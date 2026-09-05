@@ -3,9 +3,12 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 from monitor.reader import parse_stat, compute_signals
-from classifier.rules import classify, CPU_BOUND, IO_BOUND, IDLE
+from classifier.rules import classify, CPU_BOUND, IO_BOUND, IDLE, MIXED
 from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
+from setter.freq_setter import SimulatedSetter
+from monitor.synthetic import source as synth
+from governor import run
 
 STAT = """cpu  {user} 0 {sys} {idle} {iowait} 0 {softirq} 0 0 0
 cpu0 1 2 3 4 5 6 7 0 0 0
@@ -64,6 +67,32 @@ def test_hysteresis():
 def test_power():
     assert estimate_power_w(3000, 3000) > estimate_power_w(1500, 3000)
     assert estimate_power_w(0, 3000) == 2.0  # static floor only
+
+
+def test_synthetic_matches_ground_truth():
+    # The rules must reproduce the label the generator was asked for. This checks
+    # the rules against INVENTED signals, so it proves the wiring, not the
+    # thresholds - those still need real stress-ng traces (PRD S8.3).
+    plan = [("cpu", 4), ("io", 4), ("idle", 4), ("mixed", 4)]
+    setter = SimulatedSetter([1000, 2000, 3000, 4000])
+    rows = list(run(synth(plan, seed=1), setter, Policy(setter.freqs, k=3)))
+    expect = {"cpu": CPU_BOUND, "io": IO_BOUND, "idle": IDLE, "mixed": MIXED}
+    assert len(rows) == 16
+    for r in rows:
+        assert r["workload_class"] == expect[r["expected"]], r
+
+
+def test_hysteresis_suppresses_a_blip():
+    # A 2-tick I/O blip inside a CPU-bound run must not move the frequency at
+    # all when k=3. This is the anti-thrashing claim, tested end to end.
+    plan = [("cpu", 8), ("io", 2), ("cpu", 8)]
+    setter = SimulatedSetter([1000, 2000, 3000, 4000])
+    list(run(synth(plan, seed=2), setter, Policy(setter.freqs, k=3)))
+    assert setter.writes == 0, f"thrashed {setter.writes} times on a 2-tick blip"
+    # Same trace with no hysteresis does thrash - proving the test has teeth.
+    naive = SimulatedSetter([1000, 2000, 3000, 4000])
+    list(run(synth(plan, seed=2), naive, Policy(naive.freqs, k=1)))
+    assert naive.writes >= 2, naive.writes
 
 
 if __name__ == "__main__":
