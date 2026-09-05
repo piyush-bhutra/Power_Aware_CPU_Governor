@@ -13,6 +13,11 @@ def _read(cpu, attr):
         return f.read().strip()
 
 
+def _write(cpu, attr, value):
+    with open(CPUFREQ.format(cpu, attr), "w") as f:
+        f.write(str(value))
+
+
 def available_freqs_khz(cpu=0):
     """Frequencies this core can be set to, ascending.
 
@@ -49,15 +54,22 @@ class SysfsSetter:
         self.freqs = sorted(available_khz)
         self.cpus = tuple(cpus)
         self.writes = 0
+        self.ineffective_writes = 0  # count of writes that didn't land - see set()
         self.current = self.read_back()
 
     def set(self, khz):
         for cpu in self.cpus:
-            with open(CPUFREQ.format(cpu, "scaling_setspeed"), "w") as f:
-                f.write(str(khz))
+            _write(cpu, "scaling_setspeed", khz)
         self.writes += 1
-        self.current = khz
-        return khz
+        # Self-verify every write, not just once at init. A hypervisor that
+        # accepts the write syscall but silently ignores it is exactly the
+        # Outcome B symptom (PRD S5) - the one-time init check in the old
+        # version wouldn't catch this if it only failed for some frequencies.
+        actual = self.read_back()
+        if actual != khz:
+            self.ineffective_writes += 1
+        self.current = actual  # trust what the hardware reports, not what we asked for
+        return self.current
 
     def read_back(self, cpu=0):
         """Verify the write landed - a silent no-op is exactly the Outcome B symptom."""
