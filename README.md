@@ -14,11 +14,28 @@ covered by self-checks that run anywhere:
 
 | Module | State |
 |---|---|
-| `monitor/reader.py` | parsing + delta computation written and tested; file reads untested (needs Linux) |
-| `classifier/rules.py` | written; **thresholds are placeholders** until Phase 2 tuning |
-| `policy/governor_policy.py` | written and tested (hysteresis, asymmetric ramp-down) |
+| `governor.py` | control loop, runs end-to-end on synthetic signals today |
+| `monitor/reader.py` | parsing + deltas tested; the `/proc` and `/sys` reads themselves are untested (need Linux) |
+| `monitor/synthetic.py` | invented signals for dev/demo without a VM |
+| `classifier/rules.py` | written; **thresholds are placeholders** until Phase 2 tuning on real stress-ng traces |
+| `policy/governor_policy.py` | hysteresis + asymmetric ramp-down, tested |
+| `setter/freq_setter.py` | simulated path tested; sysfs path is **write-untested** until Phase 0 |
 | `power_model/estimate.py` | written; **constants are placeholders**, see `docs/power_model.md` |
-| `setter/`, `benchmark/`, `analysis/` | empty — blocked on Phase 0 outcome A vs B |
+| `benchmark/`, `analysis/`, `classifier/ml_model.py` | empty - need real runs and real data |
+
+## See it work without a VM
+
+```bash
+.venv/bin/python governor.py --synthetic
+```
+
+Prints one line per tick: classification, signals, chosen frequency, estimated
+power. The synthetic plan walks cpu -> io -> idle -> mixed -> cpu, so the 3-tick
+hysteresis lag is visible at each transition. Add `--csv data/run.csv` to log it.
+
+**The synthetic numbers are invented.** They are for wiring and demos only -
+never for tuning thresholds or training the Review II classifier. Both of those
+need real stress-ng traces.
 
 ## Setup
 
