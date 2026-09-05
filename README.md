@@ -19,9 +19,12 @@ covered by self-checks that run anywhere:
 | `monitor/synthetic.py` | invented signals for dev/demo without a VM |
 | `classifier/rules.py` | written; **thresholds are placeholders** until Phase 2 tuning on real stress-ng traces |
 | `policy/governor_policy.py` | hysteresis + asymmetric ramp-down, tested |
-| `setter/freq_setter.py` | simulated path tested; sysfs path is **write-untested** until Phase 0 |
+| `setter/freq_setter.py` | simulated path tested; write self-verification tested against a fake clamping hypervisor; real sysfs writes **still unexercised** until Phase 0 |
 | `power_model/estimate.py` | written; **constants are placeholders**, see `docs/power_model.md` |
-| `benchmark/`, `analysis/`, `classifier/ml_model.py` | empty - need real runs and real data |
+| `benchmark/baselines.py` | ondemand / performance / powersave as comparable policies |
+| `benchmark/compare.py` | runs ours + every baseline over one identical trace |
+| `benchmark/summarize.py` | per-run totals: energy (J), mean freq, frequency-change count |
+| `analysis/`, `classifier/ml_model.py` | empty - need real runs and real data |
 
 ## See it work without a VM
 
@@ -49,7 +52,7 @@ On Windows the venv lives at `.venv/Scripts/` instead.
 ## Run the self-checks
 
 ```bash
-.venv/bin/python tests/test_core.py
+.venv/bin/pytest tests/ -v
 ```
 
 ## Run the monitor (Linux only)
