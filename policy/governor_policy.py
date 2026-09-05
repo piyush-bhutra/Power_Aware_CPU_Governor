@@ -3,7 +3,7 @@
 Hysteresis is the mitigation for frequency thrashing (PRD S12): a class must
 persist for K consecutive ticks before the frequency changes.
 """
-from classifier.rules import CPU_BOUND, IO_BOUND, IDLE, MIXED
+from classifier.rules import CPU_BOUND, IO_BOUND, IDLE, MIXED, classify
 
 # Fraction of the available frequency range each class targets.
 TARGET = {CPU_BOUND: 1.0, MIXED: 0.6, IO_BOUND: 0.3, IDLE: 0.0}
@@ -45,3 +45,14 @@ class Policy:
             target = max(target, self.freqs[max(0, i - self.ramp_down_step)])
         self.current = target
         return self.current
+
+    def step(self, sig):
+        """Uniform entrypoint shared with benchmark.baselines: every governor
+        exposes step(sig) -> khz, so governor.run() and the benchmark harness
+        can swap policies without knowing which one they're driving.
+
+        Classifies internally, then defers to decide(cls) - the K-tick
+        hysteresis logic stays exactly as tested in isolation above; this is
+        purely a thin adapter, not a behaviour change.
+        """
+        return self.decide(classify(sig))

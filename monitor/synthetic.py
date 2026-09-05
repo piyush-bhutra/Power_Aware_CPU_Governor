@@ -19,6 +19,16 @@ PROFILES = {
     "io":    dict(user=6, system=10, idle=8, iowait=70, softirq=6, ctxt=9000, run=1, blk=1),
     "idle":  dict(user=1, system=1, idle=98, iowait=0, softirq=0, ctxt=60, run=1, blk=0),
     "mixed": dict(user=45, system=8, idle=25, iowait=12, softirq=10, ctxt=3000, run=2, blk=0),
+    # PRD S2's actual motivating case: data arrives, the process briefly parses/
+    # copies it (util spikes high), then blocks again waiting for the next chunk.
+    # iowait alone (12%) stays under our iowait_high threshold (20%), so this
+    # profile only classifies correctly via the second OR clause in classify()
+    # (blocked>0 and ctxt_per_s high) - if that clause is ever removed or its
+    # threshold raised, this profile is the one that catches the regression.
+    # util_pct lands ~83%, which is ALSO above ondemand's up_threshold (80%) -
+    # this is the trace that should make ours and ondemand actually diverge,
+    # unlike the plain "io" profile above, where both happen to agree.
+    "io_burst": dict(user=60, system=15, idle=5, iowait=12, softirq=8, ctxt=8000, run=1, blk=1),
 }
 
 

@@ -15,7 +15,14 @@ EXTRA_COLS = ("workload_class", "target_khz", "est_power_w", "expected")
 
 
 def run(source, setter, policy):
-    """Yield one fully-annotated row per tick."""
+    """Yield one fully-annotated row per tick.
+
+    policy just needs step(sig) -> khz. This is how benchmark/baselines.py
+    plugs in: ondemand/performance/powersave read sig directly (they have no
+    notion of workload class), while our Policy classifies internally inside
+    step(). workload_class is still logged for every governor's trace - useful
+    for analysis even when the active governor didn't use it to decide.
+    """
     f_max = setter.freqs[-1]
     for sig in source:
         # Observed frequency at sample time, i.e. before this tick acts.
@@ -23,8 +30,8 @@ def run(source, setter, policy):
         # when cpufreq is absent (Outcome B), so the key existing proves nothing.
         if sig.get("freq_khz") is None:
             sig["freq_khz"] = setter.current
-        cls = classify(sig)
-        target = policy.decide(cls)
+        cls = classify(sig)          # always computed - logged regardless of governor
+        target = policy.step(sig)    # each governor decides how (or whether) to use cls
         setter.set(target)
         yield {**sig, "workload_class": cls, "target_khz": target,
                # estimated / modelled - never measured. See docs/power_model.md
