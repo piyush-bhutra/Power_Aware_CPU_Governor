@@ -6,7 +6,7 @@ real /proc counters, on synthetic ones, or on a replayed CSV later.
 import argparse
 
 from classifier.rules import classify
-from monitor.reader import SIGNALS, log_csv, sample
+from monitor.reader import log_csv, sample
 from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
 from setter.freq_setter import open_setter
@@ -18,8 +18,11 @@ def run(source, setter, policy):
     """Yield one fully-annotated row per tick."""
     f_max = setter.freqs[-1]
     for sig in source:
-        # observed frequency at sample time, i.e. before this tick acts
-        sig.setdefault("freq_khz", setter.current)
+        # Observed frequency at sample time, i.e. before this tick acts.
+        # setdefault is wrong here: the real reader always sets the key, to None
+        # when cpufreq is absent (Outcome B), so the key existing proves nothing.
+        if sig.get("freq_khz") is None:
+            sig["freq_khz"] = setter.current
         cls = classify(sig)
         target = policy.decide(cls)
         setter.set(target)
