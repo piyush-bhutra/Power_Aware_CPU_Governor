@@ -43,3 +43,4 @@ Do the same for cpu1..cpuN to see whether vCPUs share one frequency domain
 | Classifier/policy granularity (whole-system vs per-vCPU) | |
 | Available frequencies (feed to `Policy(available_khz=...)`) | |
 | f_max in kHz (feed to `estimate_power_w`) | |
+| Does the hardware ever partially clamp/no-op a write (not just fully ignore cpufreq)? | If yes: `policy/governor_policy.py`'s `Policy` doesn't correctly recover - see `tests/test_hardware_desync.py` for the reproduction and why the obvious fix (resyncing `self.current`) makes it worse, not better. |

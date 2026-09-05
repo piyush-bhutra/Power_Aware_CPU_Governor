@@ -11,7 +11,7 @@ from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
 from setter.freq_setter import open_setter
 
-EXTRA_COLS = ("workload_class", "target_khz", "est_power_w", "expected")
+EXTRA_COLS = ("workload_class", "target_khz", "requested_khz", "est_power_w", "expected")
 
 
 def run(source, setter, policy):
@@ -31,11 +31,24 @@ def run(source, setter, policy):
         if sig.get("freq_khz") is None:
             sig["freq_khz"] = setter.current
         cls = classify(sig)          # always computed - logged regardless of governor
-        target = policy.step(sig)    # each governor decides how (or whether) to use cls
-        setter.set(target)
-        yield {**sig, "workload_class": cls, "target_khz": target,
+        requested = policy.step(sig)  # what the governor WANTS
+        actual = setter.set(requested)  # what the hardware ACTUALLY did (self-verified by
+                                         # SysfsSetter; identical to requested for
+                                         # SimulatedSetter, which never clamps)
+        # KNOWN LIMITATION, not fixed here: if actual != requested (Outcome A
+        # partial clamp/no-op), policy.current is NOT resynced to hardware
+        # truth. That was tried and reverted - Policy.decide()'s hysteresis
+        # guard ("cls == self.stable_class -> nothing to do") treats
+        # self.current as proof the stable class's target was already
+        # reached; resyncing it to a clamped value makes the policy silently
+        # stop retrying the true target, which is worse than the original bug
+        # (see tests/test_hardware_desync.py for the reproduction). A correct
+        # fix needs Policy to track "target for this stable class" separately
+        # from "what hardware last confirmed" - deferred until Phase 0 shows
+        # whether Outcome A partial-clamping is a real scenario worth solving.
+        yield {**sig, "workload_class": cls, "target_khz": actual, "requested_khz": requested,
                # estimated / modelled - never measured. See docs/power_model.md
-               "est_power_w": round(estimate_power_w(target, f_max, sig["util_pct"]), 3)}
+               "est_power_w": round(estimate_power_w(actual, f_max, sig["util_pct"]), 3)}
 
 
 def main():
