@@ -39,6 +39,35 @@ def test_deltas():
     assert compute_signals(prev, prev, 1.0) is None  # no jiffies elapsed
 
 
+def test_ratio_features():
+    # Hand-checked: 100 jiffies = 60 user + 20 iowait + 20 idle
+    #   util 60%, iowait 20%  -> iowait_over_util = 20/60 = 0.333...
+    #   600 switches in 1s over 3 runnable -> ctxt_over_run = 200
+    s = compute_signals(snap(), snap(user=60, iowait=20, idle=20, ctxt=600, run=3), 1.0)
+    assert abs(s["util_pct"] - 60.0) < 1e-9 and abs(s["iowait_pct"] - 20.0) < 1e-9
+    assert abs(s["iowait_over_util"] - 1 / 3) < 1e-9, s
+    assert s["ctxt_over_run"] == 200.0, s
+
+
+def test_ratio_features_guard_zero_denominators():
+    import math
+    cases = {
+        # util_pct = 0 with iowait > 0 -> cap
+        "util0_iowait": (snap(iowait=50, idle=50, ctxt=100, run=2), "iowait_over_util", 1000.0),
+        # util_pct = 0 and iowait = 0 -> 0.0, not 0/0
+        "util0_idle": (snap(idle=100, ctxt=100, run=2), "iowait_over_util", 0.0),
+        # procs_running = 0 with switches -> cap
+        "run0_ctxt": (snap(user=50, idle=50, ctxt=100, run=0), "ctxt_over_run", 1000.0),
+        # procs_running = 0 and no switches -> 0.0
+        "run0_quiet": (snap(user=50, idle=50, ctxt=0, run=0), "ctxt_over_run", 0.0),
+    }
+    for name, (cur, key, want) in cases.items():
+        s = compute_signals(snap(), cur, 1.0)
+        for k in ("iowait_over_util", "ctxt_over_run"):
+            assert math.isfinite(s[k]), (name, k, s[k])
+        assert s[key] == want, (name, key, s[key])
+
+
 def test_classify():
     cpu = {"util_pct": 94, "iowait_pct": 1, "irq_pct": 0, "ctxt_per_s": 200,
            "procs_running": 2, "procs_blocked": 0}

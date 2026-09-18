@@ -11,7 +11,8 @@ CPU_FIELDS = ("user", "nice", "system", "idle", "iowait", "irq",
 
 # Signals written to CSV, in order.
 SIGNALS = ("util_pct", "iowait_pct", "irq_pct", "ctxt_per_s",
-           "procs_running", "procs_blocked", "freq_khz")
+           "procs_running", "procs_blocked", "freq_khz",
+           "iowait_over_util", "ctxt_over_run")
 
 
 def parse_stat(text):
@@ -41,7 +42,7 @@ def compute_signals(prev, cur, interval_s):
     if total <= 0:  # interval too short to tick a jiffy, or counters reset
         return None
     busy = total - d["idle"] - d["iowait"]
-    return {
+    sig = {
         "util_pct": 100.0 * busy / total,
         "iowait_pct": 100.0 * d["iowait"] / total,
         "irq_pct": 100.0 * (d["irq"] + d["softirq"]) / total,
@@ -50,6 +51,17 @@ def compute_signals(prev, cur, interval_s):
         "procs_running": cur["procs_running"],
         "procs_blocked": cur["procs_blocked"],
     }
+    # Derived ratio features for the Review II ML classifier only - classify()
+    # does not read them. See docs/Research_Paper_Summary.md, paper 4.
+    sig["iowait_over_util"] = _safe_ratio(sig["iowait_pct"], sig["util_pct"])
+    sig["ctxt_over_run"] = _safe_ratio(sig["ctxt_per_s"], sig["procs_running"])
+    return sig
+
+
+def _safe_ratio(numerator, denominator, cap=1000.0):
+    if denominator <= 1e-9:
+        return cap if numerator > 0 else 0.0
+    return min(numerator / denominator, cap)
 
 
 def read_stat(path="/proc/stat"):
