@@ -2,7 +2,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from monitor.reader import parse_stat, compute_signals
+from monitor.reader import parse_stat, compute_signals, log_csv, SIGNALS
 from classifier.rules import classify, CPU_BOUND, IO_BOUND, IDLE, MIXED
 from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
@@ -66,6 +66,21 @@ def test_ratio_features_guard_zero_denominators():
         for k in ("iowait_over_util", "ctxt_over_run"):
             assert math.isfinite(s[k]), (name, k, s[k])
         assert s[key] == want, (name, key, s[key])
+
+
+def test_log_csv_creates_missing_parent_dir(tmp_path):
+    # Fresh clone: data/ is gitignored, so it doesn't exist yet.
+    import csv
+    path = tmp_path / "data" / "run.csv"
+    assert not path.parent.exists()
+    rows = [{"timestamp": 1.0, "util_pct": 90.0, "workload_class": "cpu_bound"},
+            {"timestamp": 2.0, "util_pct": 10.0, "workload_class": "idle"}]
+    log_csv(path, rows, extra_cols=("workload_class",))
+    with open(path, newline="") as f:
+        written = list(csv.reader(f))
+    assert written[0] == ["timestamp", *SIGNALS, "workload_class"]
+    assert len(written) == 3  # header + 2 rows
+    assert written[1][0] == "1.0" and written[1][-1] == "cpu_bound"
 
 
 def test_classify():

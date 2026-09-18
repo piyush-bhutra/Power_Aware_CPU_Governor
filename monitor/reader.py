@@ -3,6 +3,7 @@
 Parsing is split from file I/O so the logic is testable off-Linux (see tests/).
 """
 import csv
+import os
 import time
 
 # /proc/stat "cpu" line fields, in kernel order (Linux Documentation/filesystems/proc.rst)
@@ -98,6 +99,11 @@ def sample(interval_s=1.0, count=None):
 def log_csv(path, rows, extra_cols=()):
     """Append rows to a CSV, writing the header on first use."""
     cols = ("timestamp",) + SIGNALS + tuple(extra_cols)
+    # data/ is gitignored and absent on a fresh clone. Bare filenames have no
+    # parent, and os.makedirs("") raises, hence the guard.
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
     with open(path, "a", newline="") as f:
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         if f.tell() == 0:
