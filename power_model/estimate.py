@@ -5,8 +5,8 @@ linearly over a DVFS range, so with V normalised to f the dynamic term scales
 as f^3. A constant static (leakage) term is added.
 """
 
-# Fitted to a nominal TDP at f_max; both constants are documented assumptions,
-# not measurements. Tune in docs/power_model.md once f_max is known from Phase 0.
+# Placeholder constants - NOT fitted to any measured or published TDP yet.
+# See docs/power_model.md for what fitting these should eventually mean.
 STATIC_W = 2.0
 DYNAMIC_W_AT_FMAX = 13.0
 
