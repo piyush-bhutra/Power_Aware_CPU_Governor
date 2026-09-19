@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from monitor.reader import parse_stat, compute_signals, log_csv, SIGNALS
 from classifier.rules import classify, CPU_BOUND, IO_BOUND, IDLE, MIXED
 from policy.governor_policy import Policy
-from power_model.estimate import estimate_power_w
+from power_model.estimate import STATIC_W, estimate_power_w
 from setter.freq_setter import SimulatedSetter
 from monitor.synthetic import source as synth
 from governor import run
@@ -110,7 +110,7 @@ def test_hysteresis():
 
 def test_power():
     assert estimate_power_w(3000, 3000) > estimate_power_w(1500, 3000)
-    assert estimate_power_w(0, 3000) == 2.0  # static floor only
+    assert estimate_power_w(0, 3000) == STATIC_W  # static floor only
 
 
 def test_synthetic_matches_ground_truth():

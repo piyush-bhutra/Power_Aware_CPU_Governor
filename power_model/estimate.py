@@ -2,13 +2,14 @@
 
 CMOS dynamic power P_dyn = a*C*V^2*f. Supply voltage tracks frequency roughly
 linearly over a DVFS range, so with V normalised to f the dynamic term scales
-as f^3. A constant static (leakage) term is added.
+as f^3. A constant static term (leakage + uncore/platform power) is added.
 """
 
-# Placeholder constants - NOT fitted to any measured or published TDP yet.
-# See docs/power_model.md for what fitting these should eventually mean.
-STATIC_W = 2.0
-DYNAMIC_W_AT_FMAX = 13.0
+# FITTED (two-point) to AMD's published Ryzen 7 7840HS figures: 35 W at the
+# 3.8 GHz base clock, 54 W at the 5.1 GHz boost clock. Derivation, source and
+# the interpretive assumption behind it: docs/power_model.md.
+STATIC_W = 21.6
+DYNAMIC_W_AT_FMAX = 32.4
 
 
 def estimate_power_w(freq_khz, f_max_khz, util_pct=100.0):

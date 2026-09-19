@@ -22,7 +22,7 @@ Every power figure is estimated from a modelled frequency, never measured.
 | `classifier/rules.py` | 4-class rule classifier, tested; **thresholds are placeholders** (see `docs/thresholds.md`) until tuned on real stress-ng traces |
 | `policy/governor_policy.py` | class -> frequency with K-tick hysteresis (default 3) and optional asymmetric ramp-down, tested |
 | `setter/freq_setter.py` | with no cpufreq, `open_setter()` returns `SimulatedSetter` on the fallback ladder `RYZEN_7840HS_LADDER_KHZ` from `hardware_profile.py` (Ryzen 7 7840HS base-to-boost; its top step is f_max), tested. `SysfsSetter` self-verifies every write; tested against fake hardware only - real sysfs writes are impossible on this VM |
-| `power_model/estimate.py` | P = P_static + P_dyn(f_max) x (f/f_max)^3 x util; **constants (2.0 W / 13.0 W) are unfitted placeholders**, see `docs/power_model.md` |
+| `power_model/estimate.py` | P = P_static + P_dyn(f_max) x (f/f_max)^3 x util; constants fitted (two-point) to AMD's published Ryzen 7 7840HS figures, see `docs/power_model.md` |
 | `benchmark/baselines.py` | performance / powersave / ondemand / conservative as comparable policies; no `schedutil` baseline yet |
 | `benchmark/compare.py` | runs ours + every baseline over one identical trace |
 | `benchmark/summarize.py` | per-run estimated energy (J), mean power, mean frequency, frequency-change count, class distribution |
