@@ -81,7 +81,7 @@ def open_setter(cpus=(0,)):
     try:
         freqs = available_freqs_khz(cpus[0])
     except OSError:
-        return SimulatedSetter([1_000_000, 1_800_000, 2_600_000, 3_400_000]), False
+        return SimulatedSetter([3_800_000, 4_233_333, 4_666_667, 5_100_000]), False
     if os.access(CPUFREQ.format(cpus[0], "scaling_setspeed"), os.W_OK):
         return SysfsSetter(freqs, cpus), True
     return SimulatedSetter(freqs), False

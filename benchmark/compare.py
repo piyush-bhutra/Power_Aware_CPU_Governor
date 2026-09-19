@@ -39,7 +39,7 @@ if __name__ == "__main__":
     from benchmark.summarize import compare_table
 
     plan = [("cpu", 10), ("io", 10), ("idle", 6), ("mixed", 8)]
-    freqs = [1_000_000, 1_800_000, 2_600_000, 3_400_000]
+    freqs = [3_800_000, 4_233_333, 4_666_667, 5_100_000]
 
     results = run_comparison(lambda: synth(plan, seed=7), freqs)
     compare_table(results)

@@ -64,6 +64,17 @@ def test_set_detects_a_silent_no_op(monkeypatch):
     assert s.ineffective_writes == 2
 
 
+def test_open_setter_falls_back_to_the_7840hs_ladder(monkeypatch):
+    # No cpufreq at all (VM Outcome B, or off-Linux): open_setter must hand back
+    # the Ryzen 7 7840HS base-to-boost ladder, not the old 1.0-3.4 GHz placeholder.
+    def no_cpufreq(cpu=0):
+        raise OSError("no cpufreq directory")
+    monkeypatch.setattr(fs, "available_freqs_khz", no_cpufreq)
+    s, is_real = fs.open_setter()
+    assert isinstance(s, fs.SimulatedSetter) and is_real is False
+    assert s.freqs == [3_800_000, 4_233_333, 4_666_667, 5_100_000]
+
+
 if __name__ == "__main__":
     import pytest as _pytest
     raise SystemExit(_pytest.main([__file__, "-v"]))

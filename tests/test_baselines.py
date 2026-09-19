@@ -10,7 +10,7 @@ from benchmark.compare import run_comparison
 from benchmark.summarize import summarize
 from monitor.synthetic import source as synth
 
-FREQS = [1_000_000, 1_800_000, 2_600_000, 3_400_000]
+FREQS = [3_800_000, 4_233_333, 4_666_667, 5_100_000]
 
 
 def _settled(rows, k=3):
