@@ -20,13 +20,15 @@ HALF="$((num / 2))$suf"
 # leaving those profiles idle. Pin methods that run cleanly.
 CPUM="--cpu-method int64"; VMM="--vm-method flip"
 
-# Profile status (see docs/vm_feasibility.md, "Stress-ng environment notes"):
+# Profile status (see docs/vm_feasibility.md, "VirtualBox/AMD Zen 4 timing issues"):
 #   io         - VERIFIED (~5.9% iowait).
-#   cpu, vm    - UNVERIFIED: no SIGILL, but 4-vCPU saturation causes apparent time
-#                dilation on this VM; util_pct from these is not trustworthy yet.
+#   cpu        - VERIFIED after the --paravirtprovider legacy fix: a 5 s 4-worker run
+#                took 5.15 s wall-clock (includes stress-ng startup), and /proc/stat
+#                advanced 782 jiffies over 2 s (~800 expected). Discard pre-fix traces.
+#   vm         - UNVERIFIED: no SIGILL, but measured only ~9% util in dry run.
 #   mixed      - UNVERIFIED: uses the same cpu/vm stressors.
 declare -A CMD=(
-  [cpu]="--cpu 4 $CPUM"      # UNVERIFIED - pending 4-vCPU time-dilation investigation
+  [cpu]="--cpu 4 $CPUM"      # VERIFIED post-paravirt-fix: 5.15 s for 5 s, 782/~800 jiffies
   [io]="dd direct-I/O loop"   # special-cased below: stress-ng --hdd SIGILLs on this VM
   [vm]="--vm 1 --vm-bytes $VMB $VMM"   # UNVERIFIED - measured only ~9% util in dry run
   [mixed]="--cpu 2 $CPUM --io 1 --vm 1 --vm-bytes $HALF $VMM"

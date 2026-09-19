@@ -145,16 +145,56 @@ ls: cannot access '/sys/devices/system/cpu/cpu3/cpufreq/': No such file or direc
 
 - VM: VirtualBox on Windows host, 4 vCPUs, 4GB RAM, 30GB disk
 - Underlying host CPU: AMD Ryzen 7 7840HS (mobile, real boost clock 5.1 GHz)
-- Hypervisor: KVM (per `lscpu`), full virtualization
+- Hypervisor: VirtualBox, full virtualization. The `Hypervisor vendor: KVM` line in the `lscpu` output above was VirtualBox's default KVM paravirtualization interface, not a KVM host. That interface has since been switched to `legacy` (see [VirtualBox/AMD Zen 4 timing issues](#virtualboxamd-zen-4-timing-issues--resolved)), and `lscpu` no longer reports a hypervisor vendor.
 - Root cause of Outcome B: standard for VirtualBox/KVM guests — the vCPU doesn't get ACPI P-state/MSR passthrough, so no cpufreq driver has anything to bind to. Not a misconfiguration; not fixable by installing packages in the guest.
 
 ## Stress-ng environment notes
 
-*Added 2026-09-19. Checkpoint: one item below is still open.*
+*Added 2026-09-19. All items below are resolved; the timing investigation is written up in the next section.*
 
-- **SIGILL workaround (resolved).** stress-ng's default `--cpu`, `--vm` and `--hdd` methods crash with SIGILL on this VM. The faulting instruction uses an EVEX (AVX-512) prefix, and `/proc/cpuinfo` shows no `avx512*` flags. Workarounds in `collect_real_traces.sh`:
+- **SIGILL workaround (resolved).** stress-ng's default `--cpu`, `--vm` and `--hdd` methods crash with SIGILL on this VM. The faulting instruction uses an EVEX (AVX-512) prefix, and `/proc/cpuinfo` shows no `avx512*` flags. A host-side CPUID fix is also required; see the next section. Workarounds in `collect_real_traces.sh`:
   - cpu: `--cpu-method int64` (runs cleanly).
-  - vm: `--vm-method flip` (runs cleanly, but its load level is still unverified; see the open question below).
+  - vm: `--vm-method flip` (runs cleanly).
   - io: a `dd` direct-I/O loop (`oflag=direct conv=fsync`) replaces `--hdd`. Verified at about 5.9% mean iowait over 20 ticks, up from about 0.6% with the earlier method.
-- **OPEN QUESTION (not yet resolved): 4-vCPU time dilation.** Saturating all 4 vCPUs at once with stress-ng appears to cause severe apparent time dilation. An 8 s `stress-ng --cpu 4 --timeout 8s` reported completing in 5 m 49 s, and `/proc/stat` counters advanced about 205 jiffies over a nominal 2 s window (about 800 expected). A single worker (`--cpu 1 --cpu-method int64`) showed zero drift: `time.sleep(8)` measured 8.003 s, and a 15 s timeout completed in 15.01 s. Suspected cause: the host may not have 4 fully free logical cores to give the VM at the same time. This is under investigation and not confirmed. **Until it is resolved, do not trust any `util_pct` data collected under the 4-worker cpu profile on this VM.**
-- **Swap safety net.** Added a 2 GB `/swapfile`, persisted via `/etc/fstab`, after an earlier hard freeze during I/O testing. The VM had no swap configured, which probably turned a memory-pressure slowdown into a full stall.
+- **4-vCPU time dilation (resolved).** Caused by VirtualBox's KVM paravirtualization interface, not host contention. See the next section.
+
+## VirtualBox/AMD Zen 4 timing issues — RESOLVED
+
+*Resolved 2026-09-19.* Two separate bugs were found and fixed. Both fixes are host-side `VBoxManage` settings. The VM must be **fully powered off** (not just closed or saved) for them to apply, and they must be **re-applied if the VM is ever deleted and recreated**.
+
+### 1. SIGILL crash in stress-ng's default methods
+
+- **Symptom:** stress-ng's default `--cpu` and `--vm` methods crash with SIGILL.
+- **Cause:** AMD Zen 4 mobile CPUs expose CPUID data under VirtualBox that makes stress-ng's default methods crash.
+- **Guest-side workaround:** `--cpu-method int64` and `--vm-method flip` (already used in `collect_real_traces.sh`).
+- **Host-side fix (also required):**
+
+  ```bash
+  VBoxManage setextradata osproject VBoxInternal/CPUM/HostCPUID/80000006/edx 0x02009140
+  ```
+
+  This is a known community workaround for a division-by-zero-class bug on Ryzen Zen 4 mobile CPUs under VirtualBox.
+
+### 2. Severe, worsening time drift under 2+ concurrent CPU-bound workers
+
+- **Symptom:** an 8 s stress-ng job on 2 workers took longer on each repeated run: 6.9 s, then 28.5 s, then 34 s, then 104 s. That is up to about 20x slower than requested. This is the same effect as the earlier 4-worker observation: an 8 s run taking 5 m 49 s, and `/proc/stat` advancing about 205 jiffies over a 2 s window where about 800 were expected.
+- **Host contention ruled out:** host Task Manager showed CPU usage never above 18% during the slow runs.
+- **Cause:** VirtualBox's default paravirtualization interface for Linux guests is "KVM". `lscpu` confirmed it was active (`Hypervisor vendor: KVM`). This interface has a long-documented bug that causes severe guest time drift under load.
+- **Fix (host-side, VM powered off):**
+
+  ```bash
+  VBoxManage modifyvm osproject --paravirtprovider legacy
+  ```
+
+- **Verification after the fix:**
+  - Idle baseline, 3 runs of a timed 5 s sleep: 5.001 s, 5.008 s and 5.006 s.
+  - 2 workers, 3 repeated runs: a timed 5 s sleep measured 5.000 s each time while an 8 s `stress-ng --cpu 2` ran in the background. Each stress-ng run reported `successful run completed in 8.01 secs` (2 passed, 0 failed, 0 metrics untrustworthy). There was no slowdown across repeats, unlike the escalating runs before the fix.
+  - 4 workers, 5 s `stress-ng --cpu 4 --cpu-method int64`: 5.15 s wall-clock, including stress-ng startup.
+  - `/proc/stat` under 4 workers advanced 782 jiffies over 2 s, against about 800 expected. Before the fix it advanced about 205.
+  - `lscpu` no longer reports `Hypervisor vendor: KVM`.
+
+This is a full fix, not a workaround. `util_pct` data collected under the 4-worker cpu profile can be trusted again, but only for data collected **after** the fix. Discard any traces recorded before it.
+
+### Swap safety net
+
+The VM originally had no swap. This probably turned an earlier memory-pressure slowdown during I/O testing into a full freeze that could not be recovered. A 2 GB `/swapfile` was added and persisted via `/etc/fstab` as a standing safety net.
