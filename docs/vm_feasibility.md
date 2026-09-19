@@ -152,7 +152,7 @@ ls: cannot access '/sys/devices/system/cpu/cpu3/cpufreq/': No such file or direc
 
 *Added 2026-09-19. All items below are resolved; the timing investigation is written up in the next section.*
 
-- **SIGILL workaround (resolved).** stress-ng's default `--cpu`, `--vm` and `--hdd` methods crash with SIGILL on this VM. The faulting instruction uses an EVEX (AVX-512) prefix, and `/proc/cpuinfo` shows no `avx512*` flags. A host-side CPUID fix is also required; see the next section. Workarounds in `collect_real_traces.sh`:
+- **SIGILL workaround (resolved).** stress-ng's default `--cpu`, `--vm` and `--hdd` methods crash with SIGILL on this VM. The faulting instruction uses an EVEX (AVX-512) prefix, and `/proc/cpuinfo` shows no `avx512*` flags. The host-side CPUID override in the next section does **not** fix this: with it applied (guest CPUID `0x80000006` EDX reads `0x02009140`), `stress-ng --cpu 1` still fails with `caught SIGILL ... (ILL_ILLOPN)` at an EVEX `0x62` byte (stress-ng 0.20.01, re-tested 2026-09-19). Workarounds in `collect_real_traces.sh`:
   - cpu: `--cpu-method int64` (runs cleanly).
   - vm: `--vm-method flip` (runs cleanly).
   - io: a `dd` direct-I/O loop (`oflag=direct conv=fsync`) replaces `--hdd`. Verified at about 5.9% mean iowait over 20 ticks, up from about 0.6% with the earlier method.
@@ -160,20 +160,21 @@ ls: cannot access '/sys/devices/system/cpu/cpu3/cpufreq/': No such file or direc
 
 ## VirtualBox/AMD Zen 4 timing issues — RESOLVED
 
-*Resolved 2026-09-19.* Two separate bugs were found and fixed. Both fixes are host-side `VBoxManage` settings. The VM must be **fully powered off** (not just closed or saved) for them to apply, and they must be **re-applied if the VM is ever deleted and recreated**.
+*Resolved 2026-09-19.* Two separate bugs were found and fixed: SIGILL (guest-side method workaround) and time drift (host-side paravirt setting). A third host-side setting, the CPUID override, is also applied. Both host-side settings require the VM to be **fully powered off** (not just closed or saved) to apply and must be **re-applied if the VM is ever deleted and recreated**.
 
 ### 1. SIGILL crash in stress-ng's default methods
 
-- **Symptom:** stress-ng's default `--cpu` and `--vm` methods crash with SIGILL.
-- **Cause:** AMD Zen 4 mobile CPUs expose CPUID data under VirtualBox that makes stress-ng's default methods crash.
-- **Guest-side workaround:** `--cpu-method int64` and `--vm-method flip` (already used in `collect_real_traces.sh`).
-- **Host-side fix (also required):**
+- **Symptom:** stress-ng's default `--cpu` and `--vm` methods crash with SIGILL (`ILL_ILLOPN`).
+- **Cause:** the default methods run AVX-512 code. The faulting instruction starts with an EVEX `0x62` prefix, and the guest has no `avx512*` flags in `/proc/cpuinfo`.
+- **Fix:** guest-side only: `--cpu-method int64` and `--vm-method flip` (used in `collect_real_traces.sh`). No host setting is involved.
 
-  ```bash
-  VBoxManage setextradata osproject VBoxInternal/CPUM/HostCPUID/80000006/edx 0x02009140
-  ```
+### CPUID leaf 0x80000006 override (not a SIGILL fix)
 
-  This is a known community workaround for a division-by-zero-class bug on Ryzen Zen 4 mobile CPUs under VirtualBox.
+```bash
+VBoxManage setextradata osproject VBoxInternal/CPUM/HostCPUID/80000006/edx 0x02009140
+```
+
+This is a community workaround for a division-by-zero-class bug on Ryzen Zen 4 mobile CPUs under VirtualBox. It was found and applied during the 2-worker time-drift investigation, not the SIGILL investigation. An earlier version of this doc wrongly listed it as a SIGILL fix. With the override applied, the default stress-ng methods still crash with SIGILL. Its effect on this VM has not been isolated. It is kept applied because it is harmless, and it must be re-applied if the VM is recreated.
 
 ### 2. Severe, worsening time drift under 2+ concurrent CPU-bound workers
 
