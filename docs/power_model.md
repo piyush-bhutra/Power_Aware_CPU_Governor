@@ -92,6 +92,11 @@ citation used, once chosen, in this file.
   number is an estimate; under Outcome B it is one step further removed
   from anything physical, worth stating plainly in the final report
   rather than leaving implicit.
+- The simulated frequency floor (3.8 GHz, the base clock) is higher than
+  a real Ryzen 7840HS's actual minimum under amd-pstate, which can idle
+  below base clock, so any idle/powersave energy savings in this
+  project's results will read smaller than a real chip would achieve - a
+  deliberate modelling simplification, not a finding.
 - These constants must be re-fit once Phase 0 determines the actual host
   CPU model, f_max, and available frequency steps
   (docs/vm_feasibility.md) - see the "fitting" section above.
