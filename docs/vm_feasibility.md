@@ -147,3 +147,14 @@ ls: cannot access '/sys/devices/system/cpu/cpu3/cpufreq/': No such file or direc
 - Underlying host CPU: AMD Ryzen 7 7840HS (mobile, real boost clock 5.1 GHz)
 - Hypervisor: KVM (per `lscpu`), full virtualization
 - Root cause of Outcome B: standard for VirtualBox/KVM guests — the vCPU doesn't get ACPI P-state/MSR passthrough, so no cpufreq driver has anything to bind to. Not a misconfiguration; not fixable by installing packages in the guest.
+
+## Stress-ng environment notes
+
+*Added 2026-09-19. Checkpoint: one item below is still open.*
+
+- **SIGILL workaround (resolved).** stress-ng's default `--cpu`, `--vm` and `--hdd` methods crash with SIGILL on this VM. The faulting instruction uses an EVEX (AVX-512) prefix, and `/proc/cpuinfo` shows no `avx512*` flags. Workarounds in `collect_real_traces.sh`:
+  - cpu: `--cpu-method int64` (runs cleanly).
+  - vm: `--vm-method flip` (runs cleanly, but its load level is still unverified; see the open question below).
+  - io: a `dd` direct-I/O loop (`oflag=direct conv=fsync`) replaces `--hdd`. Verified at about 5.9% mean iowait over 20 ticks, up from about 0.6% with the earlier method.
+- **OPEN QUESTION (not yet resolved): 4-vCPU time dilation.** Saturating all 4 vCPUs at once with stress-ng appears to cause severe apparent time dilation. An 8 s `stress-ng --cpu 4 --timeout 8s` reported completing in 5 m 49 s, and `/proc/stat` counters advanced about 205 jiffies over a nominal 2 s window (about 800 expected). A single worker (`--cpu 1 --cpu-method int64`) showed zero drift: `time.sleep(8)` measured 8.003 s, and a 15 s timeout completed in 15.01 s. Suspected cause: the host may not have 4 fully free logical cores to give the VM at the same time. This is under investigation and not confirmed. **Until it is resolved, do not trust any `util_pct` data collected under the 4-worker cpu profile on this VM.**
+- **Swap safety net.** Added a 2 GB `/swapfile`, persisted via `/etc/fstab`, after an earlier hard freeze during I/O testing. The VM had no swap configured, which probably turned a memory-pressure slowdown into a full stall.
