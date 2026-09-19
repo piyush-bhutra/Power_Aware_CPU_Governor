@@ -8,9 +8,10 @@ from analysis.plots import (plot_class_distribution, plot_energy_comparison,
                             plot_frequency_timeline)
 from benchmark.compare import run_comparison
 from benchmark.summarize import summarize
+from hardware_profile import RYZEN_7840HS_LADDER_KHZ
 from monitor.synthetic import source as synth
 
-FREQS = [3_800_000, 4_233_333, 4_666_667, 5_100_000]
+FREQS = RYZEN_7840HS_LADDER_KHZ
 PLAN = [("cpu", 6), ("io_burst", 6), ("idle", 4), ("mixed", 4)]
 
 

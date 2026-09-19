@@ -37,9 +37,10 @@ def run_comparison(source_factory, available_khz, k=3, ramp_down_step=None):
 if __name__ == "__main__":
     from monitor.synthetic import source as synth
     from benchmark.summarize import compare_table
+    from hardware_profile import RYZEN_7840HS_LADDER_KHZ
 
     plan = [("cpu", 10), ("io", 10), ("idle", 6), ("mixed", 8)]
-    freqs = [3_800_000, 4_233_333, 4_666_667, 5_100_000]
+    freqs = RYZEN_7840HS_LADDER_KHZ
 
     results = run_comparison(lambda: synth(plan, seed=7), freqs)
     compare_table(results)

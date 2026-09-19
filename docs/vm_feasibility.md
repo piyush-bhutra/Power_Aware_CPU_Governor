@@ -137,8 +137,8 @@ ls: cannot access '/sys/devices/system/cpu/cpu3/cpufreq/': No such file or direc
 | vCPU count | **4** |
 | Shared or independent frequency domains | **N/A** — no cpufreq interface exists on any of the 4 cores, confirmed individually |
 | Classifier/policy granularity (whole-system vs per-vCPU) | **Whole-system** — no per-vCPU control is possible on this VM |
-| Available frequencies (feed to `Policy(available_khz=...)`) | **N/A from hardware** — synthetic profile used instead: 0.4–5.1 GHz across 11 steps (see `setter/mock_kernel.py`) |
-| f_max in kHz (feed to `estimate_power_w`) | **5100000** — Ryzen 7 7840HS real boost clock, used as the synthetic ceiling |
+| Available frequencies (feed to `Policy(available_khz=...)`) | **N/A from hardware** — synthetic ladder used instead: `RYZEN_7840HS_LADDER_KHZ` in `hardware_profile.py` (the single source; used by the setter fallback and `setter/mock_kernel.py`) |
+| f_max in kHz (feed to `estimate_power_w`) | `RYZEN_7840HS_LADDER_KHZ[-1]` — the ladder's top step, the Ryzen 7 7840HS boost clock |
 | Does the hardware ever partially clamp/no-op a write (not just fully ignore cpufreq)? | **N/A** — the cpufreq directory is fully absent on every core, not partially functional, so `test_hardware_desync.py`'s scenario doesn't apply to this environment |
 
 ## Environment notes

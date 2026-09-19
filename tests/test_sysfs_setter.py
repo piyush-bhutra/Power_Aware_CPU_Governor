@@ -8,6 +8,7 @@ import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 import setter.freq_setter as fs
+from hardware_profile import RYZEN_7840HS_LADDER_KHZ
 from setter.freq_setter import SysfsSetter
 
 
@@ -66,13 +67,13 @@ def test_set_detects_a_silent_no_op(monkeypatch):
 
 def test_open_setter_falls_back_to_the_7840hs_ladder(monkeypatch):
     # No cpufreq at all (VM Outcome B, or off-Linux): open_setter must hand back
-    # the Ryzen 7 7840HS base-to-boost ladder, not the old 1.0-3.4 GHz placeholder.
+    # the canonical Ryzen 7 7840HS ladder, not a hardcoded copy of it.
     def no_cpufreq(cpu=0):
         raise OSError("no cpufreq directory")
     monkeypatch.setattr(fs, "available_freqs_khz", no_cpufreq)
     s, is_real = fs.open_setter()
     assert isinstance(s, fs.SimulatedSetter) and is_real is False
-    assert s.freqs == [3_800_000, 4_233_333, 4_666_667, 5_100_000]
+    assert s.freqs == list(RYZEN_7840HS_LADDER_KHZ)
 
 
 if __name__ == "__main__":
