@@ -6,6 +6,8 @@ import csv
 import os
 import time
 
+from setter.backend import BACKEND
+
 # /proc/stat "cpu" line fields, in kernel order (Linux Documentation/filesystems/proc.rst)
 CPU_FIELDS = ("user", "nice", "system", "idle", "iowait", "irq",
               "softirq", "steal", "guest", "guest_nice")
@@ -73,8 +75,7 @@ def read_stat(path="/proc/stat"):
 def read_freq_khz(cpu=0):
     """Current core frequency, or None when cpufreq is not exposed (VM Outcome B)."""
     try:
-        with open(f"/sys/devices/system/cpu/cpu{cpu}/cpufreq/scaling_cur_freq") as f:
-            return int(f.read().strip())
+        return int(BACKEND.read(cpu, "scaling_cur_freq"))
     except OSError:
         return None
 

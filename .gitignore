@@ -5,3 +5,4 @@ data/*.csv
 report/figures/
 CONTEXT_EXPORT.md
 .pytest_cache/
+mock_sysfs/

@@ -9,6 +9,7 @@ from classifier.rules import classify
 from monitor.reader import log_csv, sample
 from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
+from setter.backend import BACKEND
 from setter.freq_setter import open_setter
 
 EXTRA_COLS = ("workload_class", "target_khz", "requested_khz", "est_power_w", "expected")
@@ -69,7 +70,8 @@ def main():
     else:
         src = sample(args.interval, args.ticks)
 
-    print(f"setter: {type(setter).__name__} ({'REAL' if is_real else 'SIMULATED'}), "
+    print(f"setter: {type(setter).__name__} ({'SYSFS' if is_real else 'SIMULATED'}), "
+          f"backend={BACKEND.name} ({BACKEND.root}), "
           f"freqs={setter.freqs}, k={args.k}")
     rows = run(src, setter, Policy(setter.freqs, k=args.k))
     if args.csv:

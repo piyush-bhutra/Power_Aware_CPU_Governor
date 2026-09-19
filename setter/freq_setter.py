@@ -6,18 +6,15 @@ either way. Both classes expose the same two members: set(khz) and current.
 import os
 
 from hardware_profile import RYZEN_7840HS_LADDER_KHZ
-
-CPUFREQ = "/sys/devices/system/cpu/cpu{}/cpufreq/{}"
+from setter.backend import BACKEND  # real /sys or ./mock_sysfs - see setter/backend.py
 
 
 def _read(cpu, attr):
-    with open(CPUFREQ.format(cpu, attr)) as f:
-        return f.read().strip()
+    return BACKEND.read(cpu, attr)
 
 
 def _write(cpu, attr, value):
-    with open(CPUFREQ.format(cpu, attr), "w") as f:
-        f.write(str(value))
+    BACKEND.write(cpu, attr, value)
 
 
 def available_freqs_khz(cpu=0):
@@ -84,6 +81,6 @@ def open_setter(cpus=(0,)):
         freqs = available_freqs_khz(cpus[0])
     except OSError:
         return SimulatedSetter(RYZEN_7840HS_LADDER_KHZ), False
-    if os.access(CPUFREQ.format(cpus[0], "scaling_setspeed"), os.W_OK):
+    if os.access(BACKEND.path(cpus[0], "scaling_setspeed"), os.W_OK):
         return SysfsSetter(freqs, cpus), True
     return SimulatedSetter(freqs), False
