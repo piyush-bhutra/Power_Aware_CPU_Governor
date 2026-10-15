@@ -2,7 +2,7 @@
 import sys, os
 sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
-from monitor.reader import parse_stat, compute_signals, log_csv, SIGNALS
+from monitor.reader import parse_stat, compute_signals, log_csv, SIGNALS, RAW_COLS
 from classifier.rules import classify, CPU_BOUND, IO_BOUND, IDLE, MIXED
 from policy.governor_policy import Policy
 from power_model.estimate import STATIC_W, estimate_power_w
@@ -78,7 +78,7 @@ def test_log_csv_creates_missing_parent_dir(tmp_path):
     log_csv(path, rows, extra_cols=("workload_class",))
     with open(path, newline="") as f:
         written = list(csv.reader(f))
-    assert written[0] == ["timestamp", *SIGNALS, "workload_class"]
+    assert written[0] == ["timestamp", *SIGNALS, *RAW_COLS, "workload_class"]
     assert len(written) == 3  # header + 2 rows
     assert written[1][0] == "1.0" and written[1][-1] == "cpu_bound"
 

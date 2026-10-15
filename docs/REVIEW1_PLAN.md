@@ -44,7 +44,7 @@ It writes five policy CSVs, summaries.json, metadata.json,
 synthetic_modelled_energy.png and synthetic_simulated_frequency.png, with explicit
 labels on each chart. Metadata records commit and dirty state at generation.
 It refuses to append to or overwrite existing evidence artifacts.
- Label charts synthetic and energy estimated. Do not present
+Label charts synthetic and energy estimated. Do not present
 identical classification bars as comparative evidence.
 
 Optional later read-only live demo: `.venv/bin/python -m monitor.reader` (five one-second
@@ -72,3 +72,13 @@ Real labelled trace calibration remains missing; show it as future work if unava
 Final project: repeated validated trials, classifier accuracy/ML comparison, sampling
 interval study, credible completion-time methodology, final report and presentation.
 Native hardware frequency control and a dashboard are optional, not Review 1 blockers.
+
+## Real monitoring evidence now available
+The safe monitoring milestone adds five genuine Linux counter observations labelled
+uncontrolled_background, raw snapshots, measured intervals and resource diagnostics.
+60 tests passed; collector safeguards are tested with harmless processes. Show this
+separately from the synthetic/simulated energy charts. No workload-class ground truth,
+physical actuation, measured energy or stress validation is claimed. Use the exported
+REAL_MONITORING_MILESTONE.md and CSV in the progress report. Collector I/O remains
+intentionally disabled. The first CPU experiment plan still needs explicit approval;
+see COLLECTION_WORKFLOW.md, including the ~25% aggregate utilization expectation.

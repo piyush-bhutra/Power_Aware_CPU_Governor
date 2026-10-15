@@ -90,3 +90,12 @@ project state and last checkpoint. Preserve partial work and diagnostics. Determ
 what failed before suggesting safe recovery; never reset/clean/discard or rerun stress.
 Local commits protect reproducibility, remote pushes protect VM disk loss, and handoffs
 protect context. Initial setup was subsequently checkpointed and pushed under the Review 1 authorization.
+
+## Real monitoring milestone authorization and workflow
+The October 15 Real_Monitoring_Milestone prompt authorizes collection/monitor repairs,
+one no-generated-load capture of at most five one-second intervals, and development
+checkpoint/push for that task. That observation completed once; it does not authorize
+artificial CPU/memory/I/O/mixed experiments. Read COLLECTION_WORKFLOW.md before using
+the repaired collector. Failed traces remain failed; do not auto-retry, relabel background
+as idle ground truth, or combine schema versions by appending to old CSVs. Snapshot
+resource availability, validate raw/derived data, and export only after validation.

@@ -1,6 +1,7 @@
 # Verified project state
 
-Last inspected: 2026-10-15 11:27:57 UTC. Session `initial-codex-setup-20261015`.
+Last inspected: October 15, 2026. Latest milestone: safe real Linux monitoring.
+See the chronological updates below; initial setup observations are historical.
 Latest tested checkpoint: main `1ece4a22385c56af0e1c4d139b1ec897f6ca997d`; identical to origin/main after successful
 fetch. Setup documents were checkpointed as `1a3d180` and pushed to origin/development. This is the authoritative progress snapshot;
 PRD's introductory “no code / VM not set up” status is historical and obsolete.
@@ -25,20 +26,20 @@ scikit-learn for future ML. Whole-system signals; no scheduler/queue manipulatio
   SimulatedSetter. Baseline demo: five policies, 34 ticks each. Collector bash syntax passes.
 
 ## Partial, missing and known issues
-Live monitor implementation exists, but no new live sampling run was performed during
-setup. Historical cpu/io experiments are documented; vm/mixed profiles remain unverified.
+Five-interval live background monitoring is now validated; no generated workload was
+run. Historical cpu/io experiments are documented; vm/mixed profiles remain unverified.
 Existing ignored local data needs provenance/integrity review before being used as evidence.
 Threshold calibration/classifier accuracy on real labelled data is incomplete.
-Counter total includes guest/guest_nice already contained in user/nice (double-count risk).
-Negative counter deltas/iowait and counter resets are not robustly handled. Rate computation
-uses requested interval rather than measured monotonic elapsed time. Raw snapshots are
-not retained in output CSV despite PRD's intended raw-counter logging.
+Monitoring now excludes duplicate guest time, uses monotonic measured intervals, skips
+reset intervals, flags/clamps decreasing iowait and captures previous/current raw counters.
+New CSV headers are version-incompatible with old traces; cross-schema append is refused.
 Optional ramp-down stops after its first drop while a class stays stable because the
 stable-class early return prevents further convergence. Synthetic CLI now caps its finite 20-row plan with --ticks, rejects negative limits,
 and constructs SimulatedSetter directly without hardware probing. Input validation is limited for interval/ticks/k/ladders.
 Hardware clamping leaves policy state unsynchronized (known tested limitation, dormant
 with simulated setter). Real sysfs actuation is unavailable in this guest.
-Collector has unsafe load/error/cleanup behavior; see setup report. No schedutil baseline,
+Collector safeguards are implemented and harmless-process tests pass; artificial workload
+operation remains unvalidated and requires separate approval. I/O profile is disabled. No schedutil baseline,
 ML model/training/evaluation, closed-loop completion-time comparison, repeated validated
 trials or final report/presentation artifacts are tracked. Review I report is not tracked.
 
@@ -64,9 +65,9 @@ backup-old-local and remote mock-sysfs-wip contain unique work and are preserved
 ## Review readiness and roadmap
 Ready: short synthetic pipeline, hysteresis explanation, baseline decisions, unit-test
 evidence. Not ready: validated real classification, calibrated thresholds, review report
-and screenshots, trustworthy collection safety or performance/energy claims.
-Immediate: get development workflow approval; fix collector safety with failure-path
-checks; resolve timing discrepancy read-only; then approve a tiny experiment if needed.
+and screenshots, collection under stress or performance/energy claims.
+Immediate: prepare review report using synthetic and background-monitor evidence; resolve
+or explicitly accept timing discrepancy before separately approving a tiny CPU experiment.
 Before October 16 prioritize reproducible synthetic demo, honest charts and Review I report.
 After review fix monitoring/ramp-down/CLI defects, collect validated traces, tune thresholds,
 evaluate classifiers and intervals, design repeated performance/energy methodology, implement
@@ -84,3 +85,23 @@ Latest demonstration checkpoint/push hash is recorded in shared SESSION_STATUS.m
 and the Review 1 handoff (avoids a self-referential commit hash in committed documents).
 Next priority: assemble Review 1 Design & Progress Report using this evidence pack;
 collector hardening remains required before any separately approved real experiment.
+
+## Real monitoring milestone — October 15, 2026
+Authorization: shared prompts/Real_Monitoring_Milestone.txt includes development commit/push.
+60 automated tests passed in 3.33 s; no real collector invocation or artificial load.
+Single live capture: five valid Linux observations, labelled uncontrolled_background.
+Elapsed interval 1.001–1.012 s; mean utilization 7.67% (4.29–13.51%), iowait 0%.
+Available RAM before/after 2,262,312/2,266,264 KiB; swap unchanged at 423,072 KiB.
+No pressure or gross timing anomaly detected in this short no-load run. This does not
+resolve historical freeze risk or prove timing stability under stress. Source SHA256s
+identify the observed pre-commit files; latest checkpoint/push is in shared handoff.
+Collector now uses single conservative profiles, 1 cpu worker, <=128 MiB vm request,
+1–30 intervals, worker and supervisor deadlines, groups with TERM/KILL/reap, resource
+checks, unique run directories, logs/metadata and atomic success/failure manifests.
+CSV validation checks row counts, labels, finite values, elapsed bounds, raw accounting
+and gross aggregate jiffy rate. Raw-only observation never selects a frequency setter.
+I/O is disabled rather than replaced by an unreviewed disk workload. See
+[collection workflow](COLLECTION_WORKFLOW.md) for semantics, compatibility and pending plan.
+Review findings about cleanup exceptions/provenance were reproduced and fixed.
+Optional static lint was unavailable (pyflakes module absent); no package installed.
+Next: Review 1 report, or separately approve the documented one-worker CPU experiment.

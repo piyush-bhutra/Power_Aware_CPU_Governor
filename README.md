@@ -17,7 +17,7 @@ Every power figure is estimated from a modelled frequency, never measured.
 | Module | State |
 |---|---|
 | `governor.py` | control loop + CLI (`--synthetic`, `--interval`, `--ticks`, `--k`, `--csv`); logs both `target_khz` (what landed) and `requested_khz`; runs end-to-end on synthetic signals |
-| `monitor/reader.py` | `/proc/stat` parsing + delta/rate computation tested, plus ratio features `iowait_over_util` and `ctxt_over_run` (capped, never inf/nan); `log_csv` creates its parent directory. No run on the VM's live `/proc/stat` is recorded in the repo yet |
+| `monitor/reader.py` | `/proc/stat` parsing + delta/rate computation tested, plus ratio features `iowait_over_util` and `ctxt_over_run` (capped, never inf/nan); `log_csv` creates its parent directory. Five live background intervals validated; CSV exported separately |
 | `monitor/synthetic.py` | invented cumulative counters (profiles `cpu`, `io`, `io_burst`, `idle`, `mixed`) pushed through the real delta code; dev/demo only |
 | `classifier/rules.py` | 4-class rule classifier, tested; **thresholds are placeholders** (see `docs/thresholds.md`) until tuned on real stress-ng traces |
 | `policy/governor_policy.py` | class -> frequency with K-tick hysteresis (default 3) and optional asymmetric ramp-down, tested |
@@ -70,10 +70,11 @@ frequency setter will require root (`sudo`), and the governor must be set to
 
 ## Next step
 
-Record real `stress-ng` traces in the VM (`--cpu`, `--io`, `--hdd`, `--vm`, mixed,
-idle) with `governor.py --csv`, then tune the classifier thresholds from them and
-justify each one in `docs/thresholds.md`. Monitoring is real under Outcome B, so
-this doesn't wait on anything.
+Read [safe collection workflow](docs/COLLECTION_WORKFLOW.md) before any experiment.
+The collector now runs one bounded profile, preserves metadata/manifests and refuses
+artificial loads without explicit experiment approval. I/O collection is disabled.
+Five real background-only Linux samples are verified; real threshold calibration is
+still pending. No generated workload is authorized by these documentation examples.
 
 ## Review 1 synthetic evidence
 

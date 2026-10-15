@@ -43,3 +43,8 @@ Git branch/commit/dirty/push status, merge readiness, and one next action.
 Always distinguish measured kernel counters, simulated frequency, modelled energy,
 actual hardware control, and workload completion time. Do not invent savings.
 See [Review 1 plan](docs/REVIEW1_PLAN.md) and detailed workflow for operational steps.
+
+Real-monitoring milestone: the named prompt authorized collector/monitor fixes, one
+five-interval no-generated-load observation, and its development checkpoint/push.
+That observation is complete. See [collection workflow](docs/COLLECTION_WORKFLOW.md)
+for the repaired collector and separately gated CPU plan; no artificial load is approved.

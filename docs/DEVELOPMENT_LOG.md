@@ -29,3 +29,20 @@ Regression tests failed for both bugs before implementation; full suite 30 passe
 Charts and CSVs are modelled open-loop evidence, not physical energy/performance results.
 Final review checkpoint/push hash is in shared handoff/session snapshot.
 Next: assemble Review 1 Design & Progress Report and capture presentation screenshots.
+
+## 2026-10-15 — Safe real monitoring and collection preparation
+Objective: fix collector hazards and real-counter correctness, then one no-load capture.
+Changes: monotonic elapsed rates; corrected guest total; reset handling and flagged
+negative iowait; raw snapshot CSV/schema protection; bounded read-only capture/validator;
+collector wrapper and Python process-group supervisor with unique outputs, metadata,
+resource checks and manifests. I/O loop removed/profile disabled. No stressor executed.
+Verification: regression-first accounting tests; harmless worker failure/timeout/cleanup,
+manifest and provenance tests; full suite 60 passed in 3.33 s. Synthetic demo and existing
+comparison passed. Shell syntax and whitespace checks passed. Pyflakes unavailable;
+no installation attempted. Independent review findings on cleanup/provenance fixed and
+re-reviewed. One five-row live background trace passed under 12 s external timeout;
+intervals 1.001–1.012 s, utilization mean 7.67%, available memory ~2.16 GiB and swap stable.
+No repeat. Exact producing source hashes, CSV, statistics and diagnostics exported.
+Checkpoint/push: latest hash in shared REAL_MONITORING_MILESTONE.md and SESSION_STATUS.md;
+main/historical refs preserved. Next: review report or separately approve one CPU worker
+for five sampling intervals under the documented strict budgets; no experiment started.
