@@ -1,9 +1,90 @@
 # Governorlab terminal demonstration
 
-Governorlab is a finite, read-only presentation of the existing governor, independent
-of the planned Daybreak web dashboard. It does not start collectors, workloads,
-live monitoring or physical frequency control. The standard replay lasts about
+Governorlab is a finite presentation of the existing governor, independent
+of the planned Daybreak web dashboard. Default replay is read-only. Explicit
+`--live` collects five background-only Linux intervals in-process, then replays
+simulated decisions. It never starts generated workloads or physical frequency control. The standard replay lasts about
 8.25 seconds of display time; its original synthetic time remains 34 one-second ticks.
+
+## Review 1: exactly two classroom commands (Ubuntu)
+
+Run from `/home/vboxuser/Power_Aware_CPU_Governor` in an 80x24 or larger terminal:
+
+```bash
+.venv/bin/python -m governorlab --visual
+.venv/bin/python -m governorlab --live --visual
+```
+
+The first command preserves the verified 34-tick synthetic scenario and three
+simulated transitions (about 8.3 seconds). The second shows collection progress
+0/5 through 5/5, then automatically opens the same Rich dashboard on the fresh
+measurements and predicted classes, candidates, applied simulated levels and K=3
+persistence. Expect approximately 6-8 seconds total; the final frame and summary
+remain visible. Values and transition counts vary with ordinary VM activity.
+There is no extra command or confirmation within the live flow.
+
+Professor explanation: “The first scenario makes hysteresis easy to see. The second
+reads actual aggregate Linux CPU counters and derives utilization, I/O wait and
+context-switch rates. Our existing provisional classifier predicts a class, and
+our existing policy requires three consecutive predictions before applying a
+simulated frequency. These are simulated decisions, not physical frequency changes,
+energy savings or workload completion-time measurements.”
+
+Live runs create a unique ignored `run/live-<UTC>-<random>/` directory containing
+`capture.csv` (raw previous/current counters plus interpreted rates/resources),
+`raw_events.jsonl` (baseline and every attempted interval), `metadata.json` (times,
+actual count, elapsed intervals, validation statistics, resource snapshots, source
+SHA256s and simulated decision summary), and `decisions.json` (five frames).
+These files stay local until deliberately exported. Historical evidence is untouched.
+`monitor.capture --output` itself takes a **file path**, not a directory: the previous
+`run/live_check_20261015` is an extensionless CSV and is preserved unchanged.
+
+Collection lazily reuses `monitor.reader.sample(1.0, 5)` and the existing capture
+resource guards/validator, with a 12-second SIGALRM deadline and no subprocesses.
+Exactly five attempts are permitted; invalid intervals are not replaced. Partial,
+invalid, timed-out, resource-pressure or interrupted captures retain available
+CSV/events/failure metadata, return nonzero and do not replay or automatically retry.
+The sampler's monotonic elapsed intervals and raw accounting must validate before
+classification. Missing/nonfinite classifier features fail explicitly. Its five
+required inputs are measured utilization, I/O wait, context-switch rate and current
+runnable/blocked-process gauges. Read-only CPU frequency may be unavailable in this VM;
+no simulated number is substituted in the measured CSV.
+
+`presentation.adapter.process_live_observations()` calls existing `classify()`,
+`Policy.decide()` with K=3, and an explicitly constructed `SimulatedSetter` using
+the existing model ladder. It preserves candidate versus applied state and reports
+zero transitions whenever that is the actual result. The classifier thresholds and
+ladder remain provisional modelling choices. Archived `--recorded-linux` remains a
+historical counter-only view; default imports/replay never initiate live sampling.
+`--live` and `--recorded-linux` are mutually exclusive. Explicit visual readiness is
+checked before collection. Ctrl+C stops collection/playback and restores terminal
+state; replay retains completed capture evidence. The deadline requires Linux's main
+thread and refuses an existing active interval timer.
+
+Fresh native Ubuntu verification, October 15: **181 tests passed in 22.19 seconds**,
+including 22 new live tests, conservative thread limits and a 90-second suite timeout.
+Import safety, archived replay and counter-only view remain covered. AST/whitespace
+checks passed; all 30 archived evidence files match HEAD. Independent review found
+one errno diagnostic-path issue, reproduced with a failing test and corrected; the
+reviewer then found no further actionable issues (66 targeted tests passed).
+
+One authorized real 80x24 PTY smoke test completed in **6.14 seconds**, status 0:
+`run/live-20261015T184415Z-n0nkxttw/`. Five genuine intervals ranged 1.0004-1.0115 s
+(mean 1.0034 s), CPU mean 9.1414%, I/O wait mean 0.05435%, context switches mean
+3348.49/s. Predictions: mixed, idle, idle, idle, mixed. One simulated transition at
+tick 4: 5.100 -> 3.800 GHz after the third idle prediction. No observed frequency
+was available. Available RAM before/after 2,277,536/2,281,980 KiB; swap stayed
+502,560 KiB; recent memory-pressure averages stayed zero. Raw events/CSV continuity,
+source hashes, independent classifier/policy reproduction, Rich summary, cursor
+restoration and process-group exit passed. No stress, frequency writes, installation
+or VM changes. This is background readiness, not loaded stability or classifier accuracy.
+PTY output verification does not replace the user's physical terminal rehearsal.
+
+Shared handoff: `/media/sf_OS_Project_Shared/reports/GOVERNORLAB_LIVE_DEMO.md`, with
+logs and completed live artifacts referenced there. Development checkpoint/push and
+exact-target integration assessment are recorded in that report. Main is unchanged;
+any integration requires separate approval. Earlier verification entries below are
+historical and describe the original replay-only implementation.
 
 ## Launch from the repository root
 

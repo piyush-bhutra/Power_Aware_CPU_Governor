@@ -13,7 +13,11 @@ Run `.venv/bin/python -m governorlab` on Ubuntu or
 root. Finite 34-tick synthetic replay shows actual backend classification, candidate
 versus applied simulated frequency, K=3 persistence, progressive CPU history and
 verified transitions. `--recorded-linux` displays the five archived Linux observations
-separately. No live monitoring, workload or hardware control runs.
+separately. Default replay performs no live monitoring, workload or hardware control.
+For five fresh background-only Linux observations followed automatically by simulated
+K=3 governor decisions, run `.venv/bin/python -m governorlab --live --visual`.
+Collection progress is visible; a unique ignored `run/live-*/` folder preserves the
+raw measurements and decisions. No generated workload or physical frequency writes.
 
 Rich is optional (`requirements-terminal.txt`); `--plain --instant` works without it.
 Default interactive mode uses a compact Rich dashboard at 80x24. `--visual` (alias

@@ -226,3 +226,34 @@ new live monitoring, hardware control, installs or VM changes. Independent revie
 final development checkpoint/push recorded in shared integration report. Main stays
 at approved 207e732; archive/roadmap integration needs separate approval.
 Next: complete frontend design, then authorize a replay-first local dashboard task.
+
+
+## 2026-10-15 — One-command bounded live Governorlab demonstration
+
+Authorized by the user-invoked one_prompt_demonstration.txt. Initially stopped for
+untracked run/live_check_20261015; user approved preserving it and ignoring run/.
+Fresh fetched/independently queried main/development aligned at 207e732/7f18038.
+Implemented opt-in --live with lazy in-process five-attempt collection, progress,
+12-second deadline, resource guards, unique capture/events/metadata/decisions artifacts,
+raw validation and shared adapter classify -> K=3 Policy.decide -> SimulatedSetter.
+Default synthetic 34-tick and archived counter-only visuals/import safety are preserved.
+Initial red run: six missing-API failures/eight fixture setup errors. Two subsequent
+fixture assertions incorrectly assumed constant idle despite real runnable gauges;
+corrected to zero transitions and added an explicit three-idle unit fixture. Independent
+review found an errno-bearing OSError evidence-path diagnostic issue; failing regression
+reproduced it, CLI handling corrected, reviewer found no further actionable issues.
+Fresh final native Linux suite 181 passed in 22.19 s; 66 focused tests independently
+passed. AST/diff checks and byte identity of all 30 archived files pass.
+ONE actual live command completed in 80x24 PTY, status 0, 6.14 s; five intervals mean
+1.0034 s (1.0004-1.0115), CPU 9.1414%, I/O wait 0.05435%, ctxt 3348.49/s. Classes
+mixed/idle/idle/idle/mixed, one simulated change 5.1 -> 3.8 GHz at tick 4. Measured
+frequency unavailable; no physical power/energy/completion-time claims. Capture stored
+at run/live-20261015T184415Z-n0nkxttw. Raw CSV/event continuity, fresh timestamps, source
+hashes and independent classifier/stateful policy reproduction passed. RAM before/after
+2,277,536/2,281,980 KiB; swap stayed 502,560 KiB, memory PSI recent averages zero;
+Rich opened automatically, summary/cursor restoration/process-group exit passed.
+No stress, workers, hardware writes, installs or VM changes; no collection retry.
+Shared report GOVERNORLAB_LIVE_DEMO.md,
+logs/completed artifacts and final development checkpoint/push are in shared handoff.
+Accumulated implementation milestone READY for separately approved integration;
+main unchanged. Physical terminal rehearsal remains pending. Next: rehearse two commands.

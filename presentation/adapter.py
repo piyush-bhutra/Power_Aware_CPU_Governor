@@ -1,4 +1,4 @@
-"""Normalize archived observations and verify replay with the existing backend.
+"""Normalize observations and verify replay with the existing backend.
 
 No terminal imports, live sampling, collectors, subprocesses or hardware selection.
 Private policy state is read only for derived display fields; outputs must match
@@ -17,6 +17,8 @@ from monitor.capture import validate_trace
 from monitor.synthetic import source
 from policy.governor_policy import Policy
 from setter.freq_setter import SimulatedSetter
+from classifier.rules import classify
+from hardware_profile import RYZEN_7840HS_LADDER_KHZ
 
 EVIDENCE = Path(__file__).resolve().parents[1] / 'evidence' / 'review1'
 SYNTHETIC_ARCHIVE = EVIDENCE / 'synthetic_policy_comparison_20261015'
@@ -250,4 +252,48 @@ def load_observations(folder=LINUX_ARCHIVE):
         'workload_label': 'uncontrolled_background',
         'validation': 'archive hashes and raw-counter validation passed',
         'limitations': 'Historical uncontrolled background capture; not live or idle ground truth. No frequency measurements. Does not establish loaded VM stability, classifier accuracy or energy savings.',
+    })
+
+
+def process_live_observations(records, metadata):
+    """Measured features -> existing classifier -> stateful simulated policy.
+
+    Does no collection or hardware probing. Observed frequency is never replaced
+    by a simulated value; simulation lives only in the decision fields.
+    """
+    required = ('util_pct', 'iowait_pct', 'ctxt_per_s', 'procs_running', 'procs_blocked')
+    setter = SimulatedSetter(RYZEN_7840HS_LADDER_KHZ)
+    initial = setter.current
+    policy = Policy(setter.freqs, k=3)
+    frames = []
+    for tick, row in enumerate(records, 1):
+        for key in required:
+            value = row.get(key)
+            if not isinstance(value, (float, int)) or not math.isfinite(value) or value < 0:
+                raise ValueError(f'Missing/invalid measured feature: {key}')
+        features = {key: row[key] for key in required}
+        predicted = classify(features)
+        previous = setter.current
+        applied = setter.set(policy.decide(predicted))
+        snapshot = policy_snapshot(policy, predicted)
+        event = None
+        if applied != previous:
+            event = Transition(tick, previous, applied, predicted,
+                               f'{snapshot["streak"]} consecutive {predicted} samples; K=3 met')
+            snapshot['decision_state'] = 'APPLIED'
+        frames.append(Frame(tick, f'{metadata["csv_path"]}:{tick + 1}', row['timestamp'],
+                            row['util_pct'], {key: row[key] for key in FEATURES if key in row},
+                            'linux_live', predicted_class=predicted, applied_khz=applied,
+                            transition=event, **snapshot))
+    if not frames:
+        raise ValueError('No measured observations to process')
+    return Dataset('LIVE LINUX OBSERVATION — SIMULATED GOVERNOR DECISIONS', tuple(frames), {
+        **metadata, 'k': 3, 'initial_khz': initial, 'ladder_khz': setter.freqs,
+        'frequency_control': 'simulated', 'source_commit': metadata.get('source_commit', 'working-tree'),
+        'classifier_features': list(required),
+        'measured_frequency_samples': sum(row.get('freq_khz') is not None for row in records),
+        'validation': 'raw-counter validation and measured feature checks passed',
+        'unavailable_measurements': 'Physical power/energy and workload completion time; CPU frequency when cpufreq is absent',
+        'limitations': 'Measured Linux counters and derived rates; predicted classes use provisional rules. '
+                       'Simulated frequencies only; no measured energy, physical savings or completion-time claim.',
     })

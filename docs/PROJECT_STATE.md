@@ -1,5 +1,32 @@
 # Verified project state
 
+## Current update — One-command live Governorlab demonstration, October 15, 2026
+
+User-invoked `prompts/one_prompt_demonstration.txt` authorizes this feature, one
+bounded real background smoke test and a development checkpoint/push. User separately
+approved preserving the untracked extensionless CSV and ignoring `run/`. Fresh fetch
+and independent remote heads matched development 7f18038 and main 207e732 before edits.
+Default synthetic visuals and archived counter-only mode are preserved. New `--live`
+collects five one-second attempts in-process with a 12-second timeout, saves raw and
+interpreted evidence, validates it, passes measured features through existing classify
+and K=3 Policy with explicit SimulatedSetter, then automatically replays in Rich.
+No generated workloads, hardware writes, installs, system changes or Daybreak work.
+Failures retain diagnostics; no retry or invented replacement sample.
+Fresh Linux suite: **181 passed in 22.19 s**. AST/whitespace checks and all 30 archived
+file comparisons pass. Independent review's errno-path diagnostic issue was reproduced,
+fixed and re-reviewed without further findings; 66 targeted tests pass. One real 80x24
+PTY invocation succeeded in 6.14 s: five valid intervals (mean 1.0034 s), CPU mean
+9.1414%, I/O wait mean 0.05435%, context switches mean 3348.49/s. Classes mixed/idle/
+idle/idle/mixed; one simulated 5.1 -> 3.8 GHz transition at tick 4. Observed frequency
+unavailable; physical power, energy and completion time unavailable. RAM adequate,
+swap unchanged, cursor restored and process group gone. Original user CSV preserved.
+See GOVERNORLAB.md for the two classroom commands. Physical terminal rehearsal remains
+a human step. Exact checkpoint/push, shared artifact paths and accumulated merge review
+are in shared reports/GOVERNORLAB_LIVE_DEMO.md and SESSION_STATUS.md. Main stays 207e732;
+implementation is READY for separately approved integration, without physical-savings,
+accuracy or loaded-VM claims. Next: rehearse the two commands in the actual terminal.
+
+
 ## Current update — Ubuntu import-safety test repair, October 15, 2026
 
 The authorized repair changes only two safety tests and related status documents.
