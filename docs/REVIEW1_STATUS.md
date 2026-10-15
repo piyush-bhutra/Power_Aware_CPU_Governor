@@ -1,5 +1,17 @@
 # Review 1 status — October 16, 2026
 
+## Governorlab presentation update — October 15, 2026
+
+The independent terminal MVP is available: `python -m governorlab` (finite 34-tick
+synthetic replay), `--recorded-linux` (five separate historical observations),
+`--plain --instant` (portable fallback). Candidate/applied simulated levels,
+derived K=3 persistence, progressive utilization and verified transitions are shown.
+See [demonstration guide](GOVERNORLAB.md) for Windows/Ubuntu commands and faculty notes.
+Windows-compatible suite: 72 passing, including 30 new tests. Ubuntu-specific
+integration remains pending; no new experiments or web dashboard were implemented.
+Prior presentation/status notes below describe earlier milestones. Provisional
+thresholds, model assumptions and physical-performance limitations still apply.
+
 Verified October 15, 2026 for the milestone checkpoint. Historical setup documents
 record earlier states; this document and the latest PROJECT_STATE update describe
 current evidence. This is a progress summary, not the final academic report.

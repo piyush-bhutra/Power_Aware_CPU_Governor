@@ -1,5 +1,27 @@
 # Verified project state
 
+## Current update — Governorlab terminal MVP, October 15, 2026
+
+The authorized terminal demonstration is implemented on development. See
+[Governorlab guide/local handoff](GOVERNORLAB.md) for launch commands, professor-facing
+demo, provenance and Ubuntu checklist. `python -m governorlab` replays the archived
+34-tick seed-11/K=3 scenario using existing backend functions, verifies recorded
+outputs before display, shows derived candidate/persistence and three simulated
+transitions (13, 23, 29), then ends. Rich is optional; ASCII fallback and a separate
+five-observation recorded-Linux view work without it. `presentation.adapter` is
+portable and reusable by Daybreak; no web dashboard is implemented.
+
+Fresh Windows-compatible verification: 72 tests passed (30 new), static checks,
+dependency consistency, archive integrity and bounded startup/playback checks passed.
+Full suite attempted: four existing fcntl import/collection errors on Windows;
+Linux collector/launcher tests and native Ubuntu terminal integration remain pending.
+Backend behavior and archived evidence are unchanged. Only optional Rich terminal
+dependencies were installed in this Windows virtualenv. Shared folder remains
+unavailable; GOVERNORLAB.md is the local recovery handoff. Main integration: DEFER
+pending Ubuntu verification and separate exact-target approval. Stable main remains
+207e7326369506c4e9021cc8f397c50c06fb3794; development checkpoint/remote verification
+are recorded in the final chat handoff. Earlier status sections below are historical.
+
 Last inspected: October 15, 2026. Latest milestone: approved stable integration and synthetic asset preservation.
 Current stable main: `207e7326369506c4e9021cc8f397c50c06fb3794`.
 See the final integration update and DEVELOPMENT_ROADMAP.md for current priorities.

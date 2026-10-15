@@ -1,5 +1,26 @@
 # Development log
 
+## 2026-10-15 — Governorlab terminal demonstration MVP
+
+User-invoked Governorlab implementation request authorized development code, tests,
+documentation and normal checkpoint/push, excluding main integration and Daybreak.
+Initial clean checkout main/development matched fresh GitHub heads 207e732/9999a3c.
+Added portable presentation adapter and finite Rich/ASCII terminal app; archive
+configuration drives original backend reconstruction and every available recorded
+input/output is checked. Derived candidates/persistence are labelled; simulated
+transition ticks are 13/23/29 with initialization excluded. Recorded Linux mode
+uses raw-counter validation without classifying or assigning simulated frequency.
+Installed optional Rich 14.3.4 in the Windows-native virtualenv; terminal requirements
+remain separate from existing backend dependencies. No evidence/backend/VM changes,
+live observations, collectors, workloads or physical writes. 25 initial feature tests
+failed before implementation; subsequent focused review regression reproduced an
+ASCII Unicode-path summary failure, fixed with output escaping. Final portable suite
+72 passed, including 30 new tests. Full suite stops on four existing fcntl imports
+on Windows. Static/dependency/whitespace and finite plain/Rich-startup checks pass.
+Documentation and Linux checklist are in GOVERNORLAB.md, the local fallback handoff;
+friend's shared folder is inaccessible. Main integration DEFER pending Ubuntu smoke
+and exact-target approval. Final development hash/push verification in chat handoff.
+
 ## 2026-10-15 11:27:57 UTC — Initial Codex infrastructure setup
 Objective: inspect and preserve project, establish durable instructions and reporting,
 assess Git/VM/collector and plan Review 1 without application changes.

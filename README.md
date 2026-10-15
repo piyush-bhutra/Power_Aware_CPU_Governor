@@ -6,6 +6,19 @@ frequency to match — instead of scaling on aggregate utilisation alone.
 
 BITE303P Operating Systems Lab, VIT Vellore. See [`docs/PRD.md`](docs/PRD.md) for full scope.
 
+## Governorlab terminal demonstration
+
+Run `.venv/bin/python -m governorlab` on Ubuntu or
+`.\.venv\Scripts\python.exe -m governorlab` in Windows PowerShell from the repository
+root. Finite 34-tick synthetic replay shows actual backend classification, candidate
+versus applied simulated frequency, K=3 persistence, progressive CPU history and
+verified transitions. `--recorded-linux` displays the five archived Linux observations
+separately. No live monitoring, workload or hardware control runs.
+
+Rich is optional (`requirements-terminal.txt`); `--plain --instant` works without it.
+See [startup and professor demonstration guide](docs/GOVERNORLAB.md) for provenance,
+limitations, Windows/Ubuntu instructions and the Linux integration checklist.
+
 ## Status
 
 Phase 0 is done: **Outcome B confirmed** (see `docs/vm_feasibility.md`). The dev

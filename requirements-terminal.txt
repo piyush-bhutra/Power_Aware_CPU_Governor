@@ -1,0 +1,2 @@
+# Optional terminal renderer. The ASCII replay works without this package.
+rich==14.3.4

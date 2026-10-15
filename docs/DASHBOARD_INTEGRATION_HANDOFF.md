@@ -1,5 +1,19 @@
 # Future dashboard integration handoff
 
+## Shared adapter available — Governorlab update, October 15, 2026
+
+`presentation.adapter.load_replay()` and `load_observations()` now return portable
+Dataset/Frame/Transition objects with original CSV sample identity, source metadata
+and separate synthetic/recorded modes. Candidate/persistence fields use the existing
+backend and are exposed only after archive/output consistency checks; Linux decision
+fields stay unavailable. Features and metadata are fresh dictionaries: treat as
+read-only or copy. No Rich, plotting, live collector, subprocess or hardware selector
+is called by the adapter. Cache only read-only results; create fresh policy state
+through the adapter for each reconstructed replay. Private Policy introspection is
+isolated in `policy_snapshot`; backend drift fails verification rather than inventing
+state. See GOVERNORLAB.md for schemas, integrity rules and limitations. Daybreak
+implementation remains separately authorized future work; existing APIs are unchanged.
+
 Planning boundaries only; no final UI design, frontend code or installations.
 Start implementation after the separate frontend brainstorming resolves the design.
 The stable backend baseline is main `207e7326369506c4e9021cc8f397c50c06fb3794`.
