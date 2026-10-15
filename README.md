@@ -74,3 +74,19 @@ Record real `stress-ng` traces in the VM (`--cpu`, `--io`, `--hdd`, `--vm`, mixe
 idle) with `governor.py --csv`, then tune the classifier thresholds from them and
 justify each one in `docs/thresholds.md`. Monitoring is real under Outcome B, so
 this doesn't wait on anything.
+
+## Review 1 synthetic evidence
+
+Synthetic mode always uses simulated frequency control and makes no hardware writes.
+`--ticks N` caps the finite 20-row demonstration (zero is allowed; negative is rejected).
+Inputs are invented; power and energy are modelled, never measured.
+
+```bash
+.venv/bin/python governor.py --synthetic --ticks 3
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/codex-mpl timeout 30s .venv/bin/python -m benchmark.review_demo --outdir data/review1-demo-new
+```
+
+Choose a new output directory. The review driver exports five 34-row policy CSVs,
+summary/provenance JSON and labelled energy/frequency PNGs using seed 11 and K=3.
+This is an open-loop comparison of policy approximations, not evidence of measured
+physical energy savings or preserved workload completion time. See docs/REVIEW1_PLAN.md.

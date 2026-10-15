@@ -4,12 +4,14 @@ Source-agnostic on purpose. It consumes signal dicts, so the same loop runs on
 real /proc counters, on synthetic ones, or on a replayed CSV later.
 """
 import argparse
+from itertools import islice
 
 from classifier.rules import classify
+from hardware_profile import RYZEN_7840HS_LADDER_KHZ
 from monitor.reader import log_csv, sample
 from policy.governor_policy import Policy
 from power_model.estimate import estimate_power_w
-from setter.freq_setter import open_setter
+from setter.freq_setter import SimulatedSetter, open_setter
 
 EXTRA_COLS = ("workload_class", "target_khz", "requested_khz", "est_power_w", "expected")
 
@@ -56,17 +58,24 @@ def main():
     ap.add_argument("--synthetic", action="store_true",
                     help="run on invented signals instead of /proc (no VM needed)")
     ap.add_argument("--interval", type=float, default=1.0, help="seconds per tick")
-    ap.add_argument("--ticks", type=int, help="stop after N ticks (default: forever)")
+    ap.add_argument("--ticks", type=int,
+                    help="maximum ticks (synthetic default: 20; live default: forever)")
     ap.add_argument("--k", type=int, default=3, help="hysteresis: ticks before acting")
     ap.add_argument("--csv", help="append the log here")
     args = ap.parse_args()
+    if args.ticks is not None and args.ticks < 0:
+        ap.error("--ticks must be non-negative")
 
-    setter, is_real = open_setter()
     if args.synthetic:
         from monitor.synthetic import source as synth
+        setter, is_real = SimulatedSetter(RYZEN_7840HS_LADDER_KHZ), False
         plan = [("cpu", 5), ("io", 5), ("idle", 3), ("mixed", 4), ("cpu", 3)]
         src = synth(plan, args.interval)
+        if args.ticks is not None:
+            src = islice(src, args.ticks)
+        print("inputs: SYNTHETIC; frequency decisions: SIMULATED; power: MODELLED")
     else:
+        setter, is_real = open_setter()
         src = sample(args.interval, args.ticks)
 
     print(f"setter: {type(setter).__name__} ({'REAL' if is_real else 'SIMULATED'}), "

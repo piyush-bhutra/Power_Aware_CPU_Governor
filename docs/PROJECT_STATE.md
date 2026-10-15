@@ -2,7 +2,7 @@
 
 Last inspected: 2026-10-15 11:27:57 UTC. Session `initial-codex-setup-20261015`.
 Latest tested checkpoint: main `1ece4a22385c56af0e1c4d139b1ec897f6ca997d`; identical to origin/main after successful
-fetch. Setup documents remain uncommitted. This is the authoritative progress snapshot;
+fetch. Setup documents were checkpointed as `1a3d180` and pushed to origin/development. This is the authoritative progress snapshot;
 PRD's introductory “no code / VM not set up” status is historical and obsolete.
 
 ## Objective and architecture
@@ -34,8 +34,8 @@ Negative counter deltas/iowait and counter resets are not robustly handled. Rate
 uses requested interval rather than measured monotonic elapsed time. Raw snapshots are
 not retained in output CSV despite PRD's intended raw-counter logging.
 Optional ramp-down stops after its first drop while a class stays stable because the
-stable-class early return prevents further convergence. Synthetic CLI ignores --ticks;
-its fixed plan yields 20 rows. Input validation is limited for interval/ticks/k/ladders.
+stable-class early return prevents further convergence. Synthetic CLI now caps its finite 20-row plan with --ticks, rejects negative limits,
+and constructs SimulatedSetter directly without hardware probing. Input validation is limited for interval/ticks/k/ladders.
 Hardware clamping leaves policy state unsynchronized (known tested limitation, dormant
 with simulated setter). Real sysfs actuation is unavailable in this guest.
 Collector has unsafe load/error/cleanup behavior; see setup report. No schedutil baseline,
@@ -57,7 +57,8 @@ Current guest Ubuntu 26.04.1 supersedes supplied 25.04 context. lscpu reports KV
 contradicting historical legacy-paravirt resolution; current timing safety is unresolved.
 VM freeze causes remain uncertain. Preserve historical docs rather than rewrite evidence.
 Maintain simulated whole-system architecture; do not rush ML before Review 1.
-Stable main plus reusable development is proposed; branch/identity/checkpoints await approval.
+Stable main plus reusable development is established; repository-local piyush-bhutra
+identity and development checkpoints/pushes are authorized for the Review 1 demo task.
 backup-old-local and remote mock-sysfs-wip contain unique work and are preserved.
 
 ## Review readiness and roadmap
@@ -72,4 +73,14 @@ evaluate classifiers and intervals, design repeated performance/energy methodolo
 ML comparison, complete report (15+ verified MLA sources) and 15–20 slide presentation.
 Verify cited paper claims against primary sources before academic use; setup did no external
 literature validation. Reassess hardware access only if it materially serves final scope.
-Next priority: make collection safe and observable on an approved development branch.
+## Review 1 demonstration update — October 15, 2026
+Current work branch: development. Main remains at the tested hash above.
+Fresh suite: 30 passed in 1.76 s, including six CLI/evidence cases. Failing regression
+tests first reproduced ignored limits and hardware selection in synthetic mode.
+`benchmark.review_demo` exports 34 seeded rows per policy, summaries/provenance and
+two labelled PNGs. Existing default demo still runs 20 synthetic rows. Review evidence
+does not validate physical frequency, energy, workload speed or real thresholds.
+Latest demonstration checkpoint/push hash is recorded in shared SESSION_STATUS.md
+and the Review 1 handoff (avoids a self-referential commit hash in committed documents).
+Next priority: assemble Review 1 Design & Progress Report using this evidence pack;
+collector hardening remains required before any separately approved real experiment.

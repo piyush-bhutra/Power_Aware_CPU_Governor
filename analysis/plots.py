@@ -16,23 +16,23 @@ def _save(ax, output_path):
     plt.close(ax.figure)
 
 
-def plot_energy_comparison(summaries, output_path):
+def plot_energy_comparison(summaries, output_path, *, title=None):
     """Bar chart of total_energy_j per governor. summaries: {name: summarize() dict}."""
     energy = pd.Series({name: s["total_energy_j"] for name, s in summaries.items()})
     ax = energy.plot.bar(rot=0, figsize=(7, 4))
-    ax.set(title="Total energy per governor (ESTIMATED)",
+    ax.set(title=title or "Total energy per governor (ESTIMATED)",
            xlabel="governor", ylabel="estimated energy (J)")
     _save(ax, output_path)
 
 
-def plot_frequency_timeline(results, output_path):
+def plot_frequency_timeline(results, output_path, *, title=None):
     """target_khz over tick index, one line per governor. results: {name: run() rows}."""
     # Series, not lists, so governors with different run lengths still align by tick.
     freqs = pd.DataFrame({name: pd.Series([r["target_khz"] for r in rows])
                           for name, rows in results.items()})
     # steps-post: frequency holds for the whole tick, it doesn't ramp between ticks
     ax = freqs.plot(drawstyle="steps-post", figsize=(9, 4))
-    ax.set(title="Target frequency over time",
+    ax.set(title=title or "Target frequency over time",
            xlabel="tick", ylabel="target frequency (kHz)")
     _save(ax, output_path)
 

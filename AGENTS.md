@@ -21,10 +21,10 @@ error detection and cleanup. Never automatically rerun a failed workload.
 No unnecessary guest browsers. Historical timing fixes are not current validation.
 
 ## Git and recovery
-Stable branch is main. Intended reusable work branch is development, currently absent.
-Initial setup must not create/switch/delete branches, commit or push. Obtain approval
-for development creation, confirmed identity and future checkpoint/push workflow.
-After approval, use meaningful reviewed checkpoints on development; stage explicit
+Stable branch is main; reusable work branch is development. The Review 1 prompt
+approved its creation, repository-local identity piyush-bhutra, and development
+checkpoints/pushes for the authorized review demonstration task. For future tasks,
+apply checkpoint authorization only within its approved scope. Stage explicit
 files, run appropriate safe checks, verify pushes. No AI attribution in new commits.
 Never force-push, rewrite history, discard work, delete files/branches or merge/push
 to stable without explicit approval. Preserve backup-old-local and origin/mock-sysfs-wip.

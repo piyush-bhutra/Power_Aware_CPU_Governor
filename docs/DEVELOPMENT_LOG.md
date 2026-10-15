@@ -16,3 +16,16 @@ report conflicts with historical legacy timing fix; no load validation attempted
 Checkpoint: existing tested main commit above; setup docs uncommitted and exported separately.
 Identity Vedant <v***@gmail.com> requires confirmation; development/checkpoint permissions
 pending. Next: approve workflow, then harden collector before approving any experiment.
+
+## 2026-10-15 — Git workflow and Review 1 synthetic demonstration
+Authorization: prompts/Os_Review1_Document.txt. Configured only repository-local
+piyush-bhutra identity; verified effective author/committer. Created development from
+main, preserved setup docs, committed/pushed initial checkpoint 1a3d180. Main unchanged.
+Minimal CLI fixes: finite tick cap, negative-limit validation, explicit SimulatedSetter
+and synthetic/modelled labels. Added seeded evidence driver reusing comparison/plot APIs;
+optional plot titles label exported PNGs. No stress, collector, installs or VM changes.
+Regression tests failed for both bugs before implementation; full suite 30 passed in
+1.76 s. Verified short/full CLI, existing comparison and review evidence generation.
+Charts and CSVs are modelled open-loop evidence, not physical energy/performance results.
+Final review checkpoint/push hash is in shared handoff/session snapshot.
+Next: assemble Review 1 Design & Progress Report and capture presentation screenshots.

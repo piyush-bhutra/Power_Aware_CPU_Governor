@@ -27,22 +27,19 @@ Existing `.venv` is usable; no dependency installation was needed.
 7. Identify latest checkpoint and current authorized objective. Ask only if ambiguous.
 
 ## Git workflow and permission state
-Current stable/default: main. Proposed development base: main at `1ece4a22385c56af0e1c4d139b1ec897f6ca997d`.
-development does not exist; initial creation/switch is pending approval. Keep existing
-backup-old-local (six unique commits) and origin/mock-sysfs-wip (one unique WIP commit).
-The two-active-branch target never authorizes deletion. Review unique work before any
-future consolidation. Initial setup changes are documentation only and uncommitted.
-Configured global identity is Vedant <v***@gmail.com>; effective author and committer
-match, no author/committer environment overrides observed. User confirmation pending.
-Do not alter global identity. Prefer repository-local config after confirmed choice.
-Existing commit-msg hook rejects attribution trailers and selected AI attribution;
-preserve it and historical contributors. Never add AI co-author/signature text.
-
-Separately approve identity and checkpoint workflow before routine commits/pushes.
-Then, within approved development tasks: inspect diff/secrets, stage explicit files,
-run safe checks, commit meaningful milestone on development, verify commit, push to
-origin/development, verify remote hash and record it. A failed push leaves local work
-intact and backup incomplete; investigate instead of repeated retries/force-push.
+Current stable/default: main. Reusable development created from verified main at
+`1ece4a22385c56af0e1c4d139b1ec897f6ca997d` under the explicitly requested Review 1 task.
+Initial persistent-documentation checkpoint `1a3d180` was pushed to origin/development.
+Keep backup-old-local and origin/mock-sysfs-wip; both have unique historical work.
+The branch target does not authorize deletion. Main must remain unchanged.
+Repository-local identity is confirmed as piyush-bhutra <p***@gmail.com>, overriding
+unchanged global Vedant settings. Effective author and committer verified; no environment
+identity overrides observed. Existing attribution-blocking commit hook is preserved.
+The prompt authorizes coherent development checkpoints and origin/development pushes
+for this review task; future unrelated work requires task authorization. Inspect diffs
+and secrets, stage explicit files, run safe checks, commit, verify, push only the explicit
+development ref and confirm the remote hash. Preserve local checkpoints on push failure.
+Never add AI attribution or alter historical attribution.
 No merge or push to stable, history rewrite, branch/file deletion, release, public
 publication or repository permission change without explicit approval.
 Fast-forward only under approved workflow; divergence or conflict-producing
@@ -92,4 +89,4 @@ stashes/worktrees and interrupted-operation markers. Compare changed files again
 project state and last checkpoint. Preserve partial work and diagnostics. Determine
 what failed before suggesting safe recovery; never reset/clean/discard or rerun stress.
 Local commits protect reproducibility, remote pushes protect VM disk loss, and handoffs
-protect context. Initial setup has no new commit or remote backup by instruction.
+protect context. Initial setup was subsequently checkpointed and pushed under the Review 1 authorization.

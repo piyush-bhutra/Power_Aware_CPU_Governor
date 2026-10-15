@@ -28,13 +28,23 @@ OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/codex-mpl timeout 60s
 .venv/bin/python -m benchmark.compare
 ```
 
-Setup verified 24 passing tests, 20 synthetic rows with SimulatedSetter and four classes,
-and five comparison rows with 34 ticks each. --ticks does not bound the synthetic CLI;
-its fixed plan is finite. Comparison's default plain io scenario does not necessarily
+Review demo validation verified 30 passing tests, 20 synthetic rows with SimulatedSetter and four classes,
+and five comparison rows with 34 ticks each. --ticks now caps the finite 20-row synthetic plan; zero emits no rows, and
+negative values are rejected before hardware selection. Synthetic mode never probes hardware. Comparison's default plain io scenario does not necessarily
 beat ondemand; explain decisions rather than promise an advantage. Existing io_burst
 regression test demonstrates the motivating difference after hysteresis settles.
-Plot APIs exist in analysis/plots.py; a dedicated review chart driver is future work,
-not an existing CLI. Label charts synthetic and energy estimated. Do not present
+Reproducible chart/evidence command (use a new directory for every run):
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/codex-mpl timeout 30s .venv/bin/python -m benchmark.review_demo --outdir data/review1-demo-new
+```
+
+This driver uses seed 11, interval 1 s, K=3 and cpu→io_burst→idle→mixed (34 rows).
+It writes five policy CSVs, summaries.json, metadata.json,
+synthetic_modelled_energy.png and synthetic_simulated_frequency.png, with explicit
+labels on each chart. Metadata records commit and dirty state at generation.
+It refuses to append to or overwrite existing evidence artifacts.
+ Label charts synthetic and energy estimated. Do not present
 identical classification bars as comparative evidence.
 
 Optional later read-only live demo: `.venv/bin/python -m monitor.reader` (five one-second
