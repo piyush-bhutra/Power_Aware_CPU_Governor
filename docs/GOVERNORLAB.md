@@ -41,6 +41,7 @@ Useful options, on either platform with that platform's Python executable:
 
 ```text
 python -m governorlab --speed 2
+python -m governorlab --visual
 python -m governorlab --plain --instant
 python -m governorlab --recorded-linux
 python -m governorlab --recorded-linux --plain --instant
@@ -52,11 +53,36 @@ delays. Playback uses monotonic deadlines and has no restart or polling loop.
 Ctrl+C restores the terminal and returns 130 with a partial summary, never a
 completion claim. Pause/step controls are deliberately omitted for reliability.
 
-An interactive UTF-capable terminal with sufficient dimensions uses Rich. Around
-100 columns and 30 rows is comfortable. Missing Rich, redirected output, small
-terminals, limited encodings or `TERM=dumb` use ASCII output automatically.
+Default interactive output uses Rich, with a compact dashboard at normal 80x24
+Windows console sizes and the expanded layout when space permits. Limited encodings
+use an ASCII graph/box style without disabling the visual dashboard. Missing Rich,
+redirected output, genuinely unsupported cursor updates or insufficient dimensions
+select plain output with an explicit explanation. Windows console capabilities are
+detected by Rich; an inherited POSIX `TERM=dumb`/`unknown` is corrected only in the
+Console's private environment copy, never in the process or global environment.
+Ubuntu dumb terminals remain unsupported for visual updates.
+
+`--visual` (alias `--rich`) requires interactive Rich rendering and enables dashboard
+colors, overriding `NO_COLOR` for that Console only. It returns 2 with a clear reason
+if unavailable, without dumping plain replay rows. Default mode honors `NO_COLOR` and
+explains monochrome rendering. `--plain` and `--visual` are mutually exclusive.
 `--plain` always disables terminal control sequences. The last Rich frame and final
 summary remain visible after completion. Plain mode prints every sample and transition.
+Renderer exceptions are reported as errors, never silently rerun in plain mode.
+
+For a direct human-visible check in a normal Windows PowerShell window:
+
+```powershell
+Set-Location 'C:\OS Project'
+.\.venv\Scripts\python.exe -m governorlab --visual
+```
+
+Use at least 80 columns and 24 rows. The actual Windows PTY smoke test completed
+default and explicit visual playback with cursor redraws; explicit visual emitted
+RGB color sequences and restored the cursor. Codex can inspect that output but cannot
+observe the user's physical terminal window. Screen appearance is therefore not
+claimed as visually verified. The previous static/captured-frame checks do not
+substitute for this human-visible check or Ubuntu verification.
 
 ## What to explain to faculty (two-minute demonstration)
 
@@ -130,7 +156,7 @@ transition counts, unavailable fields, source separation, import safety, fallbac
 finite playback and interruption. Test artifacts belong in a new temporary directory;
 disable pytest caching and bytecode where workspace cleanliness is required.
 
-Fresh Windows verification: **72 passed**, including 30 new presentation/UI tests.
+Original MVP Windows verification: **72 passed**, including 30 new presentation/UI tests.
 The full-suite command was attempted and stops at four pre-existing Windows
 collection errors (`No module named fcntl`) in `test_background_launcher.py`,
 `test_collection.py`, `test_cpu_timing.py` and `test_safe_launcher.py`. No Linux
@@ -148,6 +174,16 @@ terminal stream and large/small dimensions. Physical terminal layout and Ctrl+C 
 the friend's Ubuntu VM remain unverified. Static checking of the new modules/tests,
 dependency consistency and Git whitespace checks passed. The read-only code review
 identified a Unicode-path/ASCII-output issue; its failing regression now passes.
+
+Renderer repair verification: **86 Windows-compatible tests passed**, including 14
+additional selection/layout/diagnostic/lifecycle cases. Regressions first reproduced
+default plain selection at 80x24/25 with `TERM=dumb`, missing fallback explanations,
+missing explicit visual flags and renderer-error handling. Rich 14.3.4 was already
+installed and compatible; no dependencies were added or upgraded during the repair.
+The earlier 30-row expanded frame and raw TERM/Unicode gate caused intentional but
+silent fallback. `NO_COLOR` in the tool host separately explained missing color.
+Backend consistency, three transition events and archive integrity tests still pass.
+Read-only review found no actionable renderer issues. Linux-only tests remain pending.
 
 Before using the friend's Ubuntu VM:
 

@@ -143,10 +143,10 @@ def test_rich_startup_finishes_without_refresh_threads(monkeypatch):
     assert '\x1b' in text
 
 
-def test_small_terminal_uses_plain_instead_of_clipping(monkeypatch):
+def test_undersized_terminal_uses_plain_instead_of_clipping(monkeypatch):
     pytest.importorskip('rich')
-    monkeypatch.setenv('COLUMNS', '80')
-    monkeypatch.setenv('LINES', '24')
+    monkeypatch.setenv('COLUMNS', '40')
+    monkeypatch.setenv('LINES', '12')
     output = TerminalStream()
     assert ui().main(['--instant'], stream=output) == 0
     assert 'VALIDATED REPLAY COMPLETE' in output.getvalue()
@@ -175,3 +175,149 @@ assert 'benchmark.collect_traces' not in sys.modules
                             text=True, capture_output=True, timeout=10)
     assert result.returncode == 0, result.stderr
     assert result.stdout == ''
+
+
+@pytest.mark.parametrize('width,height', [(80, 24), (80, 25), (100, 30)])
+def test_default_interactive_command_uses_visual_dashboard_at_normal_sizes(monkeypatch, width, height):
+    pytest.importorskip('rich')
+    monkeypatch.setenv('COLUMNS', str(width))
+    monkeypatch.setenv('LINES', str(height))
+    monkeypatch.setenv('TERM', 'dumb')
+    monkeypatch.setattr(ui().sys, 'platform', 'win32')
+    output = TerminalStream()
+    assert ui().main(['--instant'], stream=output) == 0
+    text = output.getvalue()
+    assert 'FINAL SUMMARY' in text
+    assert '\x1b' in text
+    assert '01/34 | CPU' not in text
+    assert '3 simulated transitions' in text
+
+
+def test_redirected_output_explains_plain_fallback():
+    output = io.StringIO()
+    assert ui().main(['--instant'], stream=output) == 0
+    assert 'Plain output: stdout is not an interactive terminal' in output.getvalue()
+
+
+def test_visual_flag_rejects_redirected_output_without_dumping_ticks():
+    output = io.StringIO()
+    assert ui().main(['--visual', '--instant'], stream=output) == 2
+    assert 'Visual mode unavailable' in output.getvalue()
+    assert '01/34' not in output.getvalue()
+
+
+def test_missing_rich_is_explained_and_explicit_rich_mode_fails(monkeypatch):
+    monkeypatch.setattr(ui(), 'rich_available', lambda: False)
+    output = TerminalStream()
+    assert ui().main(['--instant'], stream=output) == 0
+    assert 'Rich is not installed' in output.getvalue()
+    output = TerminalStream()
+    assert ui().main(['--rich', '--instant'], stream=output) == 2
+    assert 'requirements-terminal.txt' in output.getvalue()
+
+
+def test_visual_interrupt_restores_cursor_and_preserves_partial_summary(monkeypatch):
+    pytest.importorskip('rich')
+    monkeypatch.setenv('COLUMNS', '80')
+    monkeypatch.setenv('LINES', '24')
+    monkeypatch.setenv('TERM', 'xterm-256color')
+    output = TerminalStream()
+    def interrupted(frames, **kwargs):
+        yield frames[0]
+        raise KeyboardInterrupt
+    monkeypatch.setattr(ui(), 'playback', interrupted)
+    assert ui().main(['--visual'], stream=output) == 130
+    text = output.getvalue()
+    assert 'INTERRUPTED' in text and '1/34' in text
+    assert '\x1b[?25h' in text
+    assert 'VALIDATED REPLAY COMPLETE' not in text
+
+
+def test_renderer_errors_are_reported_without_plain_replay(monkeypatch):
+    pytest.importorskip('rich')
+    monkeypatch.setenv('COLUMNS', '100')
+    monkeypatch.setenv('LINES', '40')
+    monkeypatch.setenv('TERM', 'xterm-256color')
+    def broken(*args, **kwargs):
+        raise RuntimeError('renderer probe failure')
+    monkeypatch.setattr(ui(), 'rich_frame', broken)
+    output = TerminalStream()
+    assert ui().main(['--instant'], stream=output) == 1
+    assert 'renderer probe failure' in output.getvalue()
+    assert '01/34 | CPU' not in output.getvalue()
+
+
+def test_compact_frame_keeps_all_policy_fields_and_history_visible():
+    pytest.importorskip('rich')
+    from rich.console import Console
+    from presentation.adapter import load_replay
+    data = load_replay()
+    console = Console(width=80, height=24, file=io.StringIO(), force_terminal=True,
+                      legacy_windows=False, color_system='truecolor')
+    renderable = ui().rich_frame(data, data.frames, compact=True)
+    lines = console.render_lines(renderable, console.options)
+    assert len(lines) <= 24
+    console.print(renderable)
+    text = console.file.getvalue()
+    for expected in ('CPU', 'mixed', 'Candidate', 'Applied', 'CPU HISTORY', 'TRANSITIONS', '13', '23', '29', 'simulated'):
+        assert expected in text
+
+
+def test_explicit_visual_enables_colors_without_changing_environment(monkeypatch):
+    pytest.importorskip('rich')
+    from presentation.adapter import load_replay
+    monkeypatch.setenv('COLUMNS', '80')
+    monkeypatch.setenv('LINES', '24')
+    monkeypatch.setenv('TERM', 'xterm-256color')
+    monkeypatch.setenv('NO_COLOR', '1')
+    import os
+    console, compact, reason = ui().select_renderer(load_replay(), TerminalStream(), visual=True)
+    assert console is not None and not console.no_color
+    assert os.environ['NO_COLOR'] == '1'
+    assert os.environ['TERM'] == 'xterm-256color'
+
+
+def test_default_honors_no_color_but_explains_monochrome_visual_mode(monkeypatch):
+    pytest.importorskip('rich')
+    monkeypatch.setenv('COLUMNS', '80')
+    monkeypatch.setenv('LINES', '24')
+    monkeypatch.setenv('TERM', 'xterm-256color')
+    monkeypatch.setenv('NO_COLOR', '1')
+    output = TerminalStream()
+    assert ui().main(['--instant'], stream=output) == 0
+    assert 'colors disabled by NO_COLOR' in output.getvalue()
+    assert 'FINAL SUMMARY' in output.getvalue()
+
+
+def test_interactive_legacy_encoding_uses_visual_ascii_graph(monkeypatch):
+    pytest.importorskip('rich')
+    monkeypatch.setenv('COLUMNS', '80')
+    monkeypatch.setenv('LINES', '24')
+    monkeypatch.setenv('TERM', 'xterm-256color')
+    class LegacyStream(TerminalStream):
+        encoding = 'cp1252'
+    output = LegacyStream()
+    assert ui().main(['--visual', '--instant'], stream=output) == 0
+    text = output.getvalue()
+    assert 'FINAL SUMMARY' in text
+    assert '01/34 | CPU' not in text
+    text.encode('cp1252')
+
+
+def test_linux_dumb_terminal_is_not_overridden(monkeypatch):
+    pytest.importorskip('rich')
+    monkeypatch.setattr(ui().sys, 'platform', 'linux')
+    monkeypatch.setenv('TERM', 'dumb')
+    output = TerminalStream()
+    assert ui().main(['--visual', '--instant'], stream=output) == 2
+    assert 'check TERM/TTY' in output.getvalue()
+
+
+def test_plain_does_not_require_rich_even_on_an_interactive_console(monkeypatch):
+    def unavailable_probe():
+        raise AssertionError('Explicit plain must not probe Rich')
+    monkeypatch.setattr(ui(), 'rich_available', unavailable_probe)
+    output = TerminalStream()
+    assert ui().main(['--plain', '--instant'], stream=output) == 0
+    assert '01/34 | CPU' in output.getvalue()
+    assert '\x1b' not in output.getvalue()

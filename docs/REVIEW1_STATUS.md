@@ -1,5 +1,14 @@
 # Review 1 status — October 16, 2026
 
+## Visual renderer repair — October 15, 2026
+
+Default interactive Governorlab now uses compact Rich Live at 80x24/25. Run
+`python -m governorlab --visual` for a required colored dashboard with a clear
+diagnostic if unavailable; `--plain` remains supported. Silent TERM/size fallback
+is repaired, with no backend or archived-evidence changes. 86 Windows-compatible
+tests pass. Actual Windows PTY visual mode completes, but physical screen appearance
+and Ubuntu integration still require human checks. See GOVERNORLAB.md.
+
 ## Governorlab presentation update — October 15, 2026
 
 The independent terminal MVP is available: `python -m governorlab` (finite 34-tick

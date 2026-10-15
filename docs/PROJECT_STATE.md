@@ -1,5 +1,20 @@
 # Verified project state
 
+## Current update — Governorlab visual renderer repair, October 15, 2026
+
+Default Windows interactive replay now selects compact Rich Live at 80x24/25,
+using Rich's capability detection and a Console-local workaround for inherited
+TERM=dumb. Unicode is no longer required for visual rendering. Explicit --visual/
+--rich requires the colored dashboard; --plain remains compatible. Fallbacks,
+NO_COLOR suppression and renderer failures are explained. Existing replay/adapter/
+backend/evidence values are unchanged. Rich 14.3.4 was already installed; no install.
+Fresh portable suite: 86 passed. Actual Windows PTY default/explicit visual playback
+completed with cursor redraws, color sequences in explicit mode and cursor restoration.
+No physical terminal screen was observed through Codex; direct Windows PowerShell
+visual check and Ubuntu integration remain pending. See GOVERNORLAB.md for recovery
+handoff and commands. Main integration remains DEFER; no main changes authorized.
+Earlier entries below describe previous checkpoints.
+
 ## Current update — Governorlab terminal MVP, October 15, 2026
 
 The authorized terminal demonstration is implemented on development. See

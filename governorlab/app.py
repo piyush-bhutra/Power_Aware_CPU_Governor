@@ -55,7 +55,7 @@ def sparkline(frames, width=60, unicode=True):
     return ''.join(levels[min(len(levels) - 1, int(v / 100 * (len(levels) - 1)))] for v in values)
 
 
-def rich_frame(data, shown):
+def rich_frame(data, shown, *, compact=False, unicode=True):
     """Build one snapshot; terminal libraries stay outside the shared adapter."""
     from rich import box
     from rich.console import Group
@@ -63,6 +63,8 @@ def rich_frame(data, shown):
     from rich.table import Table
     from rich.text import Text
 
+    if compact:
+        return compact_frame(data, shown, unicode=unicode)
     frame = shown[-1]
     synthetic = frame.source_kind == 'synthetic'
     k = data.metadata.get('k')
@@ -95,7 +97,7 @@ def rich_frame(data, shown):
         status.add_row(f'{frame.util_pct:.3f}%', f'{frame.features["iowait_pct"]:.2f}%',
                        f'{frame.features["ctxt_per_s"]:.1f}/s', f'{frame.features["elapsed_s"]:.4f} s')
         detail = Text('No frequency measurements | no policy reconstruction for this capture', style=AMBER)
-    graph = Text(sparkline(shown), style=VIOLET)
+    graph = Text(sparkline(shown, unicode=unicode), style=VIOLET)
     graph.append(f'\n0-100%  |  {len(shown)} revealed samples  |  playback speed is display time', style=MUTED)
     events = [f.transition for f in shown if f.transition]
     if synthetic:
@@ -120,6 +122,63 @@ def rich_frame(data, shown):
                     Text('Invented inputs | simulated frequency | provisional thresholds' if synthetic
                          else 'Recorded observations | not live | no generated workload', style=AMBER))
     return Panel(content, border_style='#596181', padding=(0, 1), style=f'{NEUTRAL} on {BACKGROUND}')
+
+
+def compact_frame(data, shown, *, unicode=True):
+    """Keep the complete replay dashboard within a normal 80x24 terminal."""
+    from rich.console import Group
+    from rich.panel import Panel
+    from rich.table import Table
+    from rich.text import Text
+
+    frame = shown[-1]
+    synthetic = frame.source_kind == 'synthetic'
+    k = data.metadata.get('k')
+    heading = Text('Governorlab.  /  Power-Aware CPU Governor', style=f'bold {VIOLET}')
+    mode = Text(f'{data.mode}  {frame.tick}/{len(data.frames)}', style=BLUE)
+    mode.append(f'  |  K={k}  seed={data.metadata["seed"]}' if synthetic else '  |  historical background', style=MUTED)
+    metrics = Table.grid(expand=True, padding=(0, 1))
+    for _ in range(4):
+        metrics.add_column(ratio=1)
+    if synthetic:
+        metrics.add_row(Text('CPU util', style=MUTED), Text('Class', style=MUTED),
+                        Text('Candidate*', style=MUTED), Text('Applied (sim.)', style=MUTED))
+        metrics.add_row(Text(f'{frame.util_pct:.1f}%', style=f'bold {VIOLET}'),
+                        Text(frame.predicted_class, style=NEUTRAL),
+                        Text(ghz(frame.candidate_khz), style=VIOLET), Text(ghz(frame.applied_khz), style=BLUE))
+        detail = Text(state_label(frame, k), style=AMBER if frame.decision_state == 'WAITING' else GREEN)
+    else:
+        metrics.add_row('CPU util', 'I/O wait', 'Switches/s', 'Elapsed')
+        metrics.add_row(f'{frame.util_pct:.3f}%', f'{frame.features["iowait_pct"]:.2f}%',
+                        f'{frame.features["ctxt_per_s"]:.1f}', f'{frame.features["elapsed_s"]:.4f} s')
+        detail = Text('No frequency measurements; no simulated decisions', style=AMBER)
+    features = Text(f'I/O {frame.features["iowait_pct"]:.1f}% | ctxt {frame.features["ctxt_per_s"]:.0f}/s | '
+                    f'run {frame.features["procs_running"]} | blocked {frame.features["procs_blocked"]}', style=MUTED)
+    policy = Panel(Group(metrics, detail, features), title='POLICY / SIMULATED' if synthetic else 'RECORDED COUNTERS',
+                   border_style=BLUE, padding=(0, 1))
+    graph = Panel(Group(Text(sparkline(shown, width=34, unicode=unicode), style=VIOLET),
+                        Text('0-100% | revealed samples only | display-time playback', style=MUTED)),
+                  title='CPU HISTORY', border_style=VIOLET, padding=(0, 1))
+    if synthetic:
+        events = [f.transition for f in shown if f.transition]
+        table = Table(box=None, expand=True, padding=(0, 1))
+        for label in ('Tick', 'Simulated GHz', 'Class', 'Reason*'):
+            table.add_column(label, header_style=MUTED)
+        for event in events[-3:]:
+            reason = f'K={k} met' if 'consecutive' in event.reason else 'unavailable'
+            table.add_row(str(event.tick), f'{event.previous_khz / 1_000_000:.3f} -> {event.new_khz / 1_000_000:.3f}',
+                          event.predicted_class, reason)
+        if not events:
+            table.add_row('--', 'No changes yet', '--', 'initialization excluded')
+        lower = Panel(table, title=f'TRANSITIONS / SIMULATED ({len(events)})', border_style='#596181', padding=(0, 1))
+        note = '*Derived with backend; applied outputs match archive'
+        limits = 'Synthetic inputs | simulated frequency | provisional rules'
+    else:
+        lower = Text('Validation: archive hashes + raw counters passed', style=GREEN)
+        note = 'Historical observations, not live or idle ground truth'
+        limits = 'No loaded-stability, accuracy or physical-savings claim'
+    footer = Text(f'Source {data.metadata["source_commit"][:12]} | {note}', style=MUTED)
+    return Group(heading, mode, policy, graph, lower, footer, Text(limits, style=AMBER))
 
 
 def summary_text(data, shown, interrupted=False):
@@ -150,13 +209,47 @@ def plain_tick(data, frame):
             f'| ctxt={frame.features["ctxt_per_s"]:.1f}/s | elapsed={frame.features["elapsed_s"]:.4f}s')
 
 
-def _can_render(stream):
+def _supports_unicode(stream):
     encoding = getattr(stream, 'encoding', None) or 'ascii'
     try:
         '\u2581\u2500'.encode(encoding)
     except (UnicodeError, LookupError):
         return False
-    return bool(getattr(stream, 'isatty', lambda: False)()) and os.environ.get('TERM') != 'dumb'
+    return True
+
+
+def select_renderer(data, stream, plain=False, visual=False):
+    """Return console/layout or an explicit fallback reason; never hide errors."""
+    if plain:
+        return None, False, ''
+    try:
+        tty = bool(getattr(stream, 'isatty', lambda: False)())
+    except (OSError, ValueError):
+        tty = False
+    if not tty:
+        return None, False, 'stdout is not an interactive terminal; run in Windows PowerShell or an Ubuntu terminal'
+    if not rich_available():
+        return None, False, 'Rich is not installed; install requirements-terminal.txt in this environment'
+    from rich.console import Console
+    environment = dict(os.environ)
+    # Windows capability comes from its console API. An inherited POSIX TERM=dumb
+    # must not disable a working Windows console or Rich Live's cursor updates.
+    if sys.platform == 'win32' and environment.get('TERM', '').lower() in ('dumb', 'unknown'):
+        environment['TERM'] = 'xterm-256color'
+    console = Console(file=stream, highlight=False, _environ=environment,
+                      no_color=False if visual else None)
+    if not console.is_terminal or not console.is_interactive or console.is_dumb_terminal:
+        return None, False, 'console does not support interactive cursor updates (check TERM/TTY settings)'
+    unicode = _supports_unicode(stream)
+    full = rich_frame(data, data.frames, unicode=unicode)
+    full_height = len(console.render_lines(full, console.options))
+    compact = console.width < 100 or full_height > console.height
+    if compact:
+        renderable = rich_frame(data, data.frames, compact=True, unicode=unicode)
+        height = len(console.render_lines(renderable, console.options))
+        if console.width < 60 or height > console.height:
+            return None, False, f'terminal {console.width}x{console.height} is too small; enlarge to at least 80x24'
+    return console, compact, ''
 
 
 def write_line(stream, text, flush=False):
@@ -174,7 +267,10 @@ def main(argv=None, stream=None):
     parser.add_argument('--recorded-linux', action='store_true', help='show five archived Linux observations; no live sampling')
     parser.add_argument('--speed', type=float, default=4, help='presentation ticks/second, 2-60 (default 4)')
     parser.add_argument('--instant', action='store_true', help='finish with no playback delay')
-    parser.add_argument('--plain', action='store_true', help='portable ASCII output, no terminal control codes or Rich dependency')
+    renderer = parser.add_mutually_exclusive_group()
+    renderer.add_argument('--plain', action='store_true', help='portable ASCII output, no terminal control codes or Rich dependency')
+    renderer.add_argument('--visual', '--rich', dest='visual', action='store_true',
+                          help='require Rich Live; report why unavailable rather than print plain ticks')
     try:
         args = parser.parse_args(argv)
         if not math.isfinite(args.speed) or not 2 <= args.speed <= 60:
@@ -184,20 +280,22 @@ def main(argv=None, stream=None):
     shown = []
     try:
         data = load_observations() if args.recorded_linux else load_replay()
-        use_rich = not args.plain and _can_render(stream) and rich_available()
+        console, compact, reason = select_renderer(data, stream, plain=args.plain, visual=args.visual)
+        use_rich = console is not None
+        if args.visual and not use_rich:
+            write_line(stream, f'Visual mode unavailable: {reason}')
+            return 2
+        if not use_rich and reason:
+            write_line(stream, f'Plain output: {reason}')
         if use_rich:
-            from rich.console import Console
+            if console.no_color:
+                write_line(stream, 'Rich Live: colors disabled by NO_COLOR; use --visual to enable dashboard colors')
             from rich.live import Live
-            console = Console(file=stream, highlight=False)
-            final_height = len(console.render_lines(rich_frame(data, data.frames), console.options))
-            if console.width < 72 or console.height < final_height:
-                use_rich = False
-        if use_rich:
             with Live(console=console, auto_refresh=False, transient=False,
                       redirect_stdout=False, redirect_stderr=False) as live:
                 for frame in playback(data.frames, speed=args.speed, instant=args.instant):
                     shown.append(frame)
-                    live.update(rich_frame(data, shown), refresh=True)
+                    live.update(rich_frame(data, shown, compact=compact, unicode=_supports_unicode(stream)), refresh=True)
         else:
             write_line(stream, f'Governorlab. / Power-Aware CPU Governor\n{data.mode}')
             if data.mode == 'SYNTHETIC REPLAY':
@@ -223,6 +321,6 @@ def main(argv=None, stream=None):
         else:
             write_line(stream, '\nINTERRUPTED before archive validation completed')
         return 130
-    except (OSError, ValueError, KeyError, TypeError) as error:
+    except (OSError, ValueError, KeyError, TypeError, RuntimeError) as error:
         write_line(stream, f'Governorlab could not validate/display the archive: {error}')
         return 1

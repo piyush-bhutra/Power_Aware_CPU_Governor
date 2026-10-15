@@ -16,6 +16,9 @@ verified transitions. `--recorded-linux` displays the five archived Linux observ
 separately. No live monitoring, workload or hardware control runs.
 
 Rich is optional (`requirements-terminal.txt`); `--plain --instant` works without it.
+Default interactive mode uses a compact Rich dashboard at 80x24. `--visual` (alias
+`--rich`) explicitly requires the colored dashboard and reports why unavailable;
+redirected/unsupported output explains its plain fallback.
 See [startup and professor demonstration guide](docs/GOVERNORLAB.md) for provenance,
 limitations, Windows/Ubuntu instructions and the Linux integration checklist.
 

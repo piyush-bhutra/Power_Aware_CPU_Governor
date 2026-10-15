@@ -1,5 +1,26 @@
 # Development log
 
+## 2026-10-15 — Restore default Governorlab visual rendering
+
+Authorized scoped renderer repair; freshly verified clean development 1bc515d and
+main 207e732 before editing. Rich 14.3.4 was installed and could render a bordered
+panel in the actual Windows PTY. Reproduced two automatic fallback causes: raw
+TERM=dumb rejection and expanded final frame requiring 30 rows at 80 columns.
+Tool-host NO_COLOR also suppressed color. Added compact Rich panels at 80x24/25,
+capability-based renderer selection, Console-local Windows TERM handling, encoding-
+appropriate graphs, explicit --visual/--rich and descriptive fallback/errors.
+Default honors NO_COLOR with explanation; explicit visual enables colors locally.
+Nine initial renderer regressions failed before implementation; two NO_COLOR cases
+also failed before their fix. Final Windows-compatible suite: 86 passed, with
+14 added cases and retained backend/evidence/transition checks. Windows PTY default
+and explicit visual replay completed; explicit mode emitted RGB cursor-updated
+panels and restored the cursor. No physical screen observation is claimed. Ubuntu
+tests/visible smoke remain pending. Read-only code review found no actionable issue.
+Backend, adapter and archives unchanged; no workloads/monitoring/actuation/install.
+Tool-generated Serena scratch configuration is excluded and removed before checkpoint.
+GOVERNORLAB.md remains the local handoff because shared paths are inaccessible.
+Main integration DEFER; development checkpoint/remote verification in final chat.
+
 ## 2026-10-15 — Governorlab terminal demonstration MVP
 
 User-invoked Governorlab implementation request authorized development code, tests,
