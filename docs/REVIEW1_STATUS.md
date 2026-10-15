@@ -1,5 +1,18 @@
 # Review 1 status — October 16, 2026
 
+## Ubuntu import-safety verification update — October 15, 2026
+
+The two Linux verification failures were test assumptions: stdlib subprocess imports
+fcntl on Linux, and full-suite collection preloads collector modules elsewhere.
+The repaired tests use a standard-library baseline and isolated adapter execution,
+retaining effective process/hardware/collector guards. Safe negative probes: 23 blocked.
+Fresh native Ubuntu full suite: **159 passed in 20.59 s**; surrounding modules 44 passed.
+Windows-compatible selection: **86 passed in 2.80 s on Ubuntu**, not a new Windows run.
+Governorlab behavior, archived replay and terminal visuals are unchanged. Prior Ubuntu
+80x24 PTY and recorded-view checks passed; human physical-window rehearsal remains.
+Exact development checkpoint, review, remote backup and merge assessment are in shared
+reports/GOVERNORLAB_IMPORT_SAFETY_FIX.md. Main remains unchanged pending separate approval.
+
 ## Visual renderer repair — October 15, 2026
 
 Default interactive Governorlab now uses compact Rich Live at 80x24/25. Run

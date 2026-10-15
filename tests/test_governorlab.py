@@ -162,14 +162,29 @@ def test_module_startup_is_bounded_and_read_only():
 
 def test_import_is_silent_and_has_no_process_or_hardware_side_effects():
     code = '''
-import subprocess, sys
+import os, subprocess, sys
+# subprocess legitimately imports fcntl on Linux. Snapshot stdlib imports first.
+stdlib_modules = set(sys.modules)
+unsafe_modules = ('benchmark.collect_traces', 'benchmark.safe_cpu_launcher',
+                  'benchmark.background_launcher')
 def forbidden(*args, **kwargs):
-    raise AssertionError('process launched at import/startup')
+    raise AssertionError('unsafe process or hardware operation')
+def guard(event, args):
+    if event == 'import' and args[0] in unsafe_modules:
+        raise AssertionError('unsafe collector or launcher import')
+    if event in ('subprocess.Popen', 'os.system', 'os.fork', 'os.posix_spawn'):
+        forbidden()
+    if event == 'open' and isinstance(args[0], (str, bytes, os.PathLike)):
+        path = os.fsdecode(args[0]).replace('\\\\', '/')
+        if path.startswith(('/proc/', '/sys/')):
+            forbidden()
+sys.addaudithook(guard)
 subprocess.Popen = forbidden
+os.system = forbidden
 import governorlab.app
 import presentation.adapter
-assert 'fcntl' not in sys.modules
-assert 'benchmark.collect_traces' not in sys.modules
+assert 'fcntl' not in set(sys.modules) - stdlib_modules
+assert not set(unsafe_modules).intersection(sys.modules)
 '''
     result = subprocess.run([sys.executable, '-B', '-c', code], cwd=ROOT,
                             text=True, capture_output=True, timeout=10)

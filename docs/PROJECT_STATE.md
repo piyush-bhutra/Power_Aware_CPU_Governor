@@ -1,5 +1,25 @@
 # Verified project state
 
+## Current update — Ubuntu import-safety test repair, October 15, 2026
+
+The authorized repair changes only two safety tests and related status documents.
+Fresh clean/aligned development started at 8b5ab9e; main remains 207e732. The UI
+import test now distinguishes stdlib subprocess/fcntl imports from application imports;
+the adapter safety test runs in a fresh child, independent of pytest collection.
+Both retain guards against collector/launcher imports, unintended processes, live
+monitor APIs and hardware access. 23 safe negative probes were blocked without
+actual hardware/workload calls. Backend, visuals, replay values and archives unchanged.
+Native Ubuntu verification: affected tests 2 passed, surrounding modules 44 passed,
+complete Linux suite **159 passed in 20.59 s**. Windows-compatible subset **86 passed
+in 2.80 s on Ubuntu**; no fresh execution on Windows is claimed. Compilation of both
+test modules/child snippets and whitespace checks pass; all 30 evidence files equal Git.
+The earlier two-failure Ubuntu result is historical and corrected at this checkpoint.
+Previous Ubuntu PTY replay/recorded/Ctrl+C checks remain applicable to unchanged UI;
+physical terminal appearance still needs human rehearsal. No new experiment/install.
+Independent review, exact development checkpoint/push and accumulated merge assessment
+are in shared reports/GOVERNORLAB_IMPORT_SAFETY_FIX.md and SESSION_STATUS.md.
+Main is not merged; separately approve the exact final target after reviewing the report.
+
 ## Current update — Governorlab visual renderer repair, October 15, 2026
 
 Default Windows interactive replay now selects compact Rich Live at 80x24/25,

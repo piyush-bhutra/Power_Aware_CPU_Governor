@@ -1,5 +1,27 @@
 # Development log
 
+## 2026-10-15 — Repair cross-platform import-safety tests on Ubuntu
+
+User-invoked Goverenorlab_Ubuntu_Verification.txt authorizes narrow tests/docs repair
+and normal development checkpoint/push, not main integration. Fresh fetch/remote query
+confirmed clean, aligned 8b5ab9e and main 207e732; historical branches preserved.
+Before edits, affected tests under full collection reproduced both failures (2 failed,
+157 deselected); selecting only affected tests reproduced the stdlib fcntl failure.
+Changed UI import check to a post-stdlib module baseline; isolated adapter import and
+execution in a subprocess to avoid already-collected Linux modules. Retained/expanded
+process, collector/launcher, live-monitor and hardware guards, without changing test
+order, skipping cases or changing product behavior. 23 controlled negative probes
+confirmed forbidden actions fail before real external effects.
+Affected tests 2 passed (0.18 s); surrounding modules 44 passed (0.74 s); portable
+Windows-compatible selection 86 passed (2.80 s) on Ubuntu, not actual Windows.
+Complete native Linux suite 159 passed (20.59 s), no skips. Code/child syntax and
+whitespace checks pass; all 30 evidence files byte-identical to Git. No backend/UI/
+algorithm/data changes, dependency installation, real sampling, workloads or actuation.
+Independent review and exact checkpoint/push verification are in shared
+GOVERNORLAB_IMPORT_SAFETY_FIX.md. No main merge. Concise re-verification command is
+included in the report; actual Windows execution remains an environment-specific check.
+Next: review the verified checkpoint for separately approved stable integration.
+
 ## 2026-10-15 — Restore default Governorlab visual rendering
 
 Authorized scoped renderer repair; freshly verified clean development 1bc515d and

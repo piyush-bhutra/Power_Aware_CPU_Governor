@@ -2,11 +2,13 @@
 import csv
 import importlib
 from pathlib import Path
+import subprocess
 import sys
 
 import pytest
 
-sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT))
 
 
 def adapter():
@@ -132,19 +134,42 @@ def test_current_extended_csv_schema_is_supported_without_mixing_sources(tmp_pat
         adapter().load_csv(path, 'linux_recorded')
 
 
-def test_adapter_import_and_execution_never_select_hardware_or_linux_collectors(monkeypatch):
-    import governor
-    import monitor.reader
-    import setter.freq_setter
-
-    def forbidden(*args, **kwargs):
-        raise AssertionError('unsafe operation')
-
-    monkeypatch.setattr(governor, 'open_setter', forbidden)
-    monkeypatch.setattr(monitor.reader, 'sample', forbidden)
-    monkeypatch.setattr(setter.freq_setter, '_read', forbidden)
-    monkeypatch.setattr(setter.freq_setter, '_write', forbidden)
-    adapter().load_replay()
-    adapter().load_observations()
-    assert 'benchmark.collect_traces' not in sys.modules
-    assert 'benchmark.safe_cpu_launcher' not in sys.modules
+def test_adapter_import_and_execution_never_select_hardware_or_linux_collectors():
+    # Full Linux collection imports launchers elsewhere; isolate this contract.
+    code = '''
+import os, subprocess, sys
+unsafe_modules = ('benchmark.collect_traces', 'benchmark.safe_cpu_launcher',
+                  'benchmark.background_launcher')
+def forbidden(*args, **kwargs):
+    raise AssertionError('unsafe monitoring, process or hardware operation')
+def guard(event, args):
+    if event == 'import' and args[0] in unsafe_modules:
+        raise AssertionError('unsafe collector or launcher import')
+    if event in ('subprocess.Popen', 'os.system', 'os.fork', 'os.posix_spawn'):
+        forbidden()
+    if event == 'open' and isinstance(args[0], (str, bytes, os.PathLike)):
+        path = os.fsdecode(args[0]).replace('\\\\', '/')
+        if path.startswith(('/proc/', '/sys/')):
+            forbidden()
+sys.addaudithook(guard)
+subprocess.Popen = forbidden
+os.system = forbidden
+import governor
+import monitor.reader
+import setter.freq_setter
+governor.open_setter = forbidden
+monitor.reader.sample = forbidden
+monitor.reader.read_stat = forbidden
+monitor.reader.read_freq_khz = forbidden
+setter.freq_setter.open_setter = forbidden
+setter.freq_setter._read = forbidden
+setter.freq_setter._write = forbidden
+from presentation.adapter import load_replay, load_observations
+assert len(load_replay().frames) == 34
+assert len(load_observations().frames) == 5
+assert not set(unsafe_modules).intersection(sys.modules)
+'''
+    result = subprocess.run([sys.executable, '-B', '-c', code], cwd=ROOT,
+                            text=True, capture_output=True, timeout=10)
+    assert result.returncode == 0, result.stderr
+    assert result.stdout == ''
