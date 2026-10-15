@@ -1,0 +1,3 @@
+# Separate optional web dependencies; use the platform's native virtualenv.
+streamlit==1.66.0
+plotly==6.9.0

@@ -1,5 +1,29 @@
 # Verified project state
 
+## Current update — Daybreak dashboard, October 16, 2026
+
+Explicit exact-ref authorization synchronized Windows main and development by
+fast-forward to `2753fc397bc97b96421ebb365152c1c0fc66781f`; independent remote heads
+matched, no unpublished work or dirty files existed. Main remains at that integrated
+Governorlab milestone. The entries below describe earlier checkpoints historically.
+
+Daybreak now provides four local Streamlit views: manual interactive 34-tick replay
+with three aligned signal/decision lanes and K=3 inspector; five archived Linux
+observations; verified five-policy trace/summary comparison; actual classifier and
+scientific lab notes. Cream/violet design follows the approved Daybreak reference.
+Existing backend, adapter, terminal commands and evidence bytes/rules are unchanged.
+No monitoring, generated workloads, hardware access or capture artifacts are launched.
+Web live integration is deferred because the Linux collector uses process-level
+signal deadlines incompatible with Streamlit request threads.
+
+Windows verification: **103 portable suite tests + 6 portable live-adapter tests
+passed**, including 17 new dashboard tests. Sixteen existing live lifecycle cases
+need Linux /proc and signals; four other existing modules need fcntl. Real browser
+checks covered four views, responsive layout, cursor persistence and manual controls;
+bounded local server startup succeeded. Ubuntu full-suite/dashboard deployment and
+human rehearsal remain pending. Dependencies and exact handoff: [DAYBREAK.md](DAYBREAK.md).
+Only development receives the new dashboard checkpoint; no further main integration.
+
 ## Current update — One-command live Governorlab demonstration, October 15, 2026
 
 User-invoked `prompts/one_prompt_demonstration.txt` authorizes this feature, one

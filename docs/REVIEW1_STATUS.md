@@ -1,5 +1,16 @@
 # Review 1 status — October 16, 2026
 
+## Daybreak presentation update — October 16, 2026
+
+The approved local Streamlit dashboard now presents verified replay, separate Linux
+evidence, five-policy comparison and scientific lab notes. Windows portable checks
+passed 109 tests in total, including 17 new dashboard cases; browser/manual-control
+checks passed at desktop and narrow widths. These presentation checks do not create
+new experimental evidence or establish physical energy/performance claims. Ubuntu
+dashboard deployment/full-suite checks remain pending. Main stays at the authorized
+integrated Governorlab milestone 2753fc397bc97b96421ebb365152c1c0fc66781f; Daybreak
+is development-only. See [DAYBREAK.md](DAYBREAK.md).
+
 ## Ubuntu import-safety verification update — October 15, 2026
 
 The two Linux verification failures were test assumptions: stdlib subprocess imports

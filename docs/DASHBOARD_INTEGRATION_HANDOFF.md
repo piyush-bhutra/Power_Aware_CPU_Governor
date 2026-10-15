@@ -1,4 +1,20 @@
-# Future dashboard integration handoff
+# Dashboard integration handoff
+
+## Daybreak implemented — October 16, 2026
+
+Windows main/development were safely synchronized to the approved integrated
+Governorlab checkpoint `2753fc397bc97b96421ebb365152c1c0fc66781f`. The local dashboard
+now lives in `daybreak/app.py`, with read-only verification/table helpers in
+`daybreak/data.py`, Plotly views in `daybreak/charts.py` and local `theme.css`.
+Four views use the shared adapter and existing backend, retaining sample identity
+and measured/synthetic/model boundaries. `load_comparison()` additionally verifies
+every archived five-policy row and recomputes summaries. Web live is deferred due
+to the terminal collector's Linux signal lifecycle; no automatic collector exists.
+
+See [DAYBREAK.md](DAYBREAK.md) for launch, verification and Ubuntu deployment checks.
+The sections below retain the earlier planning context; their future-work and old
+main-checkpoint statements are historical. New dashboard work goes to development
+only, without merging main.
 
 ## Shared adapter available — Governorlab update, October 15, 2026
 

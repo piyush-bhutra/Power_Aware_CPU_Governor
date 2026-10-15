@@ -6,6 +6,17 @@ frequency to match — instead of scaling on aggregate utilisation alone.
 
 BITE303P Operating Systems Lab, VIT Vellore. See [`docs/PRD.md`](docs/PRD.md) for full scope.
 
+## Daybreak web dashboard
+
+From the repository root, install `requirements-dashboard.txt`, then run
+`.\.venv\Scripts\python.exe -m streamlit run daybreak/app.py` on Windows or
+`.venv/bin/python -m streamlit run daybreak/app.py` on Ubuntu. Open
+`http://127.0.0.1:8501`. Four offline views cover interactive 34-tick replay,
+archived Linux observations, five-policy comparison and lab methodology.
+Candidate/applied simulated frequencies and K=3 state use the existing backend;
+measured observations and uncalibrated model estimates remain clearly separated.
+See [Daybreak installation, demonstration and Ubuntu checklist](docs/DAYBREAK.md).
+
 ## Governorlab terminal demonstration
 
 Run `.venv/bin/python -m governorlab` on Ubuntu or

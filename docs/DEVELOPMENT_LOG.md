@@ -1,5 +1,30 @@
 # Development log
 
+## 2026-10-16 — Authorized Windows synchronization and Daybreak dashboard
+
+Rechecked identity, clean working tree, all branches/upstreams, stashes, worktrees,
+operations, ancestry and independent remote heads. Applied only the explicitly
+authorized fast-forwards of main and development to
+2753fc397bc97b96421ebb365152c1c0fc66781f. No synchronization commit/push or rewrite.
+
+Implemented the approved local Daybreak Streamlit design on development: progressive
+34-tick replay/inspector, separate five-observation evidence, all five policy traces
+and stored summaries, and methodology/limitations. Reused the actual adapter and
+reconstructed all comparison results against the backend; no invented replacement
+data, collectors, workloads, physical writes or archive edits. Web live deferred
+after inspecting its Linux process-signal lifecycle. Terminal demonstrations retained.
+Installed separate optional Streamlit 1.66.0 and Plotly 6.9.0 dependencies.
+
+New tests first failed before implementation; all 17 subsequently passed. Windows
+portable suite: 103 passed, plus six portable live-adapter tests. Broader selection:
+109 passed, 16 existing Linux-specific failures; four fcntl modules remain Linux-only.
+Browser verification exercised all views at desktop/mobile sizes and manual replay
+controls, with no external HTTP assets or console errors. Local Streamlit startup
+required loopback socket access outside Windows restricted execution. Independent
+read-only code review found no actionable issue. Ubuntu deployment/full suite and
+human classroom rehearsal remain pending; instructions are in DAYBREAK.md.
+
+
 ## 2026-10-15 — Repair cross-platform import-safety tests on Ubuntu
 
 User-invoked Goverenorlab_Ubuntu_Verification.txt authorizes narrow tests/docs repair
