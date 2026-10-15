@@ -1,0 +1,64 @@
+# Review 1 preparation — October 16, 2026
+
+## Goal and scope
+Demonstrate credible architecture and working OS-project progress. Do not assign a
+completion percentage without a requirements mapping. Announce ML as Review II work.
+Show measured Linux signals separately from synthetic inputs, simulated actuation and
+estimated/modelled energy; never claim workload speed preservation from replay.
+
+## Three priorities
+1. Prepare a bounded reproducible demo and evidence pack (1–2 hours): existing tests,
+   synthetic four-class transitions, K=3 hysteresis, io_burst vs ondemand explanation,
+   frequency timeline and explicitly estimated energy chart. Capture terminal screenshots.
+2. Address collection safety before any real workload (2–4 hours including checks):
+   validate budgets, bounded single-worker profile, retained stderr/exit codes, external
+   timeout, process-group cleanup, unique output paths and CSV integrity. Then inspect
+   current KVM-vs-legacy discrepancy; do not alter VM settings. Experiment approval is separate.
+3. Assemble Design & Progress Report (2–3 hours): architecture, module responsibilities,
+   flowchart, algorithms, verified progress/test evidence, limitations/challenges, remaining
+   plan and references. If time is short, deliver honest synthetic evidence first.
+Estimates are approximate and exclude unexpected VM or tooling problems.
+
+## Safe demo commands and expected outputs
+Run from repository root using existing virtualenv; no installations or stress required.
+
+```bash
+OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/codex-mpl timeout 60s .venv/bin/python -m pytest tests/ -q
+.venv/bin/python governor.py --synthetic
+.venv/bin/python -m benchmark.compare
+```
+
+Setup verified 24 passing tests, 20 synthetic rows with SimulatedSetter and four classes,
+and five comparison rows with 34 ticks each. --ticks does not bound the synthetic CLI;
+its fixed plan is finite. Comparison's default plain io scenario does not necessarily
+beat ondemand; explain decisions rather than promise an advantage. Existing io_burst
+regression test demonstrates the motivating difference after hysteresis settles.
+Plot APIs exist in analysis/plots.py; a dedicated review chart driver is future work,
+not an existing CLI. Label charts synthetic and energy estimated. Do not present
+identical classification bars as comparative evidence.
+
+Optional later read-only live demo: `.venv/bin/python -m monitor.reader` (five one-second
+samples, no generated stress). Not executed during setup; confirm safe execution and
+capture before claiming live validation. Never run the collector as a review shortcut.
+
+## Evidence checklist and explanation points
+Capture test summary, four-class synthetic output, hysteresis lag at transitions,
+architecture/flowchart, frequency timeline, labelled modelled-energy table/chart,
+read-only missing-CPUFreq evidence and Git checkpoint. Save provenance (command, seed,
+interval, commit, synthetic/real designation). No screenshots were captured in setup.
+Explain cumulative counters vs deltas, instantaneous queue gauges, I/O-first rules,
+provisional thresholds, tradeoff of hysteresis lag, setter abstraction, estimated
+power assumptions, whole-system VM granularity and open-loop benchmark limitations.
+Use PRD report format: Times New Roman, headings 16/14/12 pt, body 12 pt, 1.5 spacing,
+justified text, bottom-centre pages, captions below figures and above tables.
+
+## Risks, fixes and deferred work
+Immediate risk: unstable VM and unsafe collector; real calibrated evidence may not
+fit remaining time. No repeated stress runs or settings changes without approval.
+Correctness fixes: measured elapsed-time accounting, guest counter handling, gradual
+ramp-down convergence and CLI validation. Fix only with targeted authorization and tests;
+optional ramp-down is not enabled in the current default demo.
+Real labelled trace calibration remains missing; show it as future work if unavailable.
+Final project: repeated validated trials, classifier accuracy/ML comparison, sampling
+interval study, credible completion-time methodology, final report and presentation.
+Native hardware frequency control and a dashboard are optional, not Review 1 blockers.
