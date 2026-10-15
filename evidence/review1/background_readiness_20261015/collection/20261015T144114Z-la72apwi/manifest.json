@@ -1,0 +1,84 @@
+{
+  "status": "complete",
+  "success": true,
+  "workload_label": "uncontrolled_background",
+  "processes": {
+    "monitor_exit": 0,
+    "worker_exit": null,
+    "elapsed_s": 6.364050342001065
+  },
+  "sample_validation": {
+    "success": true,
+    "statistics": {
+      "rows": 5,
+      "workload_label": "uncontrolled_background",
+      "observation_source": "linux_proc_stat",
+      "elapsed_s": {
+        "min": 1.0067027810000582,
+        "mean": 1.2421605750001619,
+        "max": 1.8549103749992355
+      },
+      "util_pct": {
+        "min": 0.0,
+        "mean": 0.3231045009245093,
+        "max": 0.8676789587852495
+      },
+      "iowait_pct": {
+        "min": 0.0,
+        "mean": 0.0,
+        "max": 0.0
+      },
+      "ctxt_per_s": {
+        "min": 246.37308958940312,
+        "mean": 389.20042390754,
+        "max": 638.1285923027353
+      },
+      "iowait_decrease_intervals": 0
+    }
+  },
+  "lifecycle": {
+    "events": [
+      {
+        "event": "monitor_started",
+        "elapsed_s": 0.001139334000981762,
+        "utc": "2026-10-15T14:41:14.604770+00:00",
+        "pid": 36533
+      },
+      {
+        "event": "monitor_ready",
+        "elapsed_s": 0.07937477199993737,
+        "utc": "2026-10-15T14:41:14.683006+00:00"
+      },
+      {
+        "event": "sampling_released",
+        "elapsed_s": 0.07977056300114782,
+        "utc": "2026-10-15T14:41:14.683400+00:00"
+      },
+      {
+        "event": "monitor_exited",
+        "elapsed_s": 6.363456770000994,
+        "utc": "2026-10-15T14:41:20.967088+00:00",
+        "exit_code": 0
+      },
+      {
+        "event": "monitor_cleanup_requested",
+        "elapsed_s": 6.364054048999606,
+        "utc": "2026-10-15T14:41:20.967684+00:00",
+        "exit_before_cleanup": 0
+      },
+      {
+        "event": "cleanup_finished",
+        "elapsed_s": 6.364476270000523,
+        "utc": "2026-10-15T14:41:20.968106+00:00"
+      }
+    ],
+    "monitor_exit": 0,
+    "worker_exit": null,
+    "cleanup": "completed"
+  },
+  "final_resources": {
+    "mem_available_kib": 2333464,
+    "swap_used_kib": 423728
+  },
+  "end_utc": "2026-10-15T14:41:20.969072+00:00"
+}

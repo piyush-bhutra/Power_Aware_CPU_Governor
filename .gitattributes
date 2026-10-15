@@ -1,0 +1,3 @@
+# Preserve original CSV bytes; CRLF is the Python csv writer's recorded line ending.
+evidence/review1/background_readiness_20261015/validated_trace.csv -text whitespace=cr-at-eol
+evidence/review1/background_readiness_20261015/collection/20261015T144114Z-la72apwi/trace.csv -text whitespace=cr-at-eol

@@ -107,8 +107,10 @@ another real observation or workload requires separate approval.
 
 ## Standalone background readiness check
 
-Preparation is complete; the real observation has not been run. After separately
-approving one background-only observation, close Codex and run from any terminal:
+One manual background-only observation succeeded on October 15, 2026. Its five-row
+evidence is preserved in [the archive](evidence/review1/background_readiness_20261015/README.md);
+see [Review 1 status](docs/REVIEW1_STATUS.md). Any further observation needs separate
+approval. For an approved future observation, close Codex and run from any terminal:
 
 ```bash
 /home/vboxuser/Power_Aware_CPU_Governor/scripts/run_background_readiness.sh

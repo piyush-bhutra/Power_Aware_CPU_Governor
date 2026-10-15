@@ -1,0 +1,35 @@
+monitor ready; waiting for sampling release
+sampling started
+{"event": "baseline", "monotonic_s": 14105.155535822, "raw": {"user": 58346, "nice": 1162, "system": 67179, "idle": 5287860, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15050734, "ctxt": 13637099, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}}
+{"event": "interval", "attempt": 1, "elapsed_s": 1.1753116990003036, "valid": true, "raw_prev": {"user": 58346, "nice": 1162, "system": 67179, "idle": 5287860, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15050734, "ctxt": 13637099, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}, "raw_cur": {"user": 58347, "nice": 1162, "system": 67182, "idle": 5288317, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15051617, "ctxt": 13637849, "btime": 1792061169, "procs_running": 2, "procs_blocked": 0}}
+{"event": "interval", "attempt": 2, "elapsed_s": 1.0434273880000546, "valid": true, "raw_prev": {"user": 58347, "nice": 1162, "system": 67182, "idle": 5288317, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15051617, "ctxt": 13637849, "btime": 1792061169, "procs_running": 2, "procs_blocked": 0}, "raw_cur": {"user": 58347, "nice": 1162, "system": 67182, "idle": 5288725, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15052211, "ctxt": 13638187, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}}
+{"event": "interval", "attempt": 3, "elapsed_s": 1.130450632001157, "valid": true, "raw_prev": {"user": 58347, "nice": 1162, "system": 67182, "idle": 5288725, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15052211, "ctxt": 13638187, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}, "raw_cur": {"user": 58347, "nice": 1162, "system": 67183, "idle": 5289170, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15052805, "ctxt": 13638566, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}}
+{"event": "interval", "attempt": 4, "elapsed_s": 1.8549103749992355, "valid": true, "raw_prev": {"user": 58347, "nice": 1162, "system": 67183, "idle": 5289170, "iowait": 8222, "irq": 0, "softirq": 9258, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15052805, "ctxt": 13638566, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}, "raw_cur": {"user": 58348, "nice": 1162, "system": 67183, "idle": 5289904, "iowait": 8222, "irq": 0, "softirq": 9259, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15053573, "ctxt": 13639023, "btime": 1792061169, "procs_running": 9, "procs_blocked": 0}}
+{"event": "interval", "attempt": 5, "elapsed_s": 1.0067027810000582, "valid": true, "raw_prev": {"user": 58348, "nice": 1162, "system": 67183, "idle": 5289904, "iowait": 8222, "irq": 0, "softirq": 9259, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15053573, "ctxt": 13639023, "btime": 1792061169, "procs_running": 9, "procs_blocked": 0}, "raw_cur": {"user": 58348, "nice": 1162, "system": 67184, "idle": 5290300, "iowait": 8222, "irq": 0, "softirq": 9259, "steal": 0, "guest": 0, "guest_nice": 0, "intr": 15054133, "ctxt": 13639428, "btime": 1792061169, "procs_running": 1, "procs_blocked": 0}}
+sampling finished
+{
+  "rows": 5,
+  "workload_label": "uncontrolled_background",
+  "observation_source": "linux_proc_stat",
+  "elapsed_s": {
+    "min": 1.0067027810000582,
+    "mean": 1.2421605750001619,
+    "max": 1.8549103749992355
+  },
+  "util_pct": {
+    "min": 0.0,
+    "mean": 0.3231045009245093,
+    "max": 0.8676789587852495
+  },
+  "iowait_pct": {
+    "min": 0.0,
+    "mean": 0.0,
+    "max": 0.0
+  },
+  "ctxt_per_s": {
+    "min": 246.37308958940312,
+    "mean": 389.20042390754,
+    "max": 638.1285923027353
+  },
+  "iowait_decrease_intervals": 0
+}

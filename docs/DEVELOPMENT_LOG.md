@@ -116,3 +116,25 @@ runtime/CPU dataset/physical-energy claims remain deferred. Safe fast-forward pr
 is proposed in BACKGROUND_READINESS_SETUP.md and requires explicit approval; no main
 merge/push or historical branch deletion occurred. Checkpoint/push and exports are
 recorded in the shared handoff. Next: separately approve one manual background run.
+
+
+## Review 1 milestone evidence checkpoint — October 15, 2026
+User-invoked prompts/Review1_Milestone_Checkpoint.txt authorizes evidence archival,
+safe verification and one development checkpoint/push; main integration is excluded.
+Preserved all 15 original artifacts (33,913 bytes) from successful background run
+launcher-20261015T144107Z-ulqlq_gi in evidence/review1/background_readiness_20261015/.
+Original shared files remain untouched. Eight source hashes match producing clean
+commit 18b87efa6ffdcc4e7f4ed58936c824876a42d3fc; original/copy SHA256s match.
+Five rows, raw/validated CSV identity, derived values, counter continuity, lifecycle,
+process identity, timestamps and report/statistics consistency were revalidated.
+Mean utilization 0.3231%; intervals mean 1.2422 s, range 1.0067–1.8549 s. This verifies
+background readiness/cleanup, not loaded timing, classifier accuracy, hardware control,
+physical energy savings or completion-time preservation. No new live observation ran.
+Fresh suite: 115 passed in 8.41 s. See REVIEW1_STATUS.md for current presentation
+commands, charts and limitations; earlier preparation-only statements are historical.
+Accumulated milestone assessment: READY for separately approved fast-forward integration;
+optional ramp-down/clamping issues remain documented and outside the default demo.
+Exact checkpoint, remote verification, review outcome and proposed integration procedure
+are recorded in shared reports/REVIEW1_MILESTONE_CHECKPOINT.md and SESSION_STATUS.md
+rather than embedding a self-referential archive commit hash here. No main merge/push.
+Next: review the checkpoint report and approve main integration if satisfied.

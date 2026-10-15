@@ -1,0 +1,43 @@
+{
+  "start_utc": "2026-10-15T14:41:14.603211+00:00",
+  "commit": "18b87efa6ffdcc4e7f4ed58936c824876a42d3fc",
+  "working_tree_dirty": false,
+  "source_hashes": {
+    "monitor/reader.py": "f46f1420837f7d93adbbcc63a58f4e4a550d036e71661422b67f3c1be1917d0b",
+    "monitor/capture.py": "5252317c51cb8c35f60a97678114254869fb2ed119eb1f51ec433742d347706a",
+    "benchmark/collect_traces.py": "dff7abd4388e57a6579ea6b6f8f418dce0e2d48e15bf66fcf6f0ea30a7298ac2",
+    "collect_real_traces.sh": "66abc6406e85a4d424c585637c6c2f3b02ba8c30bb7bb881ac0c8ffd02408208"
+  },
+  "profile": "background",
+  "workload_label": "uncontrolled_background",
+  "monitor_command": [
+    "/home/vboxuser/Power_Aware_CPU_Governor/.venv/bin/python",
+    "-u",
+    "-m",
+    "monitor.capture",
+    "--ticks",
+    "5",
+    "--label",
+    "uncontrolled_background",
+    "--output",
+    "/home/vboxuser/Power_Aware_CPU_Governor/data/background_readiness/launcher-20261015T144107Z-ulqlq_gi/collection/20261015T144114Z-la72apwi/trace.csv",
+    "--ready-file",
+    "/home/vboxuser/Power_Aware_CPU_Governor/data/background_readiness/launcher-20261015T144107Z-ulqlq_gi/collection/20261015T144114Z-la72apwi/monitor.ready",
+    "--start-file",
+    "/home/vboxuser/Power_Aware_CPU_Governor/data/background_readiness/launcher-20261015T144107Z-ulqlq_gi/collection/20261015T144114Z-la72apwi/monitor.start"
+  ],
+  "worker_command": null,
+  "max_memory_bytes": 67108864,
+  "cpu_workers": 0,
+  "interval_s": 1,
+  "duration_intervals": 5,
+  "external_timeout_s": 11,
+  "startup_timeout_s": 2,
+  "worker_timeout_s": 7,
+  "frequency_control": "none",
+  "initial_resources": {
+    "mem_available_kib": 2323276,
+    "swap_used_kib": 423728
+  },
+  "limitations": "Aggregate counters; requested stressor labels are not classifier ground truth."
+}

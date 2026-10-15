@@ -1,0 +1,40 @@
+{
+  "events": [
+    {
+      "event": "monitor_started",
+      "elapsed_s": 0.001139334000981762,
+      "utc": "2026-10-15T14:41:14.604770+00:00",
+      "pid": 36533
+    },
+    {
+      "event": "monitor_ready",
+      "elapsed_s": 0.07937477199993737,
+      "utc": "2026-10-15T14:41:14.683006+00:00"
+    },
+    {
+      "event": "sampling_released",
+      "elapsed_s": 0.07977056300114782,
+      "utc": "2026-10-15T14:41:14.683400+00:00"
+    },
+    {
+      "event": "monitor_exited",
+      "elapsed_s": 6.363456770000994,
+      "utc": "2026-10-15T14:41:20.967088+00:00",
+      "exit_code": 0
+    },
+    {
+      "event": "monitor_cleanup_requested",
+      "elapsed_s": 6.364054048999606,
+      "utc": "2026-10-15T14:41:20.967684+00:00",
+      "exit_before_cleanup": 0
+    },
+    {
+      "event": "cleanup_finished",
+      "elapsed_s": 6.364476270000523,
+      "utc": "2026-10-15T14:41:20.968106+00:00"
+    }
+  ],
+  "monitor_exit": 0,
+  "worker_exit": null,
+  "cleanup": "completed"
+}

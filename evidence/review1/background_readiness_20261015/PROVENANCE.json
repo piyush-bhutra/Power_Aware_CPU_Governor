@@ -1,0 +1,191 @@
+{
+  "experiment_id": "launcher-20261015T144107Z-ulqlq_gi",
+  "collection_id": "20261015T144114Z-la72apwi",
+  "experiment_start_utc": "2026-10-15T14:41:07.976180+00:00",
+  "experiment_end_utc": "2026-10-15T14:41:20.998920+00:00",
+  "source_commit": "18b87efa6ffdcc4e7f4ed58936c824876a42d3fc",
+  "source_working_tree_dirty": false,
+  "source_hashes": {
+    "benchmark/collect_traces.py": "dff7abd4388e57a6579ea6b6f8f418dce0e2d48e15bf66fcf6f0ea30a7298ac2",
+    "monitor/capture.py": "5252317c51cb8c35f60a97678114254869fb2ed119eb1f51ec433742d347706a",
+    "monitor/reader.py": "f46f1420837f7d93adbbcc63a58f4e4a550d036e71661422b67f3c1be1917d0b",
+    "benchmark/safe_cpu_launcher.py": "da98be53571bb273bf40fb0bb60b8c9130af04ec178dc93fe081be768990865f",
+    "scripts/run_safe_cpu_experiment.sh": "f26f82d689fffb0855bf2a6dfb34e6ce2e34464a76e64075f14c7ba7c91d7ffa",
+    "scripts/run_background_readiness.sh": "2fad09a5880f05a0c7d547a44bd1ae8f1869054bf30895a4e2fb835da3628236",
+    "benchmark/background_launcher.py": "76f816702683b89d43e23df7db5ad6c5ee6f3e98f5373b22c1f4d8ae1d79bee9",
+    "collect_real_traces.sh": "66abc6406e85a4d424c585637c6c2f3b02ba8c30bb7bb881ac0c8ffd02408208"
+  },
+  "original_shared_path": "/media/sf_OS_Project_Shared/results/safe_background_launcher-20261015T144107Z-ulqlq_gi",
+  "original_local_path": "/home/vboxuser/Power_Aware_CPU_Governor/data/background_readiness/launcher-20261015T144107Z-ulqlq_gi",
+  "archive_path": "evidence/review1/background_readiness_20261015",
+  "environment": {
+    "kernel": "Linux osproject 7.0.0-31-generic #31-Ubuntu SMP PREEMPT_DYNAMIC Sat Aug  1 04:26:38 UTC 2026 x86_64 GNU/Linux",
+    "cpu": "Architecture:                            x86_64\nCPU op-mode(s):                          32-bit, 64-bit\nAddress sizes:                           48 bits physical, 48 bits virtual\nByte Order:                              Little Endian\nCPU(s):                                  4\nOn-line CPU(s) list:                     0-3\nVendor ID:                               AuthenticAMD\nModel name:                              AMD Ryzen 7 7840HS w/ Radeon 780M Graphics\nCPU family:                              25\nModel:                                   116\nThread(s) per core:                      1\nCore(s) per socket:                      4\nSocket(s):                               1\nStepping:                                1\nBogoMIPS:                                7585.87\nFlags:                                   fpu vme de pse tsc msr pae mce cx8 apic sep mtrr pge mca cmov pat pse36 clflush mmx fxsr sse sse2 ht syscall nx mmxext fxsr_opt rdtscp lm constant_tsc rep_good nopl xtopology nonstop_tsc cpuid extd_apicid tsc_known_freq pni pclmulqdq ssse3 fma cx16 sse4_1 sse4_2 movbe popcnt aes xsave avx f16c rdrand hypervisor lahf_lm cmp_legacy cr8_legacy abm sse4a misalignsse 3dnowprefetch vmmcall fsgsbase bmi1 avx2 bmi2 invpcid rdseed adx clflushopt sha_ni arat\nHypervisor vendor:                       KVM\nVirtualization type:                     full\nNUMA node(s):                            1\nNUMA node0 CPU(s):                       0-3\nVulnerability Gather data sampling:      Not affected\nVulnerability Ghostwrite:                Not affected\nVulnerability Indirect target selection: Not affected\nVulnerability Itlb multihit:             Not affected\nVulnerability L1tf:                      Not affected\nVulnerability Mds:                       Not affected\nVulnerability Meltdown:                  Not affected\nVulnerability Mmio stale data:           Not affected\nVulnerability Old microcode:             Not affected\nVulnerability Reg file data sampling:    Not affected\nVulnerability Retbleed:                  Not affected\nVulnerability Spec rstack overflow:      Vulnerable: Safe RET, no microcode\nVulnerability Spec store bypass:         Not affected\nVulnerability Spectre v1:                Mitigation; usercopy/swapgs barriers and __user pointer sanitization\nVulnerability Spectre v2:                Mitigation; Retpolines; STIBP disabled; RSB filling; PBRSB-eIBRS Not affected; BHI Not affected\nVulnerability Srbds:                     Not affected\nVulnerability Tsa:                       Vulnerable: No microcode\nVulnerability Tsx async abort:           Not affected\nVulnerability Vmscape:                   Not affected",
+    "vm": "VirtualBox guest (project context); KVM hypervisor vendor reported by lscpu; four vCPUs",
+    "accounting_hz": 100,
+    "accounting_hz_note": "Current getconf agrees with 400 aggregate jiffies/s assumption; original metadata did not record CLK_TCK."
+  },
+  "command": [
+    "timeout",
+    "--signal=TERM",
+    "--kill-after=1s",
+    "15s",
+    "bash",
+    "/home/vboxuser/Power_Aware_CPU_Governor/collect_real_traces.sh",
+    "5",
+    "64M",
+    "/home/vboxuser/Power_Aware_CPU_Governor/data/background_readiness/launcher-20261015T144107Z-ulqlq_gi/collection",
+    "--profile",
+    "background"
+  ],
+  "config": {
+    "profile": "background",
+    "cpu_workers": 0,
+    "method": null,
+    "sampling_intervals": 5,
+    "interval_s": 1,
+    "worker_timeout_s": null,
+    "supervisor_deadline_s": 11,
+    "outer_timeout_s": 15,
+    "vm_workers": 0,
+    "io_workers": 0,
+    "frequency_control": "none"
+  },
+  "memory_limit_note": "64 MiB collector argument retained; background profile allocates no stress-worker memory.",
+  "resource_guards": {
+    "min_available_kib": 524288,
+    "max_swap_growth_kib": 131072
+  },
+  "validation": {
+    "outcome": "passed",
+    "validated_utc": "2026-10-15T14:58:53.575176+00:00",
+    "statistics": {
+      "rows": 5,
+      "workload_label": "uncontrolled_background",
+      "observation_source": "linux_proc_stat",
+      "elapsed_s": {
+        "min": 1.0067027810000582,
+        "mean": 1.2421605750001619,
+        "max": 1.8549103749992355
+      },
+      "util_pct": {
+        "min": 0.0,
+        "mean": 0.3231045009245093,
+        "max": 0.8676789587852495
+      },
+      "iowait_pct": {
+        "min": 0.0,
+        "mean": 0.0,
+        "max": 0.0
+      },
+      "ctxt_per_s": {
+        "min": 246.37308958940312,
+        "mean": 389.20042390754,
+        "max": 638.1285923027353
+      },
+      "iowait_decrease_intervals": 0
+    },
+    "checks": [
+      "15 original files copied byte-for-byte and SHA256 matched",
+      "Eight recorded source hashes match Git source commit and current source",
+      "Raw and validated CSVs identical; exact current 39-column schema; five finite rows",
+      "Raw-to-derived recomputation; counter continuity; 400 jiffies/s gross plausibility",
+      "UTC and monotonic lifecycle ordering; report/launcher/manifest/statistics agreement",
+      "Five monitor log intervals match raw CSV; recorded process identity matches lifecycle",
+      "All selected files decoded and inspected; no credentials or emails found"
+    ],
+    "jiffies_per_s": [
+      392.2363747354147,
+      391.0190634175482,
+      394.53292994359043,
+      396.7846694481416,
+      394.3567133147485
+    ],
+    "total_original_bytes": 33913
+  },
+  "scientific_limitations": [
+    "Five uncontrolled background intervals from one VM run; no labelled classifier accuracy or loaded timing validation.",
+    "Mean elapsed interval 1.242 s; max 1.855 s despite requested 1 s: not proof of timing stability.",
+    "No generated CPU/memory/I/O workload, physical frequency actuation, measured energy, energy savings or workload completion-time comparison.",
+    "Cleanup is historical launcher/lifecycle evidence, not a retrospective process-table reconstruction.",
+    "Hashes establish current copy integrity and consistency with recorded source; no original signed evidence hash manifest existed."
+  ],
+  "archived_files": [
+    {
+      "path": "BACKGROUND_READINESS_REPORT.md",
+      "bytes": 10596,
+      "sha256": "9378bd382e4a6740ae6c0c1e090e538300ecaa24291104bbb2d788ffadf20934"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/lifecycle.json",
+      "bytes": 980,
+      "sha256": "552c13e522ad004cb0a5dce4c1b7978b3d69c769dc26161d9c84324ce1f24db3"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/manifest.json",
+      "bytes": 2117,
+      "sha256": "3a457b1835299e61c8c2cb3447e6e0846aaade95c24720bbb52814ec7f8fc70b"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/metadata.json",
+      "bytes": 1786,
+      "sha256": "79ace6748aa5602e62f4bd92f3ed1f4859c03c703baae2ea4f3aba2d0095dbb1"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/monitor.log",
+      "bytes": 3917,
+      "sha256": "ff061bc4a0080dff3dbb37f5676bdf6018b0cab291be3469ef27dcc6dd3c4774"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/monitor.ready",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/monitor.start",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/processes.json",
+      "bytes": 109,
+      "sha256": "54c18d117a58421f29a09421ab1ae2674c47d2b8613361cc203b8afb51ead3ab"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/statistics.json",
+      "bytes": 537,
+      "sha256": "7015782458d9f428ca9a25f096c0a75f4bc9dcae86da7f52b733228ac2d73a43"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/trace.csv",
+      "bytes": 1957,
+      "sha256": "7386599e3b2d8e3adaabaee34750e7c08b75111ae336c7dd50ee91c50b350d6d"
+    },
+    {
+      "path": "collection/20261015T144114Z-la72apwi/worker.log",
+      "bytes": 0,
+      "sha256": "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    },
+    {
+      "path": "launcher-metadata.json",
+      "bytes": 9639,
+      "sha256": "a41ffd224134a1e871fc61200f3bf05098b1f0c38e05734ca888f2e90ceedb42"
+    },
+    {
+      "path": "launcher-stderr.log",
+      "bytes": 1,
+      "sha256": "01ba4719c80b6fe911b091a7c05124b64eeece964e09c058ef8f9805daca546b"
+    },
+    {
+      "path": "launcher-stdout.log",
+      "bytes": 317,
+      "sha256": "dd53946d8af85e5a3fba1d537d28f409e0096128c666a28f5abea02e949415a8"
+    },
+    {
+      "path": "validated_trace.csv",
+      "bytes": 1957,
+      "sha256": "7386599e3b2d8e3adaabaee34750e7c08b75111ae336c7dd50ee91c50b350d6d"
+    }
+  ],
+  "excluded_original_files": []
+}
