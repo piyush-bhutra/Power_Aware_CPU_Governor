@@ -91,6 +91,10 @@ Choose a new output directory. The review driver exports five 34-row policy CSVs
 summary/provenance JSON and labelled energy/frequency PNGs using seed 11 and K=3.
 This is an open-loop comparison of policy approximations, not evidence of measured
 physical energy savings or preserved workload completion time. See docs/REVIEW1_PLAN.md.
+Original Review 1 charts/CSVs are preserved in
+[the synthetic archive](evidence/review1/synthetic_policy_comparison_20261015/README.md);
+see [current roadmap](docs/DEVELOPMENT_ROADMAP.md) and
+[dashboard handoff](docs/DASHBOARD_INTEGRATION_HANDOFF.md).
 
 ## Standalone one-worker CPU experiment
 After reviewing and approving the limits in [collection workflow](docs/COLLECTION_WORKFLOW.md),

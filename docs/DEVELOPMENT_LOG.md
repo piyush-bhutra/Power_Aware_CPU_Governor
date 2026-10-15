@@ -138,3 +138,27 @@ Exact checkpoint, remote verification, review outcome and proposed integration p
 are recorded in shared reports/REVIEW1_MILESTONE_CHECKPOINT.md and SESSION_STATUS.md
 rather than embedding a self-referential archive commit hash here. No main merge/push.
 Next: review the checkpoint report and approve main integration if satisfied.
+
+
+## 2026-10-15 — Approved stable integration and synthetic asset preservation
+Authorization: user-invoked Stable_Milestone_Integration.txt approves exact 207e732
+main fast-forward and later selective development archive/roadmap checkpoint.
+Verified old main 1ece4a2 and development 207e732 locally/remotely, clean tree, identity,
+ancestry, eight reviewed commits and original background provenance/hashes.
+115 tests passed in 7.91 s before integration and 8.35 s on main; shell/whitespace pass.
+Fast-forwarded main and normally pushed main:main; independent remote query verified
+207e7326369506c4e9021cc8f397c50c06fb3794. Returned to development before later edits.
+All historical refs preserved; no merge commit, force, deletion or history rewrite.
+Copied nine original synthetic assets (108,680 bytes), five 34-row/15-column CSVs,
+JSON metadata/summaries and two labelled PNGs. Verified source 4055aa2/seed 11/K=3,
+model/class/summary consistency; current finite generator reproduces original columns
+and byte-identical PNGs/summaries. Original shared assets untouched; CRLF preserved.
+Temporary audit initially compared policy-specific pre-tick freq_khz as a shared
+workload input; inspection showed setter-state fallback. Excluded that output from
+input comparison and separately validated its prior-tick recurrence; no product fix.
+Added archive README/provenance/sums, roadmap and practical dashboard handoff; updated
+state/status/workflow without implementing UI or changing backend APIs. No workload,
+new live monitoring, hardware control, installs or VM changes. Independent review and
+final development checkpoint/push recorded in shared integration report. Main stays
+at approved 207e732; archive/roadmap integration needs separate approval.
+Next: complete frontend design, then authorize a replay-first local dashboard task.

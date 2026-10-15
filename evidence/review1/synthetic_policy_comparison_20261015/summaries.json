@@ -1,0 +1,67 @@
+{
+  "performance": {
+    "ticks": 34,
+    "total_energy_j": 1482.886,
+    "mean_freq_khz": 5100000.0,
+    "mean_power_w": 43.614,
+    "freq_change_count": 0,
+    "class_distribution": {
+      "cpu_bound": 10,
+      "io_bound": 10,
+      "idle": 6,
+      "mixed": 8
+    }
+  },
+  "powersave": {
+    "ticks": 34,
+    "total_energy_j": 1044.012,
+    "mean_freq_khz": 3800000.0,
+    "mean_power_w": 30.706,
+    "freq_change_count": 0,
+    "class_distribution": {
+      "cpu_bound": 10,
+      "io_bound": 10,
+      "idle": 6,
+      "mixed": 8
+    }
+  },
+  "ondemand": {
+    "ticks": 34,
+    "total_energy_j": 1442.784,
+    "mean_freq_khz": 4768627.5,
+    "mean_power_w": 42.435,
+    "freq_change_count": 2,
+    "class_distribution": {
+      "cpu_bound": 10,
+      "io_bound": 10,
+      "idle": 6,
+      "mixed": 8
+    }
+  },
+  "conservative": {
+    "ticks": 34,
+    "total_energy_j": 1365.647,
+    "mean_freq_khz": 4564705.9,
+    "mean_power_w": 40.166,
+    "freq_change_count": 5,
+    "class_distribution": {
+      "cpu_bound": 10,
+      "io_bound": 10,
+      "idle": 6,
+      "mixed": 8
+    }
+  },
+  "ours": {
+    "ticks": 34,
+    "total_energy_j": 1336.622,
+    "mean_freq_khz": 4539215.6,
+    "mean_power_w": 39.312,
+    "freq_change_count": 3,
+    "class_distribution": {
+      "cpu_bound": 10,
+      "io_bound": 10,
+      "idle": 6,
+      "mixed": 8
+    }
+  }
+}

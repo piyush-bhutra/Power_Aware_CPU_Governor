@@ -1,8 +1,10 @@
 # Verified project state
 
-Last inspected: October 15, 2026. Latest milestone: safe real Linux monitoring.
+Last inspected: October 15, 2026. Latest milestone: approved stable integration and synthetic asset preservation.
+Current stable main: `207e7326369506c4e9021cc8f397c50c06fb3794`.
+See the final integration update and DEVELOPMENT_ROADMAP.md for current priorities.
 See the chronological updates below; initial setup observations are historical.
-Latest tested checkpoint: main `1ece4a22385c56af0e1c4d139b1ec897f6ca997d`; identical to origin/main after successful
+Initial tested checkpoint (historical): main `1ece4a22385c56af0e1c4d139b1ec897f6ca997d`; identical to origin/main after successful
 fetch. Setup documents were checkpointed as `1a3d180` and pushed to origin/development. This is the authoritative progress snapshot;
 PRD's introductory “no code / VM not set up” status is historical and obsolete.
 
@@ -197,3 +199,25 @@ Exact checkpoint, remote verification, review outcome and proposed integration p
 are recorded in shared reports/REVIEW1_MILESTONE_CHECKPOINT.md and SESSION_STATUS.md
 rather than embedding a self-referential archive commit hash here. No main merge/push.
 Next: review the checkpoint report and approve main integration if satisfied.
+
+
+## Approved stable integration and synthetic archive — October 15, 2026
+User-invoked Stable_Milestone_Integration.txt explicitly approved only 207e732 for main.
+Exact prerequisite refs/clean tree/identity/ancestry and background hashes passed.
+Fresh pre-integration suite: 115 passed in 7.91 s; main after fast-forward: 115 passed
+in 8.35 s. Normal main:main push and independent remote query verified main/origin/main
+207e7326369506c4e9021cc8f397c50c06fb3794; previous main
+1ece4a22385c56af0e1c4d139b1ec897f6ca997d remains a recovery commit. Historical branches
+preserved. Returned to clean development at the same target before any asset edits.
+Archived nine original synthetic assets (108,680 bytes) under
+evidence/review1/synthetic_policy_comparison_20261015/ with provenance/hash sums.
+Recorded clean source 4055aa2, seed 11, K=3, five 34-row policies. All original values,
+summaries and PNG bytes reproduced with current source; old 15-column CSV schema
+preserved. No duplicate background archive, real sampling, stress, actuation or install.
+Roadmap separates OS Course Project v1.0 from longer-term research. Frontend design
+is pending in another conversation; Streamlit/optional Plotly are preferences only.
+See DEVELOPMENT_ROADMAP.md and DASHBOARD_INTEGRATION_HANDOFF.md. No UI/backend changes.
+The subsequent evidence/roadmap commit is on development only; exact checkpoint/push
+and its independent review/READY assessment are in shared STABLE_MILESTONE_INTEGRATION.md.
+No additional main integration is authorized. Next: finish frontend brainstorming,
+then scope a bounded replay-first dashboard implementation with explicit authorization.

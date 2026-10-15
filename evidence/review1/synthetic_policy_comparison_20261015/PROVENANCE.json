@@ -1,0 +1,167 @@
+{
+  "source_commit": "4055aa2c0700f829b565f01442f392806f0dea73",
+  "source_working_tree_dirty": false,
+  "generation_timestamp_note": "Original metadata does not record generation UTC; directory date is 2026-10-15. Do not infer a precise time from file mtimes.",
+  "original_shared_path": "/media/sf_OS_Project_Shared/results/review1_verified_20261015",
+  "archive_path": "evidence/review1/synthetic_policy_comparison_20261015",
+  "generation_command": ".venv/bin/python -m benchmark.review_demo --outdir <new-output-directory>",
+  "generation_command_note": "Equivalent invocation established from tracked generator; original exact output-directory argument was not recorded.",
+  "parameters": {
+    "seed": 11,
+    "k": 3,
+    "interval_s": 1.0,
+    "plan": [
+      [
+        "cpu",
+        10
+      ],
+      [
+        "io_burst",
+        10
+      ],
+      [
+        "idle",
+        6
+      ],
+      [
+        "mixed",
+        8
+      ]
+    ],
+    "ladder_khz": [
+      3800000,
+      4233333,
+      4666667,
+      5100000
+    ]
+  },
+  "policies": [
+    "performance",
+    "powersave",
+    "ondemand",
+    "conservative",
+    "ours"
+  ],
+  "rows_per_policy": 34,
+  "original_csv_columns": [
+    "timestamp",
+    "util_pct",
+    "iowait_pct",
+    "irq_pct",
+    "ctxt_per_s",
+    "procs_running",
+    "procs_blocked",
+    "freq_khz",
+    "iowait_over_util",
+    "ctxt_over_run",
+    "workload_class",
+    "target_khz",
+    "requested_khz",
+    "est_power_w",
+    "expected"
+  ],
+  "source_hashes": {
+    "benchmark/review_demo.py": "7653a8eda0e12355b5f34aa5ddff21293dadd9659f0bad1376bbc1588064ed38",
+    "benchmark/compare.py": "f973b3a13f591a76f0aa0762e9dade77c5a6553e3a159e450e18112f74bc7eff",
+    "benchmark/baselines.py": "f1eb254b39187cb39a8dfe1d6e7315e9b181e78712b2b3a7d989206bbd734ba4",
+    "benchmark/summarize.py": "088252dda117a8c2ec2b1cdff21d326c5ac4ab0ff84ffafc1edd1b2326a63ddf",
+    "governor.py": "fa6bc39d91e907d7f606a3fcdbb53a043d1d83457a56038ef48fffa887438f9e",
+    "monitor/synthetic.py": "cea470f591792c621ae0831fda98f0f41c64ad0bf35745d1b434fef648b76b7f",
+    "monitor/reader.py": "c50a51fc6f91a8aa00b3e191b2de91b543d10297ae722174aa37ff50430dfd20",
+    "classifier/rules.py": "9b80206c26e1744bc02c53d3a5e3c9c3e9c9a5c74ddcc2b6e6ba46a11d80b6df",
+    "policy/governor_policy.py": "faee21cb690f95e1854d187d4503f60f3d4b17662d7a26460d8bd1b9a772f638",
+    "setter/freq_setter.py": "339fd0c62f2b71111664422e795dc059ab3dcbbbd3260c6927d816ecc89f93cc",
+    "power_model/estimate.py": "c23b623799faff7447641ad290322beb03af527168dea097b2896e4a4ba28d72",
+    "hardware_profile.py": "8f76fdfc05b149a90b1c431eee645336c70e56c4c2ae885486c315fa60fd5cf7",
+    "analysis/plots.py": "b391d45a29b548fb3f568e6331be68c80d5cadab1fbf26dcee87fa85d3649d93"
+  },
+  "source_hash_note": "Computed during archival from Git object 4055aa2, not hashes originally recorded by the generator.",
+  "model_assumptions": {
+    "static_w": 21.6,
+    "dynamic_w_at_fmax": 32.4,
+    "frequency_max_khz": 5100000,
+    "formula": "P = 21.6 + 32.4 * (f/5100000)^3 * util/100; E = sum(rounded per-tick P * 1 s)",
+    "notes": "Assumed package model/ladder; not calibrated to the guest or measured electrical energy. Fixed synthetic input replay does not model completion-time effects."
+  },
+  "validation": {
+    "outcome": "passed",
+    "validated_utc": "2026-10-15T15:34:17.593818+00:00",
+    "original_files": 9,
+    "total_bytes": 108680,
+    "original_copy_sha256": "All nine matched; originals untouched",
+    "checks": [
+      "Five 34-row, 15-column CSVs; finite values; identical policy input signals",
+      "Recomputed class labels, model power and all summary metrics agree",
+      "Metadata source commit, clean flag, seed 11, K=3 and plan agree with generator",
+      "Both PNG files visually inspected; labels show synthetic/simulated/modelled scope",
+      "Both PNGs byte-identical to current regenerated charts, derived from equivalent CSVs",
+      "All 15 original CSV columns exactly reproduced; new CSV schema has 25 extra columns",
+      "No credential markers or email addresses in text artifacts; no file above 100 KB"
+    ],
+    "chart_reproduction": {
+      "synthetic_modelled_energy.png": "byte-identical to regenerated chart",
+      "synthetic_simulated_frequency.png": "byte-identical to regenerated chart"
+    }
+  },
+  "reproduction": {
+    "command": "OPENBLAS_NUM_THREADS=1 OMP_NUM_THREADS=1 MPLCONFIGDIR=/tmp/codex-mpl timeout 30s .venv/bin/python -m benchmark.review_demo --outdir /tmp/codex-stable-integration/reproduced",
+    "source_commit": "207e7326369506c4e9021cc8f397c50c06fb3794",
+    "working_tree_dirty": false,
+    "summary_json_byte_equal": true,
+    "note": "Current source reproduces all original values and PNG bytes; new raw/elapsed CSV columns and metadata commit differ. Regenerated artifacts are audit-only, not substituted originals."
+  },
+  "interpretation_restrictions": [
+    "Synthetic workload signals are invented; no real Linux monitoring in these files.",
+    "Frequency targets are simulated decisions; freq_khz is simulated setter state before that tick, not hardware measurement or actuation.",
+    "Energy/power are model estimates; no measured savings, workload duration or accuracy claim.",
+    "Baselines are Python approximations, not actual kernel governor experiments.",
+    "Background evidence is separately archived; none duplicated here."
+  ],
+  "archived_files": [
+    {
+      "path": "conservative.csv",
+      "bytes": 3848,
+      "sha256": "d0bbd3f21c918501aefabffe2a5736af8f851a8948d6a4da72a96bf06dc5c291"
+    },
+    {
+      "path": "metadata.json",
+      "bytes": 563,
+      "sha256": "f0db3448d0e6aa4ec1dea3ac38e0eea1130cd301f9d1502e028ed7439914c190"
+    },
+    {
+      "path": "ondemand.csv",
+      "bytes": 3850,
+      "sha256": "2891633921e44b00aae9da44c16c06327f068561948dc63d3964e003a9ab2187"
+    },
+    {
+      "path": "ours.csv",
+      "bytes": 3848,
+      "sha256": "dc79674a430032b22cb9c86ba045b63dfa7b26195d98b6769da19afcfb82780e"
+    },
+    {
+      "path": "performance.csv",
+      "bytes": 3848,
+      "sha256": "5c0fcf73493d9344e2b0fec25a1a38950efcfdeb2a06890e2f78b8545fdc953f"
+    },
+    {
+      "path": "powersave.csv",
+      "bytes": 3848,
+      "sha256": "9361cdf80888a0de4c48b9c88f28d764345422b4fc868d4a266b54850df0b9f5"
+    },
+    {
+      "path": "summaries.json",
+      "bytes": 1362,
+      "sha256": "19b63ee72970cc4ab7de0406d63757b45a257795f1a6225d5e1e10185ec7cf9c"
+    },
+    {
+      "path": "synthetic_modelled_energy.png",
+      "bytes": 40527,
+      "sha256": "098ab69f4157d9650f7db60f9d4da19aad8ec23206a6ca95fc94df93d7d031cf"
+    },
+    {
+      "path": "synthetic_simulated_frequency.png",
+      "bytes": 46986,
+      "sha256": "3926cbbe9f29451bcda3ec7cd245addc961c4cb8992a8e5ed269f4994aa66c11"
+    }
+  ]
+}

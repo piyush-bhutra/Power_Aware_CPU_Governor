@@ -1,0 +1,35 @@
+{
+  "inputs": "synthetic",
+  "frequency_control": "simulated",
+  "power_energy": "modelled",
+  "interval_s": 1.0,
+  "seed": 11,
+  "k": 3,
+  "plan": [
+    [
+      "cpu",
+      10
+    ],
+    [
+      "io_burst",
+      10
+    ],
+    [
+      "idle",
+      6
+    ],
+    [
+      "mixed",
+      8
+    ]
+  ],
+  "ladder_khz": [
+    3800000,
+    4233333,
+    4666667,
+    5100000
+  ],
+  "commit": "4055aa2c0700f829b565f01442f392806f0dea73",
+  "working_tree_dirty": false,
+  "limitations": "Open-loop policy approximations; no measured energy or completion-time evidence."
+}

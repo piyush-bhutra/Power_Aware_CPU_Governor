@@ -94,8 +94,10 @@ Existing shared `results/review1_verified_20261015/` has five 34-row policy CSVs
 (`ours`, `performance`, `powersave`, `ondemand`, `conservative`), `summaries.json`,
 `metadata.json`, `synthetic_modelled_energy.png` and `synthetic_simulated_frequency.png`.
 Its metadata records clean producing commit `4055aa2c0700f829b565f01442f392806f0dea73`,
-seed 11, K=3 and one-second nominal intervals. These existing outputs remain outside
-Git. `benchmark.review_demo` reproduces this synthetic scenario; `benchmark.compare`
+seed 11, K=3 and one-second nominal intervals. These nine original outputs are now archived in
+[synthetic evidence](../evidence/review1/synthetic_policy_comparison_20261015/README.md).
+Their original values and PNG bytes reproduce; original shared files remain untouched.
+`benchmark.review_demo` reproduces this synthetic scenario; `benchmark.compare`
 prints the default five-policy model table. `analysis/plots.py` also implements class
 distribution bars, which are identical for identical input replay and provide no
 comparative evidence. Visualization is static PNG only; no web UI/dashboard exists.
@@ -112,7 +114,14 @@ approved bounded labelled traces, calibrate thresholds, evaluate classifier accu
 add ML comparison and design repeated completion-time/energy measurements.
 Hardware control is an optional later milestone requiring suitable hardware and approval.
 
-Accumulated development is **READY** as a bounded monitoring, synthetic demonstration
-and evidence milestone, subject to independent review and exact final hash recorded
-in the shared checkpoint handoff. Loaded stress validation and physical savings remain
-deferred. Main is unchanged; merging/pushing main requires separate explicit approval.
+The approved monitoring/synthetic/evidence milestone was fast-forwarded to main and
+verified on GitHub at `207e7326369506c4e9021cc8f397c50c06fb3794`. Fresh integration tests
+passed 115 cases before integration (7.91 s) and on main (8.35 s). The subsequent
+synthetic archive and roadmap stay on development; no later main merge is authorized.
+[Roadmap](DEVELOPMENT_ROADMAP.md) prioritizes the OS Course Project v1.0 demonstration
+separately from research. Frontend brainstorming is pending; preferred Streamlit and
+optional Plotly remain unimplemented/uninstalled. Use the existing terminal/PNG path
+until design is finalized. Loaded stress validation and physical savings remain deferred.
+See [dashboard handoff](DASHBOARD_INTEGRATION_HANDOFF.md) for evidence/APIs and safety
+boundaries. Exact archive checkpoint, review and push verification are in the shared
+STABLE_MILESTONE_INTEGRATION.md report.

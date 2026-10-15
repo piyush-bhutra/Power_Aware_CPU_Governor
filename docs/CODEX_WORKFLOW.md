@@ -31,7 +31,8 @@ Current stable/default: main. Reusable development created from verified main at
 `1ece4a22385c56af0e1c4d139b1ec897f6ca997d` under the explicitly requested Review 1 task.
 Initial persistent-documentation checkpoint `1a3d180` was pushed to origin/development.
 Keep backup-old-local and origin/mock-sysfs-wip; both have unique historical work.
-The branch target does not authorize deletion. Main must remain unchanged.
+The branch target does not authorize deletion. Main changes require exact milestone
+approval; see the integration record below.
 Repository-local identity is confirmed as piyush-bhutra <p***@gmail.com>, overriding
 unchanged global Vedant settings. Effective author and committer verified; no environment
 identity overrides observed. Existing attribution-blocking commit hook is preserved.
@@ -130,3 +131,17 @@ artificial CPU/memory/I/O/mixed experiments. Read COLLECTION_WORKFLOW.md before 
 the repaired collector. Failed traces remain failed; do not auto-retry, relabel background
 as idle ground truth, or combine schema versions by appending to old CSVs. Snapshot
 resource availability, validate raw/derived data, and export only after validation.
+
+
+## Stable integration authorization record — October 15, 2026
+The user-invoked Stable_Milestone_Integration.txt authorized exactly
+207e7326369506c4e9021cc8f397c50c06fb3794 to main after guarded checks; this succeeded
+and origin/main was independently verified. Original main
+1ece4a22385c56af0e1c4d139b1ec897f6ca997d and historical branches remain recoverable.
+This prompt also authorizes the subsequent selective synthetic evidence/roadmap
+checkpoint and normal origin/development backup, not its integration into main.
+Keep evidence and related documents in one coherent checkpoint to avoid needless
+divergence. Assess that accumulated diff independently; a READY assessment alone
+never authorizes main. Future frontend work starts after stable baseline/design
+completion and task authorization; no frontend install/implementation in this task.
+See DEVELOPMENT_ROADMAP.md and DASHBOARD_INTEGRATION_HANDOFF.md for scope/boundaries.
