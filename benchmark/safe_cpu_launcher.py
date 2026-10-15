@@ -35,7 +35,7 @@ def atomic_text(path,content):
             os.unlink(temp)
 
 
-def preflight(root,shared):
+def preflight(root,shared,diagnostics=None):
     for name in ('.venv/bin/python','collect_real_traces.sh','benchmark/collect_traces.py',
                  'monitor/capture.py','monitor/reader.py'):
         if not (root/name).is_file():
@@ -57,11 +57,46 @@ def preflight(root,shared):
         Path(probe).unlink(missing_ok=True)
     if shutil.disk_usage(root).free < 512*1024*1024:
         raise RuntimeError('Free local disk space below 512 MiB')
-    first=resources();check_resources(first,first)
-    activity=swap_activity();time.sleep(.25)
-    second=resources();check_resources(second,first)
-    if swap_activity()!=activity:
-        raise RuntimeError('Ongoing swap activity detected; close applications and inspect before retrying manually')
+    if diagnostics is None:
+        diagnostics={}
+    activity=dict(requested_window_s=.25,window_count=3,max_total_pages=32,
+                  max_active_windows=1,page_size_bytes=os.sysconf('SC_PAGE_SIZE'),
+                  min_available_kib=512*1024,max_swap_growth_kib=128*1024,
+                  samples=[],windows=[],passed=False)
+    diagnostics['swap_preflight']=activity
+    first=resources()
+    diagnostics['resources_before']=first
+    check_resources(first,first)
+    previous=swap_activity();start=time.monotonic();previous_time=start
+    activity['samples'].append(dict(pswpin=previous[0],pswpout=previous[1],
+                                    elapsed_s=0,resources=first))
+    for _ in range(activity['window_count']):
+        time.sleep(activity['requested_window_s'])
+        current=swap_activity();now=time.monotonic();second=resources()
+        elapsed=now-previous_time
+        delta_in=current[0]-previous[0];delta_out=current[1]-previous[1]
+        kib=(delta_in+delta_out)*activity['page_size_bytes']/1024
+        activity['samples'].append(dict(pswpin=current[0],pswpout=current[1],
+                                        elapsed_s=now-start,resources=second))
+        activity['windows'].append(dict(elapsed_s=elapsed,delta_pswpin_pages=delta_in,
+                                        delta_pswpout_pages=delta_out,
+                                        swap_kib_per_s=kib/elapsed if elapsed>0 else None))
+        check_resources(second,first)
+        if delta_in<0 or delta_out<0 or elapsed<=0:
+            raise RuntimeError('Invalid swap counter/timing observation; see swap_preflight diagnostics')
+        previous=current;previous_time=now
+    activity['elapsed_s']=now-start
+    activity['total_pages']=sum(w['delta_pswpin_pages']+w['delta_pswpout_pages']
+                                for w in activity['windows'])
+    activity['total_kib']=activity['total_pages']*activity['page_size_bytes']/1024
+    activity['active_windows']=sum(w['delta_pswpin_pages']+w['delta_pswpout_pages']>0
+                                   for w in activity['windows'])
+    if (activity['total_pages']>activity['max_total_pages']
+            or activity['active_windows']>activity['max_active_windows']):
+        raise RuntimeError(f'Swap preflight rejected: {activity["total_pages"]} pages '
+                           f'({activity["total_kib"]:g} KiB), {activity["active_windows"]}/3 active windows; '
+                           'limits <=32 pages and <=1 active window; close applications and inspect before retrying manually')
+    activity['passed']=True
     for path in Path('/proc').glob('[0-9]*/cmdline'):
         try:
             if int(path.parent.name)==os.getpid() or path.stat().st_uid!=os.getuid():
@@ -131,7 +166,7 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
     try:
         lock=experiment_lock(root);fd=lock.__enter__()
         handlers={sig:signal.signal(sig,cancelled) for sig in (signal.SIGINT,signal.SIGTERM)}
-        state['resources_before']=preflight(root,shared)
+        state['resources_before']=preflight(root,shared,state)
         for cmd,name in ((['uname','-a'],'kernel'),(['lscpu'],'cpu'),(['git','rev-parse','HEAD'],'commit'),
                          (['git','status','--porcelain'],'git_changes')):
             result=subprocess.run(cmd,cwd=root,text=True,capture_output=True,timeout=3)

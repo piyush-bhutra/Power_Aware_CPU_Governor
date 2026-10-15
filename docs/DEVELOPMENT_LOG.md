@@ -59,3 +59,19 @@ exit and used production deadline for non-timeout cases. No real stress-ng or la
 execution against the real collector. No installs/system settings/main changes.
 Checkpoint/push: final hash in SAFE_CPU_LAUNCHER_SETUP.md and SESSION_STATUS.md.
 Next: wait for user approval and manual execution with Codex closed.
+
+## 2026-10-15 — Swap preflight diagnostics and conservative transient allowance
+Authorized by prompts/Swap_Preflight_Diagnostics.txt. Inspected original aborted
+attempt: collector_started/workload_started false; exact swap counters were absent.
+Old .25 s tuple inequality rejected even one page. One bounded read-only snapshot
+observed isolated 18-page swap-in, then seven quiet windows, stable swap occupancy
+and ~2.15 GiB RAM available. Added failure-preserved sample/resource/delta/rate/threshold
+reporting. Changed gate to three .25 s windows, <=32 total pages in <=1 active window;
+retained low-memory/swap-growth guards and reject decreasing counters. No artificial
+workload, collector, system configuration change, swap clearing or retry performed.
+Eight new tests failed against old implementation before the fix; initial full suite
+88 passed in 27.17 s. Additional combined-direction and mid-window memory-pressure
+cases were added; final full suite: 93 passed in 7.60 s. Shell syntax and whitespace
+checks passed. Independent review found no blocking issues. Checkpoint/export evidence
+is in the shared report.
+Next: review handoff and separately approve one manual retry with Codex closed.

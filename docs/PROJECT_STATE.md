@@ -121,3 +121,21 @@ Launcher is ready for user-approved manual execution with Codex closed, subject 
 its fresh preflight and interactive confirmation. Stress-ng effectiveness and loaded
 VM timing remain unvalidated. Checkpoint/push hash is recorded in shared setup handoff.
 Next: user reviews limits, closes Codex, and manually launches only if approved.
+
+## Swap preflight investigation — October 15, 2026
+Swap_Preflight_Diagnostics.txt authorizes this fix and development checkpoint/push,
+without artificial workload execution. The user's manual launcher attempt aborted
+before the collector started: the old check rejected any pswpin/pswpout change in
+250 ms. Original counter values were not recorded and cannot be recovered.
+A single ~2.1 s read-only diagnostic caught 18 pages (72 KiB) swap-in in its first
+window followed by seven quiet windows, no swap-out or occupancy change, and
+~2.15 GiB available RAM. This demonstrates sensitivity to a small isolated transient;
+it does not prove VM stability or identify the original event's size or cause.
+Launcher now preserves counters, timing, rates, resources and thresholds on failure.
+Three 250 ms windows permit <=32 total pages in <=1 active window; sustained activity,
+larger bursts, counter decreases and existing memory-pressure conditions reject.
+This is a conservative engineering limit, not a calibrated loaded-VM safety guarantee.
+Test results and final checkpoint are recorded in the shared swap investigation report.
+No real collector, stress-ng, hardware control or experiment retry occurred.
+Next: review report, then obtain approval for one manual retry with Codex closed;
+fresh preflight and interactive RUN remain mandatory. No merge to main performed.

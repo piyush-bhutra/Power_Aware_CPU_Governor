@@ -142,7 +142,7 @@ def test_interrupt_stops_harmless_collector_and_exports_report(setup,monkeypatch
 
 def test_active_swapping_prevents_workload(setup,monkeypatch):
     root,shared,_=setup
-    values=iter([(0,0),(0,1)])
+    values=iter([(0,0),(0,1),(0,2),(0,3)])
     monkeypatch.setattr(launcher,'swap_activity',lambda:next(values))
     assert launcher.run_launcher(root,shared,confirm=lambda _:'RUN')==1
     assert not list((root/'data').rglob('manifest.json'))
@@ -213,3 +213,67 @@ def test_fallback_refuses_reused_leader_identity(tmp_path):
         assert process.poll() is None
     finally:
         stop_group(process)
+
+
+@pytest.mark.parametrize('counters,expected_code',[
+    ([(100,200),(118,200),(118,200),(118,200)],0),
+    ([(100,200),(132,200),(132,200),(132,200)],0),
+    ([(100,200),(133,200),(133,200),(133,200)],1),
+    ([(100,200),(101,200),(102,200),(102,200)],1),
+    ([(100,200),(100,201),(100,202),(100,203)],1),
+    ([(100,200),(99,200),(99,200),(99,200)],1),
+    ([(100,200),(100,200),(100,200),(101,200)],0),
+    ([(100,200),(116,216),(116,216),(116,216)],0),
+    ([(100,200),(116,217),(116,217),(116,217)],1),
+    ([(100,200),(101,200),(101,200),(101,201)],1),
+])
+def test_swap_windows_reject_sustained_or_large_activity(setup,monkeypatch,counters,expected_code):
+    root,shared,_=setup
+    values=iter(counters)
+    monkeypatch.setattr(launcher,'swap_activity',lambda:next(values))
+    assert launcher.run_launcher(root,shared,confirm=lambda _:'RUN')==expected_code
+    state=json.loads(next((root/'data').rglob('launcher-metadata.json')).read_text())
+    diagnostic=state['swap_preflight']
+    assert diagnostic['samples'][0]['pswpin']==100
+    assert diagnostic['samples'][0]['pswpout']==200
+    assert diagnostic['max_total_pages']==32
+    assert diagnostic['max_active_windows']==1
+    assert diagnostic['passed']==(expected_code==0)
+    if expected_code:
+        assert state['collector_started'] is False
+        assert 'swap_preflight' in (shared/'LATEST_REPORT.md').read_text()
+
+
+def test_swap_diagnostics_report_units_deltas_and_resources(setup,monkeypatch):
+    root,shared,_=setup
+    values=iter([(100,200),(118,200),(118,200),(118,200)])
+    times=iter([10,10.25,10.5,10.75])
+    monkeypatch.setattr(launcher,'swap_activity',lambda:next(values))
+    monkeypatch.setattr(launcher.time,'monotonic',lambda:next(times))
+    monkeypatch.setattr(launcher.os,'sysconf',lambda _:4096)
+    diagnostics={}
+    launcher.preflight(root,shared,diagnostics)
+    result=diagnostics['swap_preflight']
+    assert result['elapsed_s']==.75
+    assert result['total_pages']==18
+    assert result['total_kib']==72
+    assert result['active_windows']==1
+    assert result['windows'][0]['delta_pswpin_pages']==18
+    assert result['windows'][0]['delta_pswpout_pages']==0
+    assert result['windows'][0]['swap_kib_per_s']==288
+    assert result['samples'][0]['resources']['mem_available_kib']==2097152
+
+
+@pytest.mark.parametrize('current',[
+    dict(mem_available_kib=512*1024-1,swap_used_kib=0),
+    dict(mem_available_kib=2*1024*1024,swap_used_kib=128*1024+1),
+])
+def test_memory_pressure_during_swap_windows_preserves_failure_evidence(setup,monkeypatch,current):
+    root,shared,_=setup
+    observations=iter([dict(mem_available_kib=2*1024*1024,swap_used_kib=0),current,current])
+    monkeypatch.setattr(launcher,'resources',lambda:next(observations))
+    assert launcher.run_launcher(root,shared,confirm=lambda _:'RUN')==1
+    state=json.loads(next((root/'data').rglob('launcher-metadata.json')).read_text())
+    assert state['collector_started'] is False
+    assert state['swap_preflight']['passed'] is False
+    assert state['swap_preflight']['samples'][-1]['resources']==current

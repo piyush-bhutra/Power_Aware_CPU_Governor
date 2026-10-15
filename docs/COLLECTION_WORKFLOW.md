@@ -115,7 +115,14 @@ After user approval, save your work, close Codex and unnecessary guest applicati
 Codex should be closed to reduce memory use, scheduling interference and measurement
 noise. The launcher checks the virtualenv/files, stress-ng/timeout/bash/git availability,
 the mounted shared folder with write/read probe, disk >=512 MiB, RAM >=512 MiB, current
-resource state and a 250 ms no-swap-activity window. Historical swap allocation alone
+resource state and three 250 ms swap-activity windows. Preflight accepts at most 32
+pages total (swap-in plus swap-out), confined to one window; activity in two or more
+windows, a larger burst, or decreasing counters rejects the attempt. At 4 KiB per
+page the burst cap is 128 KiB. This conservative engineering allowance addresses an
+observed isolated 18-page swap-in; it is not a validated safety threshold under load.
+Samples, measured elapsed times, page size, deltas, rates, thresholds and resources
+are preserved in launcher metadata/report even on rejection. RAM below 512 MiB or
+swap occupancy growth above 128 MiB still aborts. Historical swap allocation alone
 is not treated as current thrashing. It records kernel/CPU information and warns that
 KVM/legacy timing disagreement is unresolved. Type exactly RUN only if you accept the
 printed limits and VM timing uncertainty; every other answer cancels before the collector.
