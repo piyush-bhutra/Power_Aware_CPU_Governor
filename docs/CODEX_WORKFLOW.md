@@ -26,6 +26,54 @@ Existing `.venv` is usable; no dependency installation was needed.
 6. Fetch (no pruning) when permitted. Compare ahead/behind; do not blindly pull.
 7. Identify latest checkpoint and current authorized objective. Ask only if ambiguous.
 
+## Mandatory stop-on-stale rule (both development environments)
+
+Before editing in every coding or repository task, inspect Git status, fetch origin
+without pruning when network access is available, and independently verify remote
+heads. Compare the working branch with its upstream and check both local main and
+development against origin/main and origin/development. A clean tree does not prove
+freshness; the Windows workspace and friend's Ubuntu VM are both potential writers.
+
+STOP before implementation if the working branch or local development is behind,
+any relevant branch is divergent/stale, or local main is behind origin/main. Report
+ordinary main advancement separately from conflicts. If remote verification is
+unavailable, freshness is unverified: do not edit work requiring current upstream state.
+Report checkout path, branch/local/remote hashes, ahead/behind counts, working-tree
+state, local-only work and exact safe synchronization options; wait for the user's
+separate decision. Do not automatically pull, merge, rebase, reset, stash, cherry-pick
+or create commits to resolve stale/divergent state. Preserve historical unique work.
+
+The October 15, 2026 workspace-setup request is a one-time exception: after verifying
+the canonical remote, clean tree, no at-risk untracked/ignored work, no unpublished
+commits needing preservation, no interrupted operation and fast-forward eligibility,
+update local main/development only to their verified corresponding remote heads.
+Create a missing local development branch tracking origin/development; finish there.
+No history rewriting, branch deletion or main integration is authorized. The request
+allows one reviewed, lightweight-checked workflow-policy documentation checkpoint and
+normal push to origin/development; synchronization itself authorizes no push. Verify
+remote alignment immediately before that push and independently verify its result.
+Future stale repositories still require a separate synchronization decision.
+
+Use repository-local identity piyush-bhutra <piyushbhutra1@gmail.com> for new commits;
+leave global identity and historical authors unchanged. Follow existing local hooks
+and add no AI attribution. Routine verified development checkpoints/pushes require
+approved task scope and aligned remote development. Main integration always requires
+separate approval of the exact target after accumulated diff/history/tests/limitations
+review and a READY / DEFER / BLOCKED recommendation.
+
+Workspace recovery note: this setup executes in Windows PowerShell at C:\OS Project,
+not /home/vboxuser/Power_Aware_CPU_Governor. Both documented shared-folder paths are
+unavailable here; this workflow note and the chat synchronization report are the local
+handoff. The Ubuntu environment/identity/hook observations below are historical and
+must be rechecked there. No frontend, backend implementation or experiment is part
+of this setup. Governorlab terminal demonstration is the next separately scoped task,
+followed by the Daybreak Streamlit/Plotly dashboard with a shared backend data adapter.
+Setup checks: 42 Windows-compatible unit/synthetic tests passed; Linux collector/
+launcher tests require fcntl and remain Ubuntu checks. All 26 archived SHA256 entries
+match stored Git blobs; system core.autocrlf=true converts 14 covered text files to
+CRLF locally, so direct working-file hash checks differ for those files only. CSVs
+and PNGs retain their recorded bytes. No evidence or line-ending settings were changed.
+
 ## Git workflow and permission state
 Current stable/default: main. Reusable development created from verified main at
 `1ece4a22385c56af0e1c4d139b1ec897f6ca997d` under the explicitly requested Review 1 task.
