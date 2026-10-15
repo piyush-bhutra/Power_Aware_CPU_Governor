@@ -1,5 +1,38 @@
 # Verified project state
 
+## Current update — Unified Daybreak session player, October 16, 2026
+
+Clean/aligned Windows development started at bfcd822d68ffd78196b90b0e2ca9b79ff5ac07ae;
+main/origin/main remain 2753fc397bc97b96421ebb365152c1c0fc66781f. Fresh remote checks
+preceded edits. The earlier manual-only/live-deferred dashboard entry is historical.
+
+One shared Player now serves synthetic 34-tick and validated saved five-observation
+Linux sessions: automatic progression/completion, play/pause/resume, Restart,
+previous/next, paused seek, Reset, speed, progress, synchronized chart lanes,
+actual simulated transition markers, inspector and summary. Controls stay outside
+the timed rendering fragment; delayed slider echoes cannot interrupt its clock.
+Selecting a source restarts; returning to Replay resumes its cursor/source/speed.
+
+Linux-only Collect Live Data explicitly invokes a single-purpose child running
+the existing collect_live pipeline, with its 12-second deadline, 15-second parent
+watchdog and six-second UI heartbeat lease. Cancellation/navigation/disconnect/
+server exit interrupt, escalate and reap the owned child. One active child per user
+session, no retries/workloads/sudo/physical writes. Saved raw counters and decisions
+are revalidated; new captures have hashes. Legacy terminal captures are identified
+as lacking a manifest. Saved observations are never labelled currently live.
+Windows collection is disabled; all other views remain available. Backend, shared
+adapter, terminal commands and evidence are unchanged. No real collection occurred
+in this Windows task. Native Ubuntu lifecycle/full-suite checks remain mandatory;
+see DAYBREAK.md for the deployment checklist and local recovery handoff.
+
+Fresh Windows verification: **127 portable suite tests + 6 portable live-adapter
+tests passed (133 total)**, including 24 new upgrade tests and the 17 original
+dashboard tests. Browser replay completed at 1× and 4× with three verified events;
+pause/resume, manual controls, four views and mobile overflow checks passed.
+Independent final review found no further actionable issue; high-tick to five-sample
+source switching passed a regression check. Ubuntu collection/isolation/cancellation
+and full-suite verification remain pending. Main integration assessment: **DEFER**.
+
 ## Current update — Daybreak dashboard, October 16, 2026
 
 Explicit exact-ref authorization synchronized Windows main and development by

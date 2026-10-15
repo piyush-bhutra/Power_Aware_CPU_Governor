@@ -50,7 +50,14 @@ def replay_figure(replay, tick):
     for row in (1, 2, 3):
         fig.add_vline(x=tick, line_dash='dot', line_color='#b7b0c3', row=row, col=1)
     fig.update_xaxes(range=[.5, len(replay.frames) + .5], dtick=5)
-    fig.update_xaxes(title_text='Synthetic tick · nominal one-second intervals', row=3, col=1)
+    synthetic = replay.frames[0].source_kind == 'synthetic'
+    fig.update_xaxes(title_text='Synthetic tick · nominal one-second intervals' if synthetic else 'Saved observation tick · measured intervals in inspector', row=3, col=1)
+    events = [f.transition for f in frames if f.transition]
+    if events:
+        fig.add_trace(go.Scatter(x=[e.tick for e in events], y=[e.new_khz / 1e6 for e in events],
+                                mode='markers', name='Applied simulated transitions',
+                                marker=dict(symbol='diamond', size=11, color=AMBER),
+                                text=[e.reason for e in events], hovertemplate='%{text}<extra>Simulated transition</extra>'), row=3, col=1)
     for annotation in fig.layout.annotations:
         annotation.update(font=dict(size=12, color='#716a7c'), x=0, xanchor='left')
     return style(fig, 420)

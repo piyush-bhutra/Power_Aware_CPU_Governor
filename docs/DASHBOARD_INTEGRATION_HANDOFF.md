@@ -1,5 +1,17 @@
 # Dashboard integration handoff
 
+## Unified player implemented — October 16, 2026
+
+`daybreak/player.py` owns finite source/tick/speed/playback state. The existing
+Replay uses it for both verified synthetic and revalidated saved Linux Dataset
+objects. `playback_ui.py` renders stable controls; the app's timed fragment renders
+one synchronized snapshot and polls collection. `sessions.py` revalidates saved
+raw counters and all derived decisions without sampling. `worker.py` explicitly
+calls the existing live pipeline; `collection.py` owns the bounded child lifecycle.
+Fresh capture is Linux-only and explicit; completion automatically selects saved
+data for replay. Other views and terminal commands are unchanged. This supersedes
+the earlier live-deferred/manual-only handoff. See DAYBREAK.md for limits and checks.
+
 ## Daybreak implemented — October 16, 2026
 
 Windows main/development were safely synchronized to the approved integrated

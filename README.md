@@ -11,8 +11,12 @@ BITE303P Operating Systems Lab, VIT Vellore. See [`docs/PRD.md`](docs/PRD.md) fo
 From the repository root, install `requirements-dashboard.txt`, then run
 `.\.venv\Scripts\python.exe -m streamlit run daybreak/app.py` on Windows or
 `.venv/bin/python -m streamlit run daybreak/app.py` on Ubuntu. Open
-`http://127.0.0.1:8501`. Four offline views cover interactive 34-tick replay,
+`http://127.0.0.1:8501`. Four views cover automatic/manual 34-tick replay,
 archived Linux observations, five-policy comparison and lab methodology.
+One shared player supports pause/resume, restart, paused seek, previous/next and
+speed for synthetic and saved Linux sessions. An explicit Linux-only Collect Live
+Data action captures five bounded background intervals in an isolated child, then
+replays them in that same player. Startup and ordinary reruns never collect.
 Candidate/applied simulated frequencies and K=3 state use the existing backend;
 measured observations and uncalibrated model estimates remain clearly separated.
 See [Daybreak installation, demonstration and Ubuntu checklist](docs/DAYBREAK.md).

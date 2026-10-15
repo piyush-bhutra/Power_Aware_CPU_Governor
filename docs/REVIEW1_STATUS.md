@@ -1,5 +1,19 @@
 # Review 1 status — October 16, 2026
 
+## Unified Daybreak playback update — October 16, 2026
+
+Synthetic and saved Linux sessions now share automatic/manual playback, source-aware
+charts, derived K=3 inspector, actual simulated transitions and completion summary.
+Explicit bounded Linux child collection is implemented but not natively validated
+on Windows. No new experimental results or physical savings are claimed. Ubuntu
+full-suite and actual collection/cancellation/disconnect checks are still pending;
+main integration remains DEFER, requiring separate exact-head approval.
+
+Windows portable tests: **133 passed**, including 24 new upgrade cases. Browser
+automatic replay completes at 1× and 4× with the verified summary. Independent
+review findings were fixed and regression checked. This is Windows presentation
+and fixture lifecycle verification, not a new Linux measurement or deployment check.
+
 ## Daybreak presentation update — October 16, 2026
 
 The approved local Streamlit dashboard now presents verified replay, separate Linux

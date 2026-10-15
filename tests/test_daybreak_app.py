@@ -10,7 +10,9 @@ ROOT = Path(__file__).resolve().parents[1]
 
 def app():
     from streamlit.testing.v1 import AppTest
-    return AppTest.from_file(str(ROOT / 'daybreak/app.py'), default_timeout=20).run()
+    at = AppTest.from_file(str(ROOT / 'daybreak/app.py'), default_timeout=20).run()
+    at.button(key='pause').click().run()
+    return at
 
 
 def test_replay_navigation_slider_next_previous_and_reset():

@@ -1,5 +1,38 @@
 # Development log
 
+## 2026-10-16 — Unified automatic Daybreak session playback
+
+Rechecked clean canonical repository, active development, all tracking refs,
+unpublished commits, stashes, worktrees and interrupted operations. Fetch and
+independent remote query confirmed bfcd822 development and 2753fc3 main, both aligned.
+Implemented pure finite Player, saved-session verification, single-purpose worker,
+parent ownership/watchdog and one common Streamlit player retaining Daybreak views.
+No backend/adapter/terminal/evidence changes or dependency additions.
+
+Tests were written and observed failing before implementation. Independent review
+found hidden first-start errors and source/speed widget cleanup across navigation;
+both were reproduced and fixed with regressions. Real browser inspection exposed
+stale seek-slider echoes interrupting rapid animation. Reproduced in a focused test;
+stable controls now sit outside the timed rendering fragment, and pause enables seek.
+The clock advances at most one observation per tick rather than skipping data.
+
+Collection uses the existing Linux five-attempt pipeline in a child, not a request
+thread: 12-second inner deadline, 15-second parent bound, six-second heartbeat lease,
+explicit cancellation and reaping, no automatic retry. Windows tests use fixtures/
+fakes only. New captures hash their artifacts; saved terminal captures without hashes
+are explicitly identified and revalidated against raw counters and backend decisions.
+No live sampling, generated workloads or physical CPU writes ran here. Ubuntu real
+collection/cancel/disconnect/shutdown checks and main integration remain deferred.
+
+Final Windows selection: 127 passed in 22.18 s; six portable live-adapter tests
+passed in 0.12 s. Includes 24 new tests for this upgrade, 41 dashboard tests total.
+Additional high-tick34 to saved five-sample switching regression passed. Real local
+browser verified 1×/4× automatic completion, three transitions/summary, pause/resume,
+manual navigation, view preservation and mobile layout. Final independent review
+found no actionable issue after fixes. Dependencies unchanged, pip/static/archive
+checks passed. Sixteen existing live lifecycle cases and four fcntl modules remain
+native Ubuntu checks. Main/origin/main remain 2753fc3; development-only checkpoint.
+
 ## 2026-10-16 — Authorized Windows synchronization and Daybreak dashboard
 
 Rechecked identity, clean working tree, all branches/upstreams, stashes, worktrees,

@@ -12,8 +12,10 @@ import streamlit as st
 
 from classifier.rules import THRESHOLDS, classify
 from daybreak.charts import comparison_figure, energy_figure, evidence_figure, replay_figure
-from daybreak.data import comparison_table, inspect_decision, load_comparison, move_tick, observation_table, replay_table
+from daybreak.data import comparison_table, inspect_decision, load_comparison, observation_table, replay_table
 from presentation.adapter import load_observations, load_replay
+from daybreak.playback_ui import active_collection, controls, ensure_player, cancel, poll_collection
+import time
 
 VIEWS = ('The Replay', 'The Evidence', 'The Comparison', 'Lab Notes')
 CHART_CONFIG = {'displaylogo': False, 'scrollZoom': False, 'modeBarButtonsToRemove': ['lasso2d', 'select2d']}
@@ -31,22 +33,12 @@ def navigate(view):
     st.session_state['view'] = view
 
 
-def change_tick(delta=0, reset=False):
-    tick = 1 if reset else move_tick(st.session_state.get('tick', 1), delta, 34)
-    st.session_state['tick'] = tick
-    st.session_state['tick_control'] = tick
-
-
-def select_tick():
-    st.session_state['tick'] = st.session_state['tick_control']
-
-
 def first_transition():
-    # Read the verified event instead of copying a transition boundary into UI logic.
-    replay = load_replay()
-    tick = next(f.tick for f in replay.frames if f.transition)
-    st.session_state['tick'] = tick
-    st.session_state['tick_control'] = tick
+    replay = st.session_state['dataset']
+    tick = next((f.tick for f in replay.frames if f.transition), None)
+    if tick is not None:
+        ensure_player().seek(tick)
+        st.session_state['sync_controls'] = True
 
 
 def state_copy(info):
@@ -84,10 +76,12 @@ def provenance(data):
 
 
 def replay_view():
-    replay = load_replay()
-    st.session_state.setdefault('tick', 1)
-    st.session_state.setdefault('tick_control', st.session_state['tick'])
-    tick = st.session_state['tick']
+    replay = st.session_state['dataset']
+    p = ensure_player()
+    tick = p.tick
+    status = 'Complete' if p.complete else ('Playing' if p.playing else 'Paused')
+    st.progress(tick / p.total, text=f'{status} · tick {tick} / {p.total} · {p.speed:g}× · pause to seek and inspect')
+    synthetic = replay.frames[0].source_kind == 'synthetic'
     frame = replay.frames[tick - 1]
     info = inspect_decision(replay, tick)
     left, right = st.columns([1.35, 1], gap='large')
@@ -97,32 +91,27 @@ def replay_view():
              '<p class="hero-copy">A workload-adaptive policy that waits before it switches. '
              'Follow the signals, inspect the logic, and see hysteresis in action.</p>')
         a, b = st.columns([1.05, 1])
-        a.button('Explore the first transition →', type='primary', on_click=first_transition, key='first_transition')
-        b.caption('34 verified synthetic ticks\n\nOffline · simulated actuation')
+        a.button('Explore the first transition →', type='primary', on_click=first_transition, key='first_transition', disabled=not any(f.transition for f in replay.frames))
+        b.caption(f'{len(replay.frames)} verified ' + ('synthetic ticks' if synthetic else 'saved Linux observations') + '\n\nSimulated governor decisions')
     with right:
         state_card(info)
     with st.container(key='card_pipeline'):
         html('<div class="pipeline"><span><span class="index">01</span>Observe</span>→'
              '<span><span class="index">02</span>Classify</span>→<span><span class="index">03</span>Select</span>→'
              '<strong><span class="index">04</span>Wait</strong>→<span><span class="index">05</span>Apply</span>'
-             '<span class="badge">SYNTHETIC REPLAY</span></div>')
+             f'<span class="badge">{"SYNTHETIC REPLAY" if synthetic else "SAVED LINUX SESSION"}</span></div>')
     main, inspector = st.columns([2.15, 1], gap='medium')
     with main, st.container(key='card_timeline'):
         st.subheader('The decision timeline')
         st.caption('Violet: utilization & derived candidate · Blue: applied simulated frequency')
         st.plotly_chart(replay_figure(replay, tick), width='stretch', theme=None, config=CHART_CONFIG, key='replay_chart')
-        previous, slider, next_button, reset = st.columns([.65, 4, .65, .8], vertical_alignment='bottom')
-        previous.button('←', key='previous', help='Previous tick', disabled=tick == 1, on_click=change_tick, args=(-1,))
-        with slider:
-            st.slider('Selected replay tick', 1, len(replay.frames), key='tick_control', on_change=select_tick)
-        next_button.button('→', key='next', help='Next tick', disabled=tick == len(replay.frames), on_click=change_tick, args=(1,))
-        reset.button('Reset', key='reset', on_click=change_tick, kwargs={'reset': True})
-        st.caption(f'Tick {tick} / {len(replay.frames)} · nominal synthetic time {frame.timestamp:.0f}s · {info["transitions"]} verified transitions so far')
+        clock = f'nominal synthetic time {frame.timestamp:.0f}s' if synthetic else f'measured interval {frame.features["elapsed_s"]:.4f}s'
+        st.caption(f'Tick {tick} / {len(replay.frames)} · {clock} · {info["transitions"]} simulated transitions so far')
     with inspector, st.container(key='card_inspector'):
         html('<div class="overline">READ THE SIGNALS</div>')
         st.subheader('Why this decision?')
         html(f'<div class="rule">The existing rule classifier predicts <b>{escape(frame.predicted_class.replace("_", " "))}</b>. '
-             'The candidate comes from the backend policy, not a separate UI heuristic.</div>')
+             'The candidate comes from the backend policy. Classes are provisional predictions, not verified workload labels.</div>')
         for label, value in (
             ('CPU utilization', f'{frame.util_pct:.2f}%'), ('I/O wait', f'{frame.features["iowait_pct"]:.2f}%'),
             ('Context switches', f'{frame.features["ctxt_per_s"]:,.0f} /s'),
@@ -132,12 +121,12 @@ def replay_view():
             html(f'<div class="keyval"><span>{label}</span><b>{escape(value)}</b></div>')
         html(f'<div class="decision">{escape(state_copy(info))}</div>'
              '<span class="badge">Prediction ≠ verified workload label</span>')
-        st.caption('*Candidate, persistence and reasons are reconstructed with the existing Policy. Applied outputs match the archive.')
+        st.caption('*Classes are provisional backend predictions; candidate, persistence and reasons are derived with the existing Policy. Applied simulated outputs are verified against the selected source.')
     a, b = st.columns(2)
     with a, st.container(key='card_evidence'):
         html('<div class="overline">THE EVIDENCE MATTERS</div>')
         st.subheader('Real signals. Clear boundaries.')
-        st.write('Five archived Linux observations establish background monitoring readiness. This replay uses invented inputs and simulated frequency decisions.')
+        st.write('Five archived Linux observations establish background monitoring readiness. ' + ('This replay uses invented inputs and simulated frequency decisions.' if synthetic else 'This saved session uses observed Linux counters, derived rates, provisional predicted classes and simulated governor decisions. It is not currently live.'))
         st.button('Open evidence register ↗', on_click=navigate, args=('The Evidence',), key='open_evidence')
     with b, st.container(key='card_transition_summary'):
         st.subheader('A deliberate pause, then a change.')
@@ -147,12 +136,16 @@ def replay_view():
                 st.write(f'T{event.tick:02d} · {ghz(event.previous_khz)} → {ghz(event.new_khz)} · {event.predicted_class}')
         else:
             st.write('No applied transitions yet. Initialization is excluded.')
-        st.caption('All three full-run events are verified against the recorded applied frequencies.')
+        st.caption(f'{replay.summary["transitions"]} full-session simulated transitions; initialization excluded. Zero is a valid result.')
+        if tick == len(replay.frames):
+            st.success(f'Session complete · {len(replay.frames)} samples · {replay.summary["transitions"]} simulated transitions')
+            st.json(replay.summary)
         st.button('Compare all five policies ↗', on_click=navigate, args=('The Comparison',), key='open_comparison')
     provenance(replay)
-    with st.expander('Inspect all 34 archived samples'):
+    with st.expander(f'Inspect all {len(replay.frames)} source samples'):
         st.dataframe(replay_table(replay), hide_index=True, width='stretch')
         st.caption(info['sample_id'])
+        st.caption('Source: ' + ('synthetic generated counters' if synthetic else 'observed Linux counters; features derived from raw deltas and actual elapsed time'))
 
 
 def evidence_view():
@@ -222,8 +215,8 @@ def notes_view():
         st.code(inspect.getsource(classify), language='python')
     with st.container(key='card_live_limit'):
         st.subheader('VirtualBox & live monitoring')
-        st.write('The recorded Ubuntu guest exposes no CPUFreq interface. Loaded stress runs have a history of freezes and timing irregularities. Nothing in this dashboard starts live observation, a collector, artificial load, a subprocess or hardware actuation.')
-        st.write('The existing terminal live API uses Linux SIGALRM/setitimer deadlines and writes capture artifacts. Streamlit request threads cannot safely own that process-level signal lifecycle, so web live capture is deferred; offline views are independent of it.')
+        st.write('The recorded Ubuntu guest exposes no CPUFreq interface. Loaded stress runs have a history of freezes and timing irregularities. Ordinary dashboard startup and replay do not start collection. The explicit Linux collection action observes background activity only; no artificial load or hardware actuation is used.')
+        st.write('Collect Live Data explicitly starts a single-purpose Linux child using the existing five-interval pipeline. Its 12-second collection deadline is backed by a 15-second parent watchdog, cancellation and UI heartbeat lease. Saved sessions are raw-counter validated and decisions reconstructed before the shared player replays them. Nothing collects on startup or ordinary reruns.')
         st.code('.venv/bin/python -m governorlab --visual\n.venv/bin/python -m governorlab --live --visual', language='bash')
         st.caption('Terminal live mode is Linux-only, user-initiated and separately bounded. These commands are documentation, not actions launched by the web page.')
     st.subheader('Reproducibility')
@@ -240,9 +233,37 @@ def main():
     with navigation:
         st.radio('Dashboard section', VIEWS, horizontal=True, key='view', label_visibility='collapsed')
     view = st.session_state['view']
+    previous_view = st.session_state.get('previous_view')
+    if view != 'The Replay' and 'player' in st.session_state:
+        ensure_player().pause()
+        cancel()
+    elif view == 'The Replay' and previous_view not in (None, 'The Replay'):
+        p = ensure_player()
+        p.restart(time.monotonic()) if p.complete else p.play(time.monotonic())
+    st.session_state['previous_view'] = view
     try:
-        {'The Replay': replay_view, 'The Evidence': evidence_view,
-         'The Comparison': comparison_view, 'Lab Notes': notes_view}[view]()
+        if view == 'The Replay':
+            p = ensure_player()
+            controls()
+            timed = p.playing or active_collection()
+            @st.fragment(run_every=.25 if timed else None)
+            def session_player():
+                if st.session_state.pop('sync_controls', False) or st.session_state['view'] != 'The Replay':
+                    st.rerun()
+                try:
+                    if poll_collection(apply=False):
+                        st.rerun()
+                    p.advance(time.monotonic())
+                    st.session_state['tick'] = p.tick
+                    replay_view()
+                except (OSError, ValueError, KeyError, TypeError) as error:
+                    ensure_player().pause()
+                    st.error(f'Session validation failed: {error}. No substitute samples generated.')
+                if (ensure_player().playing or active_collection()) != timed:
+                    st.rerun()
+            session_player()
+        else:
+            {'The Evidence': evidence_view, 'The Comparison': comparison_view, 'Lab Notes': notes_view}[view]()
     except (OSError, ValueError, KeyError, TypeError) as error:
         st.error(f'This view could not validate its source data: {error}')
         st.info('No substitute measurements are generated. Restore the original archive and try again; other views remain independently available.')
