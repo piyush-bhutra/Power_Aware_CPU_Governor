@@ -91,3 +91,11 @@ Choose a new output directory. The review driver exports five 34-row policy CSVs
 summary/provenance JSON and labelled energy/frequency PNGs using seed 11 and K=3.
 This is an open-loop comparison of policy approximations, not evidence of measured
 physical energy savings or preserved workload completion time. See docs/REVIEW1_PLAN.md.
+
+## Standalone one-worker CPU experiment
+After reviewing and approving the limits in [collection workflow](docs/COLLECTION_WORKFLOW.md),
+close Codex/unnecessary applications and run `./scripts/run_safe_cpu_experiment.sh`
+from the repository root in an ordinary Ubuntu terminal. Fresh preflight and typing
+`RUN` are required. Ctrl+C cancels with cleanup. No real workload was executed as part
+of launcher setup. Reports are generated without Codex in the Windows shared folder;
+failures preserve local evidence and never trigger an automatic retry.

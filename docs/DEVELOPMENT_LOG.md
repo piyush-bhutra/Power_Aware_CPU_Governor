@@ -46,3 +46,16 @@ No repeat. Exact producing source hashes, CSV, statistics and diagnostics export
 Checkpoint/push: latest hash in shared REAL_MONITORING_MILESTONE.md and SESSION_STATUS.md;
 main/historical refs preserved. Next: review report or separately approve one CPU worker
 for five sampling intervals under the documented strict budgets; no experiment started.
+
+## 2026-10-15 — Standalone CPU launcher setup (no real stress run)
+Implemented scripts/run_safe_cpu_experiment.sh and Python orchestration over the existing
+collector. Added shared experiment locking, process identity records, independently
+attempted fallback cleanup, strict confirmation, preflight, local logs and standalone
+validated export/handoff. Persistent docs include execution/cancellation/recovery steps.
+Tests: 80 harmless/fixture/mock cases; shell syntax and diff checks. Regression-first
+review fixes cover cleanup exceptions, partial exports and reused identities. A short
+mock timeout initially masked a nonzero-exit test; replaced that mock with immediate shell
+exit and used production deadline for non-timeout cases. No real stress-ng or launcher
+execution against the real collector. No installs/system settings/main changes.
+Checkpoint/push: final hash in SAFE_CPU_LAUNCHER_SETUP.md and SESSION_STATUS.md.
+Next: wait for user approval and manual execution with Codex closed.

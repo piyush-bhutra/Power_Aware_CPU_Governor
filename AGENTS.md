@@ -48,3 +48,7 @@ Real-monitoring milestone: the named prompt authorized collector/monitor fixes, 
 five-interval no-generated-load observation, and its development checkpoint/push.
 That observation is complete. See [collection workflow](docs/COLLECTION_WORKFLOW.md)
 for the repaired collector and separately gated CPU plan; no artificial load is approved.
+
+Safe_CPU_Launcher.txt authorizes standalone launcher implementation/mock tests and its
+development checkpoint/push, explicitly not real stress execution. The launcher is for
+later user-approved manual use with Codex closed. Do not bypass its RUN confirmation.

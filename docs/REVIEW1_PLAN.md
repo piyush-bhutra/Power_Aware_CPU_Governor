@@ -82,3 +82,12 @@ physical actuation, measured energy or stress validation is claimed. Use the exp
 REAL_MONITORING_MILESTONE.md and CSV in the progress report. Collector I/O remains
 intentionally disabled. The first CPU experiment plan still needs explicit approval;
 see COLLECTION_WORKFLOW.md, including the ~25% aggregate utilization expectation.
+
+## Standalone CPU launcher ready for manual approval
+Use ./scripts/run_safe_cpu_experiment.sh with Codex closed, from the project root,
+only after reviewing/approving the one-worker limits. Executable mode is set. Type RUN
+at the interactive prompt to start; Ctrl+C cancels with cleanup/reporting. 80 tests use
+harmless processes and mocks; no real CPU dataset was generated during launcher setup.
+Read COLLECTION_WORKFLOW.md for local/shared outputs and VM-freeze recovery. Existing
+synthetic and five-row background evidence remain the verified Review 1 data until a
+manual CPU run succeeds. Below 70% aggregate utilization is not automatically failure.

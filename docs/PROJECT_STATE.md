@@ -105,3 +105,19 @@ I/O is disabled rather than replaced by an unreviewed disk workload. See
 Review findings about cleanup exceptions/provenance were reproduced and fixed.
 Optional static lint was unavailable (pyflakes module absent); no package installed.
 Next: Review 1 report, or separately approve the documented one-worker CPU experiment.
+
+## Standalone CPU launcher setup — October 15, 2026
+Authorized by Safe_CPU_Launcher.txt for implementation and harmless tests only.
+Added executable scripts/run_safe_cpu_experiment.sh and benchmark.safe_cpu_launcher;
+reuses collector CLI/supervisor/validator. Adds interactive RUN confirmation, environment/
+resource/shared-mount preflight, lock shared with direct collector, source provenance,
+outer timeout, fallback recorded-group cleanup and standalone local/shared handoff.
+Collector now records process groups and participates in the launcher-inherited lock.
+80 lightweight tests cover mocked success, dependencies/resources, failures/timeouts,
+INT/TERM cleanup, manifest/CSV validation, exports, locks and identity reuse. No real
+CPU, memory or I/O workload ran. Existing Linux/synthetic behavior remains covered.
+Review findings on cleanup exceptions/partial exports/identity reuse were fixed.
+Launcher is ready for user-approved manual execution with Codex closed, subject to
+its fresh preflight and interactive confirmation. Stress-ng effectiveness and loaded
+VM timing remain unvalidated. Checkpoint/push hash is recorded in shared setup handoff.
+Next: user reviews limits, closes Codex, and manually launches only if approved.

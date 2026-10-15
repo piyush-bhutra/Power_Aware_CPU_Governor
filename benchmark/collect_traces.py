@@ -1,5 +1,7 @@
 """Conservative, explicitly approved collection; never changes CPU frequency."""
 import argparse
+from contextlib import contextmanager
+import fcntl
 from datetime import datetime, timezone
 import json
 import hashlib
@@ -14,6 +16,73 @@ import tempfile
 import time
 
 from monitor.capture import check_resources, resources, validate_trace
+
+
+@contextmanager
+def experiment_lock(root):
+    """One project experiment; launcher may pass its already-held lock to collector."""
+    path=Path(root)/'data/.experiment.lock'
+    path.parent.mkdir(parents=True,exist_ok=True)
+    inherited=os.environ.get('POWER_GOVERNOR_EXPERIMENT_LOCK_FD')
+    if inherited:
+        fd=os.dup(int(inherited))
+        if (os.fstat(fd).st_dev,os.fstat(fd).st_ino)!=(path.stat().st_dev,path.stat().st_ino):
+            os.close(fd)
+            raise RuntimeError('Invalid inherited experiment lock')
+    else:
+        fd=os.open(path,os.O_RDWR|os.O_CREAT,0o600)
+    try:
+        try:
+            fcntl.flock(fd,fcntl.LOCK_EX|fcntl.LOCK_NB)
+        except BlockingIOError as error:
+            raise RuntimeError('Another project experiment is already running') from error
+        yield fd
+    finally:
+        os.close(fd)  # keep parent lock held when collector inherited the same description
+
+
+def process_record(pid):
+    fields=Path(f'/proc/{pid}/stat').read_text().rsplit(')',1)[1].split()
+    return dict(pid=pid,pgid=int(fields[2]),session=int(fields[3]),start_ticks=int(fields[19]))
+
+
+def cleanup_recorded_groups(directory):
+    """Fallback after supervisor interruption; identify owned sessions before signalling."""
+    def members(record):
+        found=[]
+        for path in Path('/proc').glob('[0-9]*/stat'):
+            try:
+                if path.stat().st_uid!=os.getuid():
+                    continue
+                fields=path.read_text().rsplit(')',1)[1].split()
+                if (int(fields[2])==record['pgid'] and int(fields[3])==record['session']
+                        and int(fields[19])>=record['start_ticks'] and fields[0] not in ('Z','X')):
+                    found.append(int(path.parent.name))
+            except (OSError,ValueError,IndexError):
+                continue
+        return found
+    clean=True
+    for path in Path(directory).rglob('processes.json'):
+        records=json.loads(path.read_text())
+        for record in records.values():
+            if record['pgid']!=record['pid'] or record['session']!=record['pid'] or record['pgid']==os.getpgrp():
+                raise RuntimeError('Unsafe recorded process group; refusing cleanup')
+            try:
+                leader=process_record(record['pid'])
+            except FileNotFoundError:
+                leader=None
+            if leader is not None and leader['start_ticks']!=record['start_ticks']:
+                raise RuntimeError('Recorded leader identity has changed; refusing cleanup')
+            for sig,delay in ((signal.SIGTERM,.2),(signal.SIGKILL,.2)):
+                if not members(record):
+                    break
+                try:
+                    os.killpg(record['pgid'],sig)
+                except ProcessLookupError:
+                    break
+                time.sleep(delay)
+            clean=not members(record) and clean
+    return clean
 
 
 def parse_args(argv=None):
@@ -58,13 +127,21 @@ def run_processes(monitor_command, worker_command, directory, timeout_s):
     started=time.monotonic()
     initial=resources()
     check_resources(initial,initial)
+    records={}
+    def record(name,process):
+        records[name]=process_record(process.pid)
+        temp=directory/'.processes.tmp'
+        temp.write_text(json.dumps(records,indent=2)+'\n')
+        os.replace(temp,directory/'processes.json')
     with (directory/'monitor.log').open('x') as monitor_log, (directory/'worker.log').open('x') as worker_log:
         try:
             if worker_command:
                 worker=subprocess.Popen(worker_command,stdout=worker_log,stderr=subprocess.STDOUT,
                                         start_new_session=True)
+                record('worker',worker)
             monitor=subprocess.Popen(monitor_command,stdout=monitor_log,stderr=subprocess.STDOUT,
                                      start_new_session=True)
+            record('monitor',monitor)
             while True:
                 check_resources(resources(),initial)
                 monitor_code=monitor.poll()
@@ -88,7 +165,7 @@ def run_processes(monitor_command, worker_command, directory, timeout_s):
                 stop_group(worker)
 
 
-def main():
+def collect():
     args=parse_args()
     parent=Path(args.outdir).resolve()
     shared=Path('/media/sf_OS_Project_Shared')
@@ -148,6 +225,11 @@ def main():
         manifest['end_utc']=datetime.now(timezone.utc).isoformat()
         save_manifest()
         print(f'Run preserved in {directory}; status={manifest["status"]}')
+
+
+def main():
+    with experiment_lock(Path(__file__).resolve().parents[1]):
+        collect()
 
 
 if __name__=='__main__':
