@@ -121,48 +121,111 @@ def stop_group(process):
     process.wait(timeout=2)
 
 
-def run_processes(monitor_command, worker_command, directory, timeout_s):
-    """Watch new process groups; always tear both down on failure or timeout."""
+def run_processes(monitor_command, worker_command, directory, timeout_s, *, readiness=False):
+    """Watch owned groups within one total budget; readiness never extends it."""
     monitor=worker=None
     started=time.monotonic()
     initial=resources()
     check_resources(initial,initial)
     records={}
+    evidence=dict(events=[], monitor_exit=None, worker_exit=None, cleanup='pending')
+    diagnostic_errors=[]
+    def event(name, **details):
+        evidence['events'].append(dict(event=name, elapsed_s=time.monotonic()-started,
+                                      utc=datetime.now(timezone.utc).isoformat(), **details))
+        save_evidence()
+    def save_evidence():
+        try:
+            temp=directory/'.lifecycle.tmp'
+            temp.write_text(json.dumps(evidence,indent=2)+'\n')
+            os.replace(temp,directory/'lifecycle.json')
+        except OSError as error:
+            # Diagnostic storage must never prevent either group's cleanup.
+            diagnostic_errors.append(str(error))
     def record(name,process):
         records[name]=process_record(process.pid)
         temp=directory/'.processes.tmp'
         temp.write_text(json.dumps(records,indent=2)+'\n')
         os.replace(temp,directory/'processes.json')
+        event(name+'_started',pid=process.pid)
+    def deadline(phase):
+        evidence['deadline_phase']=phase
+        event('deadline_exceeded',phase=phase)
+        raise TimeoutError(f'{phase} deadline exceeded within external collector budget')
     with (directory/'monitor.log').open('x') as monitor_log, (directory/'worker.log').open('x') as worker_log:
         try:
-            if worker_command:
-                worker=subprocess.Popen(worker_command,stdout=worker_log,stderr=subprocess.STDOUT,
-                                        start_new_session=True)
-                record('worker',worker)
             monitor=subprocess.Popen(monitor_command,stdout=monitor_log,stderr=subprocess.STDOUT,
                                      start_new_session=True)
             record('monitor',monitor)
+            if readiness:
+                while True:
+                    check_resources(resources(),initial)
+                    code=monitor.poll()
+                    if code is not None:
+                        raise RuntimeError(f'monitor exited before readiness with status {code}; see monitor.log')
+                    elapsed=time.monotonic()-started
+                    if elapsed >= min(2,timeout_s):
+                        deadline('startup')
+                    if (directory/'monitor.ready').exists():
+                        event('monitor_ready')
+                        break
+                    time.sleep(.05)
+            if worker_command:
+                if time.monotonic()-started >= (min(2,timeout_s) if readiness else timeout_s):
+                    deadline('startup')
+                worker=subprocess.Popen(worker_command,stdout=worker_log,stderr=subprocess.STDOUT,
+                                        start_new_session=True)
+                record('worker',worker)
+            if readiness:
+                if time.monotonic()-started >= timeout_s:
+                    deadline('startup')
+                # Baseline is taken only after worker launch, so pre-load startup
+                # does not consume one of the requested observation intervals.
+                (directory/'monitor.start').touch(exist_ok=False)
+                event('sampling_released')
             while True:
                 check_resources(resources(),initial)
                 monitor_code=monitor.poll()
                 worker_code=worker.poll() if worker else None
+                for name,code in (('monitor',monitor_code),('worker',worker_code)):
+                    if code is not None and evidence[name+'_exit'] is None:
+                        evidence[name+'_exit']=code
+                        event(name+'_exited',exit_code=code)
                 if worker and worker_code is not None and worker_code != 0:
                     raise RuntimeError(f'worker exited with status {worker_code}; see worker.log')
                 if monitor_code is not None and monitor_code != 0:
                     raise RuntimeError(f'monitor exited with status {monitor_code}; see monitor.log')
                 if worker and worker_code==0 and monitor_code is None:
                     raise RuntimeError('worker ended before monitoring completed; invalid workload trace')
+                # Deadline precedes success: a late poll must not accept overruns.
+                if time.monotonic()-started >= timeout_s:
+                    deadline('sampling' if monitor_code is None else 'workload')
                 if monitor_code==0 and (worker is None or worker_code==0):
                     return dict(monitor_exit=monitor_code,worker_exit=worker_code,
                                 elapsed_s=time.monotonic()-started)
-                if time.monotonic()-started > timeout_s:
-                    raise TimeoutError('external collector deadline exceeded')
                 time.sleep(.05)
+        except BaseException as error:
+            event('failure',error=f'{type(error).__name__}: {error}')
+            raise
         finally:
-            try:
-                stop_group(monitor)
-            finally:
-                stop_group(worker)
+            cleanup_errors=[]
+            for name,process in (('monitor',monitor),('worker',worker)):
+                try:
+                    if process is not None:
+                        event(name+'_cleanup_requested',exit_before_cleanup=process.poll())
+                    stop_group(process)
+                except BaseException as error:
+                    cleanup_errors.append(error)
+                    event(name+'_cleanup_failed',error=f'{type(error).__name__}: {error}')
+                finally:
+                    if process is not None:
+                        evidence[name+'_exit']=process.returncode
+            evidence['cleanup']='failed' if cleanup_errors else 'completed'
+            event('cleanup_finished')
+            if cleanup_errors:
+                raise cleanup_errors[0]
+            if diagnostic_errors and sys.exc_info()[0] is None:
+                raise RuntimeError(f'Lifecycle diagnostic storage failed: {diagnostic_errors[0]}')
 
 
 def collect():
@@ -184,8 +247,9 @@ def collect():
             worker+=['--cpu','1','--cpu-method','int64']
         if args.profile in ('vm','mixed'):
             worker+=['--vm','1','--vm-bytes',str(args.memory_bytes),'--vm-method','flip']
-    command=[sys.executable,'-m','monitor.capture','--ticks',str(args.duration),
-             '--label',label,'--output',str(directory/'trace.csv')]
+    command=[sys.executable,'-u','-m','monitor.capture','--ticks',str(args.duration),
+             '--label',label,'--output',str(directory/'trace.csv'),
+             '--ready-file',str(directory/'monitor.ready'),'--start-file',str(directory/'monitor.start')]
     revision=subprocess.run(['git','rev-parse','HEAD'],capture_output=True,text=True,timeout=5)
     dirty=subprocess.run(['git','status','--porcelain'],capture_output=True,text=True,timeout=5)
     root=Path(__file__).resolve().parents[1]
@@ -197,6 +261,7 @@ def collect():
                   profile=args.profile,workload_label=label,monitor_command=command,worker_command=worker,
                   max_memory_bytes=args.memory_bytes,cpu_workers=1 if args.profile in ('cpu','mixed') else 0,
                   interval_s=1,duration_intervals=args.duration,external_timeout_s=args.duration+6,
+                  startup_timeout_s=2,worker_timeout_s=args.duration+2,
                   frequency_control='none',initial_resources=resources(),
                   limitations='Aggregate counters; requested stressor labels are not classifier ground truth.')
     (directory/'metadata.json').write_text(json.dumps(metadata,indent=2)+'\n')
@@ -210,9 +275,10 @@ def collect():
         raise InterruptedError(f'collector interrupted by signal {signum}')
     previous={sig:signal.signal(sig,interrupted) for sig in (signal.SIGINT,signal.SIGTERM)}
     try:
-        manifest['processes']=run_processes(command,worker,directory,args.duration+6)
+        manifest['processes']=run_processes(command,worker,directory,args.duration+6,readiness=True)
         stats=validate_trace(directory/'trace.csv',args.duration,label,
                              os.cpu_count()*os.sysconf('SC_CLK_TCK'))
+        manifest['sample_validation']=dict(success=True,statistics=stats)
         (directory/'statistics.json').write_text(json.dumps(stats,indent=2)+'\n')
         manifest.update(status='complete',success=True)
     except BaseException as error:
@@ -221,6 +287,16 @@ def collect():
     finally:
         for sig,handler in previous.items():
             signal.signal(sig,handler)
+        if 'sample_validation' not in manifest:
+            try:
+                stats=validate_trace(directory/'trace.csv',args.duration,label,
+                                     os.cpu_count()*os.sysconf('SC_CLK_TCK'))
+                manifest['sample_validation']=dict(success=True,statistics=stats)
+            except Exception as error:
+                manifest['sample_validation']=dict(success=False,error=f'{type(error).__name__}: {error}')
+        lifecycle=directory/'lifecycle.json'
+        if lifecycle.exists():
+            manifest['lifecycle']=json.loads(lifecycle.read_text())
         manifest['final_resources']=resources()
         manifest['end_utc']=datetime.now(timezone.utc).isoformat()
         save_manifest()

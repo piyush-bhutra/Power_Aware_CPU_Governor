@@ -75,3 +75,24 @@ cases were added; final full suite: 93 passed in 7.60 s. Shell syntax and whites
 checks passed. Independent review found no blocking issues. Checkpoint/export evidence
 is in the shared report.
 Next: review handoff and separately approve one manual retry with Codex closed.
+
+## 2026-10-15 — CPU timing and missing-sample investigation
+Authorized by prompts/CPU_Timing_Diagnostics.txt; user requested autonomous completion.
+Fetched origin: development clean and identical at 81dd446 before edits; identity
+repository-local piyush-bhutra, historical branches/stashes/worktree preserved.
+Inspected original manual failed CPU run and matched collector source hashes to its
+checkpoint. Worker-first startup/no readiness and failure-only loss of exit/sample
+validation evidence reproduced. The specific original zero-row cause is unresolved.
+Added monitor ready/start handshake, <=2 s startup within unchanged total budget,
+unbuffered/per-attempt diagnostics, atomic lifecycle/status evidence and independent
+failure-time validation. Existing seven/eleven/fifteen-second budgets and guards remain.
+Initial five failing regressions plus additional skipped-interval/header and storage
+cleanup failures were observed before fixes. A reviewer independently identified the
+intermediate cleanup storage regression; corrected and re-reviewed. Full suite now
+104 passed; shell syntax/diff checks pass. Import-only observation recorded 13.378 ms
+cumulative capture imports, not a loaded run or full interpreter startup measurement.
+No real collector/live sampler/stress, system/VM changes, installs or retry executed.
+Accumulated milestones READY for implementation integration; loaded validation DEFER.
+Detailed evidence, final checkpoint/push and archived handoffs exported to shared
+CPU_TIMING_DIAGNOSTIC.md. Next: separately authorize one background-only readiness
+observation; no automatic experiment and no main merge/push.

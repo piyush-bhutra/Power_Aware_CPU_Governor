@@ -55,7 +55,7 @@ def test_manifest_records_failure_and_preserves_unique_runs(tmp_path, monkeypatc
     import json
     from benchmark import collect_traces
 
-    def failed(*args):
+    def failed(*args, **kwargs):
         raise RuntimeError('mock worker status 7')
     monkeypatch.setattr(collect_traces, 'run_processes', failed)
     monkeypatch.setattr(sys, 'argv', ['collector','5','64M',str(tmp_path),'--approved-workload'])
@@ -99,7 +99,7 @@ def test_worker_cleanup_still_runs_if_monitor_cleanup_raises(tmp_path, monkeypat
 def test_metadata_identifies_uncommitted_sources(tmp_path, monkeypatch):
     import json
     from benchmark import collect_traces
-    def failed(*args):
+    def failed(*args, **kwargs):
         raise RuntimeError('mock failure')
     monkeypatch.setattr(collect_traces, 'run_processes', failed)
     monkeypatch.setattr(sys, 'argv', ['collector','5','64M',str(tmp_path),'--approved-workload'])

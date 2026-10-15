@@ -91,3 +91,14 @@ harmless processes and mocks; no real CPU dataset was generated during launcher 
 Read COLLECTION_WORKFLOW.md for local/shared outputs and VM-freeze recovery. Existing
 synthetic and five-row background evidence remain the verified Review 1 data until a
 manual CPU run succeeds. Below 70% aggregate utilization is not automatically failure.
+
+## CPU attempt and timing diagnostic status
+The first manual one-worker CPU attempt failed: stress-ng reported completion in
+11.08 s for a requested 7 s, but supervisor timed out and CSV contains zero rows.
+Do not use it as a validated CPU dataset or infer energy/performance savings.
+CPU_TIMING_DIAGNOSTIC.md records evidence, uncertainty and monitor-first readiness/
+lifecycle/sample-validation corrections tested with mocks and harmless processes.
+104 tests pass; implementation milestones are READY for integration review, while
+loaded VM timing/CPU dataset claims remain DEFER. No main merge is authorized.
+Use existing synthetic and background evidence for Review 1. Separately authorize
+a background-only readiness observation before considering another CPU attempt.

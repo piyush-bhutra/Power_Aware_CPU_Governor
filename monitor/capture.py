@@ -4,6 +4,7 @@ import csv
 import json
 import math
 import os
+import time
 from pathlib import Path
 
 from monitor.reader import RAW_FIELDS, compute_signals, log_csv, sample
@@ -81,19 +82,36 @@ def main():
     parser.add_argument('--output', required=True)
     parser.add_argument('--ticks', type=int, default=5)
     parser.add_argument('--label', default='uncontrolled_background')
+    parser.add_argument('--ready-file')
+    parser.add_argument('--start-file')
     args=parser.parse_args()
     if not 1 <= args.ticks <= 30:
         parser.error('--ticks must be 1–30')
+    if bool(args.ready_file) != bool(args.start_file):
+        parser.error('--ready-file and --start-file must be supplied together')
     initial=resources()
     check_resources(initial,initial)
     def annotated():
-        for sig in sample(1.0,args.ticks):
+        if args.ready_file:
+            Path(args.ready_file).touch(exist_ok=False)
+            print('monitor ready; waiting for sampling release', flush=True)
+            started=time.monotonic()
+            while not Path(args.start_file).exists():
+                check_resources(resources(),initial)
+                if time.monotonic()-started >= 2:
+                    raise TimeoutError('monitor sampling release startup timeout')
+                time.sleep(.01)
+        print('sampling started', flush=True)
+        def observed(event):
+            print(json.dumps(event), flush=True)
+        for sig in sample(1.0,args.ticks,observer=observed):
             current=resources()
             check_resources(current, initial)
             if not .5 <= sig['elapsed_s'] <= 2:
                 raise RuntimeError('Sampling timing anomaly; stopping without retry')
             yield {**sig, **current, 'workload_label':args.label,
                    'observation_source':'linux_proc_stat'}
+        print('sampling finished', flush=True)
     log_csv(args.output, annotated(), LABEL_COLS, mode='x')
     stats=validate_trace(args.output,args.ticks,args.label,os.cpu_count()*os.sysconf('SC_CLK_TCK'))
     print(json.dumps(stats,indent=2))

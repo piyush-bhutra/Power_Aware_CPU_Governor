@@ -139,3 +139,23 @@ Test results and final checkpoint are recorded in the shared swap investigation 
 No real collector, stress-ng, hardware control or experiment retry occurred.
 Next: review report, then obtain approval for one manual retry with Codex closed;
 fresh preflight and interactive RUN remain mandatory. No merge to main performed.
+
+## CPU timing diagnostics — October 15, 2026
+The subsequent manual run launcher-20261015T134651Z-69tl2qzm failed at the collector
+deadline. stress-ng reported success after 11.08 s despite a requested seven-second
+timeout; trace.csv has a header and zero rows. There is no validated CPU dataset.
+Root cause of the missing rows remains unresolved: monitor return code and interval
+diagnostics were absent. Original CSV creation roughly 52 ms after metadata start
+does not support an eleven-second Python import delay. Recorded sleep/timeout overruns
+raise timing concerns without proving host/guest clock distortion; RAM remained >2 GiB
+available and swap occupancy was stable.
+CPU_Timing_Diagnostics.txt authorized fixes/mock tests/checkpoint/push only, no real
+load. Monitor-first readiness/start gating now fits a two-second startup cap within
+existing total deadlines. Lifecycle/exit/cleanup evidence, flushed per-attempt raw
+diagnostics and failure-independent sample validation are preserved. Valid samples
+cannot promote failed supervision to success; storage errors cannot skip group cleanup.
+Fresh full suite: 104 passed; independent review found no remaining code/safety issues.
+READY for implementation integration, DEFER loaded experiment/data claims. Main is
+unchanged; development checkpoint/push details are in the shared diagnostic handoff.
+See CPU_TIMING_DIAGNOSTIC.md. Next: separately approve one five-interval background-only
+observation of the new readiness/diagnostic path before considering any CPU retry.

@@ -99,3 +99,8 @@ from the repository root in an ordinary Ubuntu terminal. Fresh preflight and typ
 `RUN` are required. Ctrl+C cancels with cleanup. No real workload was executed as part
 of launcher setup. Reports are generated without Codex in the Windows shared folder;
 failures preserve local evidence and never trigger an automatic retry.
+
+The first manual CPU attempt failed with zero samples. See
+[CPU timing diagnostic](docs/CPU_TIMING_DIAGNOSTIC.md) for verified evidence and
+remaining uncertainty. Monitor-first readiness and failure diagnostics are tested;
+another real observation or workload requires separate approval.

@@ -1,5 +1,10 @@
 # Safe Linux monitoring and controlled collection
 
+Latest October 15 update: the first manual CPU attempt failed with zero CSV rows.
+The timing investigation added readiness gating and failure diagnostics; no retry
+was run. See the final section below and CPU_TIMING_DIAGNOSTIC.md. Earlier milestone
+statements below describe their historical authorization and validation scope.
+
 Milestone authorization: shared `prompts/Real_Monitoring_Milestone.txt`, October 15,
 2026. Only one background-only five-interval observation was authorized and executed.
 No artificial workload or actual collector invocation has been executed in this milestone.
@@ -169,3 +174,27 @@ If the VM becomes unresponsive, do not launch another run. Allow recovery, inspe
 VM activity, and use manual restart only if necessary. After recovery, inspect local
 metadata/manifests/process records and handoff before deciding what happened; do not
 reset Git, delete evidence, change VM settings or blindly repeat the experiment.
+
+## Timing diagnostic correction — no real experiment executed
+Monitor launches first with unbuffered output, flushes its exclusive CSV header,
+checks resources and signals readiness. Supervisor waits <=2 s inside the existing
+duration+6 total budget, starts the worker, then releases sampling. Capture takes
+its baseline after release and has its own <=2 s release wait. Readiness proves
+capture setup, not stressor initialization or uninterrupted guest scheduling.
+Five-interval CPU limits remain seven-second worker / eleven-second supervisor /
+fifteen-second outer guard. No startup extension, weaker resource/timing check or
+automatic retry was added. Late success cannot bypass the total deadline.
+
+lifecycle.json atomically records launch/readiness/release, observed exits, deadline
+phase and cleanup events with UTC/monotonic timing. monitor.log flushes baseline and
+all attempted intervals, including invalid/skipped raw-counter intervals. Diagnostic
+storage errors cannot skip cleanup. Manifest sample_validation is attempted after
+failed supervision too; sample validity and workload success remain separate. Even
+valid rows cannot make a failed workload a successful controlled dataset.
+
+Original manual run launcher-20261015T134651Z-69tl2qzm is failed evidence: worker
+reported 11.08 s for requested 7 s, collector exceeded deadline, zero rows, stable
+swap occupancy and ample available RAM. No specific original monitor failure is
+proved. Current code has 104 passing safe tests; real readiness/loaded VM timing
+remain unvalidated. Next proposed separately approved action is one background-only
+five-interval readiness observation with no worker and existing 11/15 s limits.

@@ -94,7 +94,7 @@ def read_freq_khz(cpu=0):
         return None
 
 
-def sample(interval_s=1.0, count=None):
+def sample(interval_s=1.0, count=None, *, observer=None):
     """Yield one signal dict per tick. Runs forever unless count is given."""
     if not math.isfinite(interval_s) or interval_s <= 0:
         raise ValueError("sampling interval must be finite and positive")
@@ -102,12 +102,17 @@ def sample(interval_s=1.0, count=None):
         raise ValueError("sample count must be non-negative")
     prev = read_stat()
     previous_time = time.monotonic()
+    if observer:
+        observer(dict(event='baseline', monotonic_s=previous_time, raw=prev))
     n = 0
     while count is None or n < count:
         time.sleep(interval_s)
         cur = read_stat()
         now = time.monotonic()
         sig = compute_signals(prev, cur, now - previous_time)
+        if observer:
+            observer(dict(event='interval', attempt=n+1, elapsed_s=now-previous_time,
+                          valid=sig is not None, raw_prev=prev, raw_cur=cur))
         if sig is not None:
             for side, snapshot in (("prev", prev), ("cur", cur)):
                 sig.update({f"raw_{side}_{f}": snapshot[f] for f in RAW_FIELDS})
@@ -137,6 +142,7 @@ def log_csv(path, rows, extra_cols=(), *, mode="a"):
         w = csv.DictWriter(f, fieldnames=cols, extrasaction="ignore")
         if f.tell() == 0:
             w.writeheader()
+            f.flush()
         for row in rows:
             w.writerow(row)
             f.flush()  # so a killed run still leaves usable data
