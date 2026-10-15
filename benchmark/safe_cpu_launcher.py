@@ -35,14 +35,14 @@ def atomic_text(path,content):
             os.unlink(temp)
 
 
-def preflight(root,shared,diagnostics=None):
+def preflight(root,shared,diagnostics=None,*,profile='cpu'):
     for name in ('.venv/bin/python','collect_real_traces.sh','benchmark/collect_traces.py',
                  'monitor/capture.py','monitor/reader.py'):
         if not (root/name).is_file():
             raise RuntimeError(f'Missing required project file: {name}')
     if not os.access(root/'.venv/bin/python',os.X_OK):
         raise RuntimeError('Python environment is not executable')
-    for name in ('stress-ng','timeout','bash','git'):
+    for name in (('stress-ng',) if profile=='cpu' else ()) + ('timeout','bash','git'):
         if not shutil.which(name):
             raise RuntimeError(f'Missing dependency: {name}; no packages installed')
     if not os.path.ismount(shared):
@@ -127,8 +127,9 @@ def stop_launcher_child(process):
             process.wait(timeout=2)
 
 
-def export_run(run,shared,report):
-    target=shared/'results'/('safe_cpu_'+run.name)
+def export_run(run,shared,report,*,profile='cpu'):
+    report_name='CPU_EXPERIMENT_REPORT.md' if profile=='cpu' else 'BACKGROUND_READINESS_REPORT.md'
+    target=shared/'results'/(f'safe_{profile}_'+run.name)
     target.parent.mkdir(exist_ok=True)
     shutil.copytree(run,target)  # refuses an existing destination
     for source in run.rglob('*'):
@@ -137,7 +138,7 @@ def export_run(run,shared,report):
             if hashlib.sha256(source.read_bytes()).digest()!=hashlib.sha256(copied.read_bytes()).digest():
                 raise RuntimeError('Export hash verification failed')
     for name,content in [('SESSION_STATUS.md',
-            f'# Standalone CPU experiment\nReport: results/{target.name}/CPU_EXPERIMENT_REPORT.md\n'
+            f'# Standalone {profile} observation\nReport: results/{target.name}/{report_name}\n'
             'Read LATEST_REPORT.md for outcome, errors, checkpoint and next action.\n'),('LATEST_REPORT.md',report)]:
         path=shared/name
         if path.exists():
@@ -148,17 +149,45 @@ def export_run(run,shared,report):
     return target
 
 
-def run_launcher(root,shared,confirm=None,timeout_s=15):
+def validate_background_handshake(directory,manifest):
+    """A valid CSV alone cannot establish the new readiness mechanism worked."""
+    lifecycle=json.loads((directory/'lifecycle.json').read_text())
+    if lifecycle!=manifest.get('lifecycle'):
+        raise RuntimeError('Background lifecycle and manifest disagree')
+    names=[event['event'] for event in lifecycle['events']]
+    required=('monitor_started','monitor_ready','sampling_released','monitor_exited','cleanup_finished')
+    if any(names.count(name)!=1 for name in required):
+        raise RuntimeError('Missing or ambiguous background readiness lifecycle events')
+    positions=[names.index(name) for name in required]
+    if positions!=sorted(positions):
+        raise RuntimeError('Background readiness lifecycle order is invalid')
+    if (lifecycle.get('monitor_exit')!=0 or lifecycle.get('worker_exit') is not None
+            or lifecycle.get('cleanup')!='completed' or 'worker_started' in names):
+        raise RuntimeError('Background lifecycle exits/cleanup failed or worker started')
+    records=json.loads((directory/'processes.json').read_text())
+    if set(records)!={'monitor'}:
+        raise RuntimeError('Background observation requires only a recorded monitor, no worker')
+    for name in ('monitor.ready','monitor.start','monitor.log'):
+        if not (directory/name).is_file():
+            raise RuntimeError(f'Missing background readiness evidence: {name}')
+
+
+def run_launcher(root,shared,confirm=None,timeout_s=15,*,profile='cpu'):
+    if profile not in ('cpu','background'):
+        raise ValueError('Only cpu and background launcher profiles are supported')
+    cpu=profile=='cpu'
+    report_name='CPU_EXPERIMENT_REPORT.md' if cpu else 'BACKGROUND_READINESS_REPORT.md'
+    label='cpu_stressor_1_worker' if cpu else 'uncontrolled_background'
     root=Path(root).resolve();shared=Path(shared).resolve()
-    parent=root/'data/controlled_cpu'
+    parent=root/('data/controlled_cpu' if cpu else 'data/background_readiness')
     parent.mkdir(parents=True,exist_ok=True)
     run=Path(tempfile.mkdtemp(prefix='launcher-'+datetime.now(timezone.utc).strftime('%Y%m%dT%H%M%SZ-'),dir=parent))
     (run/'launcher-stdout.log').touch(exist_ok=False)
     (run/'launcher-stderr.log').touch(exist_ok=False)
     state=dict(start_utc=datetime.now(timezone.utc).isoformat(),workload_started=False,
                collector_started=False,validation='not performed',cleanup='not needed',errors=[],
-               config=dict(cpu_workers=1,method='int64',sampling_intervals=5,interval_s=1,
-                           worker_timeout_s=7,supervisor_deadline_s=11,outer_timeout_s=timeout_s,
+               config=dict(profile=profile,cpu_workers=1 if cpu else 0,method='int64' if cpu else None,sampling_intervals=5,interval_s=1,
+                           worker_timeout_s=7 if cpu else None,supervisor_deadline_s=11,outer_timeout_s=timeout_s,
                            vm_workers=0,io_workers=0,frequency_control='none'),statistics=None)
     process=None;code=1;handlers={};lock=None
     def cancelled(signum,frame):
@@ -166,7 +195,7 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
     try:
         lock=experiment_lock(root);fd=lock.__enter__()
         handlers={sig:signal.signal(sig,cancelled) for sig in (signal.SIGINT,signal.SIGTERM)}
-        state['resources_before']=preflight(root,shared,state)
+        state['resources_before']=preflight(root,shared,state,profile=profile)
         for cmd,name in ((['uname','-a'],'kernel'),(['lscpu'],'cpu'),(['git','rev-parse','HEAD'],'commit'),
                          (['git','status','--porcelain'],'git_changes')):
             result=subprocess.run(cmd,cwd=root,text=True,capture_output=True,timeout=3)
@@ -174,11 +203,17 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
         state['source_hashes']={str(p.relative_to(root)):hashlib.sha256(p.read_bytes()).hexdigest()
                                for name in ('benchmark/collect_traces.py','monitor/capture.py','monitor/reader.py',
                                             'benchmark/safe_cpu_launcher.py','scripts/run_safe_cpu_experiment.sh',
+                                            'scripts/run_background_readiness.sh','benchmark/background_launcher.py',
                                             'collect_real_traces.sh') if (p:=root/name).is_file()}
         prompt=('Close Codex and unnecessary applications first. This starts ONE int64 CPU worker, '
                 '5 samples, 7s worker / 11s supervisor / 15s outer deadline. '
                 'KVM/legacy timing discrepancy remains unresolved; guest timers cannot protect a frozen host. '
                 'Type RUN to confirm this exact experiment (anything else cancels): ')
+        if not cpu:
+            prompt=('Close Codex and unnecessary applications first. This records FIVE background-only '
+                    'intervals with ZERO CPU/memory/I/O workers and no frequency control. '
+                    '11s supervisor / 15s outer deadline; existing preflight and cleanup remain. '
+                    'Type RUN to confirm this observation (anything else cancels): ')
         if confirm is None:
             if not sys.stdin.isatty():
                 raise RuntimeError('Interactive terminal required; piped confirmation is refused')
@@ -189,7 +224,9 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
         check_resources(resources(),state['resources_before'])
         command=['timeout','--signal=TERM','--kill-after=1s',f'{timeout_s}s','bash',
                  str(root/'collect_real_traces.sh'),'5','64M',str(run/'collection'),
-                 '--profile','cpu','--approved-workload']
+                 '--profile',profile]
+        if cpu:
+            command.append('--approved-workload')
         state['command']=command
         atomic_text(run/'launcher-metadata.json',json.dumps(state,indent=2)+'\n')
         env=dict(os.environ,POWER_GOVERNOR_EXPERIMENT_LOCK_FD=str(fd),
@@ -211,10 +248,13 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
         manifest=json.loads(manifests[0].read_text())
         state['manifest']=manifest
         if (manifest.get('status')!='complete' or manifest.get('success') is not True
-                or manifest.get('processes',{}).get('worker_exit')!=0
+                or manifest.get('processes',{}).get('worker_exit')!=(0 if cpu else None)
                 or manifest.get('processes',{}).get('monitor_exit')!=0):
             raise RuntimeError('Collector success/exit manifest failed validation')
-        stats=validate_trace(directory/'trace.csv',5,'cpu_stressor_1_worker',
+        if not cpu:
+            validate_background_handshake(directory,manifest)
+            state['handshake_validation']='passed'
+        stats=validate_trace(directory/'trace.csv',5,label,
                              os.cpu_count()*os.sysconf('SC_CLK_TCK'))
         with (directory/'trace.csv').open() as stream:
             rows=list(csv.DictReader(stream))
@@ -256,27 +296,28 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
             stream.write(f'Launcher pre-export exit={code}; local evidence: {run}\n')
         with (run/'launcher-stderr.log').open('a') as stream:
             stream.write('\n'.join(state['errors'])+'\n')
-        report=('# CPU experiment report\n\n'
+        report=(('# CPU experiment report\n\n' if cpu else '# Background readiness report\n\n')+
                 f'Date: {state["start_utc"]}\n\nValidation: {state["validation"]}\n'
                 f'Overall success: {state["success"]}; exit code: {code}\n'
                 f'Commit: {state.get("commit","unavailable")}; dirty state: {bool(state.get("git_changes"))}\n'
                 f'Collector started: {state["collector_started"]}; worker startup recorded: {state["workload_started"]}\n'
                 f'Cleanup: {state["cleanup"]}\n\n'
-                f'Local evidence: {run}\nShared evidence: results/safe_cpu_{run.name}/\n\n'
+                f'Local evidence: {run}\nShared evidence: results/safe_{profile}_{run.name}/\n\n'
                 'Configuration, resources before/after, manifest, statistics, class counts and errors:\n\n'
                 '```json\n'+json.dumps(state,indent=2)+'\n```\n\n'
-                'Interpretation: actual Linux counters; no frequency writes or measured energy. '
-                'A successful worker exit plus validated observations supports completion, not classifier ground truth. '
-                'One busy worker may yield roughly 25% aggregate utilization on four vCPUs; below 70% is not failure. '
+                'Interpretation: actual Linux counters; no frequency writes or measured energy. '+
+                ('A successful worker exit plus validated observations supports completion, not classifier ground truth. '
+                 'One busy worker may yield roughly 25% aggregate utilization on four vCPUs; below 70% is not failure. '
+                 if cpu else 'Background-only observations are uncontrolled kernel counters, not idle ground truth or a CPU workload dataset. ')+
                 'Guest timers cannot recover an unresponsive VM/host. No retry occurred.\n\n'
                 'Next action: review manifest, worker logs and CSV; obtain approval before any further experiment.\n')
-        atomic_text(run/'CPU_EXPERIMENT_REPORT.md',report)
+        atomic_text(run/report_name,report)
         atomic_text(run/'launcher-metadata.json',json.dumps(state,indent=2)+'\n')
         try:
             if not os.path.ismount(shared):
                 raise RuntimeError('Shared mount unavailable; local handoff preserved')
-            target=export_run(run,shared,report)
-            print(f'Report exported: {target}/CPU_EXPERIMENT_REPORT.md')
+            target=export_run(run,shared,report,profile=profile)
+            print(f'Report exported: {target}/{report_name}')
         except Exception as error:
             code=code or 1
             state.update(exit_code=code,success=False,export='failed')
@@ -287,21 +328,21 @@ def run_launcher(root,shared,confirm=None,timeout_s=15):
             before_json,after_json=report.split('```json\n',1)
             _,tail=after_json.split('\n```',1)
             report=before_json+'```json\n'+json.dumps(state,indent=2)+'\n```'+tail
-            atomic_text(run/'CPU_EXPERIMENT_REPORT.md',report)
+            atomic_text(run/report_name,report)
             atomic_text(run/'launcher-metadata.json',json.dumps(state,indent=2)+'\n')
             atomic_text(run/'export-error.txt',f'{type(error).__name__}: {error}\n')
             # Correct any partial export once; leave local evidence if the mount is failing.
             try:
-                target=shared/'results'/('safe_cpu_'+run.name)
+                target=shared/'results'/(f'safe_{profile}_'+run.name)
                 if target.is_dir():
-                    atomic_text(target/'CPU_EXPERIMENT_REPORT.md',report)
+                    atomic_text(target/report_name,report)
                     atomic_text(target/'launcher-metadata.json',json.dumps(state,indent=2)+'\n')
                 latest=shared/'LATEST_REPORT.md'
                 if latest.exists() and str(run) in latest.read_text():
                     atomic_text(latest,report)
             except Exception:
                 pass
-            print(f'Export failed: {error}. Local report: {run}/CPU_EXPERIMENT_REPORT.md',file=sys.stderr)
+            print(f'Export failed: {error}. Local report: {run}/{report_name}',file=sys.stderr)
         if lock is not None:
             lock.__exit__(None,None,None)
         for sig,handler in handlers.items():

@@ -96,3 +96,23 @@ Accumulated milestones READY for implementation integration; loaded validation D
 Detailed evidence, final checkpoint/push and archived handoffs exported to shared
 CPU_TIMING_DIAGNOSTIC.md. Next: separately authorize one background-only readiness
 observation; no automatic experiment and no main merge/push.
+
+## 2026-10-15 — Standalone background readiness preparation
+Authorized by shared prompts/small_task.txt; checkpoint started at 59a2ac3 on development.
+Preserved pending AGENTS/CODEX_WORKFLOW Git policy changes from the preceding request.
+Added fixed background entrypoint/wrapper using existing collector background profile
+and shared launcher machinery. No stress-ng dependency/workload flag/worker in this
+path; deadlines/resource guards/confirmation/locking/cleanup/export retained.
+Success requires CSV and readiness lifecycle plus recorded monitor identity. Independent
+review identified absent processes.json acceptance; failing regression reproduced it,
+then fixed. Initial seven regressions failed before implementation; final suite 115
+passes. An initial targeted existing cleanup test hit a three-second lscpu metadata
+timeout before collector startup (124 instead of expected 1); fixtures now mock metadata
+calls while retaining harmless real collector children. No production timeout raised.
+Shell syntax and whitespace checks pass. No live collector, background sampling,
+artificial load, installs or VM/system settings changes executed.
+Read-only accumulated milestone review: READY for implementation integration, while
+runtime/CPU dataset/physical-energy claims remain deferred. Safe fast-forward procedure
+is proposed in BACKGROUND_READINESS_SETUP.md and requires explicit approval; no main
+merge/push or historical branch deletion occurred. Checkpoint/push and exports are
+recorded in the shared handoff. Next: separately approve one manual background run.

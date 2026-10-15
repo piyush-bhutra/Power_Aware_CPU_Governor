@@ -159,3 +159,19 @@ READY for implementation integration, DEFER loaded experiment/data claims. Main 
 unchanged; development checkpoint/push details are in the shared diagnostic handoff.
 See CPU_TIMING_DIAGNOSTIC.md. Next: separately approve one five-interval background-only
 observation of the new readiness/diagnostic path before considering any CPU retry.
+
+## Background readiness launcher preparation — October 15, 2026
+small_task.txt authorized preparation/mock tests/development checkpoint/push, explicitly
+no actual observation. Added fixed standalone scripts/run_background_readiness.sh and
+benchmark.background_launcher, reusing the shared CPU launcher's preflight, lock,
+bounded supervision/cleanup, sample validation and export. Background mode creates
+zero workers, has no stress-ng dependency or workload approval flag, and retains the
+five-interval / eleven-second supervisor / fifteen-second outer plan. Success also
+requires ordered readiness lifecycle and monitor identity evidence; missing records
+fail validation. Automatic reports use distinct background names/local/shared paths.
+115 safe tests pass; no real collector/background observation/artificial load executed.
+Pending Git workflow policy edits from the preceding task are preserved and included
+in this authorized documentation checkpoint. READY for implementation integration;
+runtime readiness and loaded VM claims remain deferred. Main/historical refs preserved.
+Next: review/approve one manual background-only observation, then close Codex and run
+the exact standalone command in COLLECTION_WORKFLOW.md; no automatic execution.

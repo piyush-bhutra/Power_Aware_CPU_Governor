@@ -45,6 +45,37 @@ publication or repository permission change without explicit approval.
 Fast-forward only under approved workflow; divergence or conflict-producing
 integration requires explanation and approval. Never hide uncommitted work by switching.
 
+## Milestone-based Git synchronization and merge policy
+
+Persistent project policy adopted October 15, 2026 from the user-invoked
+`/media/sf_OS_Project_Shared/prompts/GIT_WORKFLOW.txt`. Apply throughout the project;
+the earlier task-specific checkpoint permissions above remain scoped to those tasks.
+
+Use origin/development as the backed-up working branch and main as the stable branch.
+
+After meaningful development milestones:
+
+1. Verify the current working tree, commit history, Git identity and remote synchronization.
+2. Review all changes between main and development, including file-level diffs and commit history.
+3. Ensure appropriate tests have passed and significant functionality is verified.
+4. Check whether unresolved defects, experimental limitations or documentation inconsistencies make the changes unsuitable for main.
+5. Assess whether the accumulated work forms a coherent, independently useful milestone.
+6. Recommend READY, DEFER or BLOCKED for merging, with a brief evidence-based explanation.
+7. If READY, propose a safe merge procedure and wait for explicit user approval.
+8. Never automatically merge, force-push, rewrite history or delete branches.
+9. Preserve historical branches containing unique work.
+10. After an approved merge, verify main and origin/main, ensure development remains usable, and record the resulting commit hashes.
+11. Keep milestone reports and Git decisions in PROJECT_STATE.md, DEVELOPMENT_LOG.md and the shared-folder handoff.
+
+Do not recommend merging merely because a session is ending. Do not indefinitely
+postpone integration when a coherent, fully verified milestone is ready.
+
+Prefer small, understandable, recoverable integrations over large accumulated merges.
+
+Continue making and remotely backing up authorized development checkpoints between
+merge assessments. This policy does not itself authorize a merge or expand experiment
+permissions.
+
 ## Safe validation and VM history
 Level 1 static/read-only inspection and level 2 short unit/synthetic checks are allowed.
 Use bounded commands and limit numerical library threads where useful:

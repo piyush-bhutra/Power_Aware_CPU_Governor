@@ -102,3 +102,11 @@ lifecycle/sample-validation corrections tested with mocks and harmless processes
 loaded VM timing/CPU dataset claims remain DEFER. No main merge is authorized.
 Use existing synthetic and background evidence for Review 1. Separately authorize
 a background-only readiness observation before considering another CPU attempt.
+
+## Background-only readiness launcher prepared
+Use scripts/run_background_readiness.sh only after approving one manual observation
+and closing Codex. Preparation uses mocks/harmless processes; no new live trace exists.
+Five intervals, zero artificial workers, 11 s supervisor and 15 s outer timeout;
+automatic lifecycle/raw interval/CSV/manifest export and strict readiness validation.
+115 tests pass. The accumulated implementation is READY for approved integration,
+but Review 1 evidence still consists of the earlier synthetic/background artifacts.

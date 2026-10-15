@@ -31,6 +31,17 @@ to stable without explicit approval. Preserve backup-old-local and origin/mock-s
 After a crash inspect status, interrupted operations, stashes, checkpoint and handoff;
 compare documents against code. Do not reset/clean or blindly repeat the failed command.
 
+Apply the persistent [milestone-based Git synchronization and merge policy](docs/CODEX_WORKFLOW.md#milestone-based-git-synchronization-and-merge-policy)
+from shared prompts/GIT_WORKFLOW.txt throughout this project. Use origin/development
+as the backed-up working branch. At meaningful milestones review the accumulated
+main-to-development diff/history, tests, defects, limitations and documentation;
+recommend READY, DEFER or BLOCKED with evidence. If READY, propose a safe merge
+procedure and wait for explicit user approval. Do not merge merely because a session
+ends or indefinitely defer a coherent, fully verified milestone. Prefer small,
+recoverable integrations; continue authorized development checkpoints/backups.
+After an approved merge verify main/origin/main, development usability and resulting
+hashes; record Git decisions in project state, development log and shared handoff.
+
 ## Complete substantial tasks
 Update relevant state/log/review documents without erasing history. Save supporting
 logs and reports, then atomically update /media/sf_OS_Project_Shared/LATEST_REPORT.md

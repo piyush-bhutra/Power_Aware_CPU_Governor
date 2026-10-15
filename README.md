@@ -104,3 +104,18 @@ The first manual CPU attempt failed with zero samples. See
 [CPU timing diagnostic](docs/CPU_TIMING_DIAGNOSTIC.md) for verified evidence and
 remaining uncertainty. Monitor-first readiness and failure diagnostics are tested;
 another real observation or workload requires separate approval.
+
+## Standalone background readiness check
+
+Preparation is complete; the real observation has not been run. After separately
+approving one background-only observation, close Codex and run from any terminal:
+
+```bash
+/home/vboxuser/Power_Aware_CPU_Governor/scripts/run_background_readiness.sh
+```
+
+Type `RUN` after reviewing the printed limits. The fixed command uses five intervals,
+zero artificial workers, an eleven-second supervisor and fifteen-second outer timeout.
+It retains resource/lock/cleanup/CSV checks and exports readiness, lifecycle, raw interval
+diagnostics and the report to the shared folder. No command-line overrides are accepted.
+See [collection workflow](docs/COLLECTION_WORKFLOW.md#standalone-background-readiness-preparation).

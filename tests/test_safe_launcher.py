@@ -24,6 +24,16 @@ def setup(tmp_path, monkeypatch):
     monkeypatch.setattr(launcher.time,'sleep',lambda _:None)
     which=launcher.shutil.which
     monkeypatch.setattr(launcher.shutil,'which',lambda name:'/mock/stress-ng' if name=='stress-ng' else which(name))
+    # This fixture tests launcher behavior, not the VM's uname/lscpu/git latency.
+    # Keep the fake collector a real harmless subprocess, but isolate metadata I/O.
+    import subprocess
+    original_run=launcher.subprocess.run
+    def metadata_run(command,**kwargs):
+        if command[0] in ('uname','lscpu','git'):
+            stdout='' if command==['git','status','--porcelain'] else 'fixture metadata\n'
+            return subprocess.CompletedProcess(command,0,stdout,'')
+        return original_run(command,**kwargs)
+    monkeypatch.setattr(launcher.subprocess,'run',metadata_run)
     # Independently constructed valid Linux-shaped observations, not live data.
     columns=['timestamp',*SIGNALS,*RAW_COLS,'workload_label','observation_source']
     rows=[]

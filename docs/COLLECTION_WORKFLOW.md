@@ -198,3 +198,55 @@ swap occupancy and ample available RAM. No specific original monitor failure is
 proved. Current code has 104 passing safe tests; real readiness/loaded VM timing
 remain unvalidated. Next proposed separately approved action is one background-only
 five-interval readiness observation with no worker and existing 11/15 s limits.
+
+## Standalone background readiness preparation
+
+`prompts/small_task.txt` authorizes launcher preparation, mock/harmless tests,
+documentation and development checkpoint/push. It explicitly prohibits performing
+the actual observation during preparation. No real observation has been run here.
+
+After separate approval, close Codex/unnecessary guest applications and run exactly:
+
+```bash
+/home/vboxuser/Power_Aware_CPU_Governor/scripts/run_background_readiness.sh
+```
+
+The wrapper resolves the project root and uses the existing virtualenv. It accepts
+no overrides and runs `benchmark.background_launcher`, which fixes the shared
+launcher to the collector's `background` profile. Review the limits and type `RUN`
+in an interactive terminal; piped confirmation is rejected and Ctrl+C cancels.
+The collector command is equivalent to the following, but use the wrapper so
+preflight, fallback cleanup, validation and export are included:
+
+```text
+timeout --signal=TERM --kill-after=1s 15s bash collect_real_traces.sh 5 64M <unique-local-output>/collection --profile background
+```
+
+Five one-second attempted intervals, <=2 s monitor readiness within an eleven-second
+supervisor deadline, fifteen-second outer timeout plus one-second kill escalation.
+No stressor is created, no `--approved-workload` is passed, and stress-ng is not a
+dependency for this background path. The 64M positional argument satisfies collector
+syntax and allocates no workload memory. No setter/frequency write is selected.
+
+Shared experiment lock, disk >=512 MiB, RAM >=512 MiB, swap growth <=128 MiB,
+three-window swap preflight, resource recheck after confirmation, monitor timing/raw
+accounting checks, TERM/KILL/reap and recorded-session fallback cleanup are reused.
+Success requires a complete manifest, monitor exit zero, no worker, exact five-row
+uncontrolled_background CSV validation, and a consistent lifecycle with ordered
+monitor_started → monitor_ready → sampling_released → monitor_exited → cleanup_finished.
+The monitor identity record and ready/start files must exist. Missing evidence fails.
+No failed run retries automatically. Guest/host pauses can still delay guest deadlines.
+
+Local evidence: `data/background_readiness/launcher-<UTC>-<random>/`, including
+`BACKGROUND_READINESS_REPORT.md`, launcher metadata/stdout/stderr, validated_trace.csv
+only after validation, and `collection/<run>/` containing lifecycle.json, processes.json,
+monitor.ready/start, monitor.log (baseline and every attempted raw interval), worker.log
+(empty without a worker), manifest.json, trace.csv, metadata.json and statistics.json
+when produced. Failure preserves available evidence and errors without a success claim.
+
+Automatic shared export: `results/safe_background_launcher-<UTC>-<random>/`, SHA256
+verified copy, archived previous handoffs, and atomic LATEST_REPORT.md/SESSION_STATUS.md.
+If export fails, local report/export-error.txt remains authoritative and the old shared
+handoff may remain. This background report never implies a successful CPU workload,
+idle ground truth, measured energy or physical frequency control. Review exported
+evidence before separately approving any further observation or workload.
