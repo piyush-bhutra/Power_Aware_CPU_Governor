@@ -2,12 +2,15 @@
 import argparse
 from collections import Counter
 import importlib.util
+import json
 import math
 import os
 import sys
 import time
 
 from presentation.adapter import load_observations, load_replay
+from presentation.sessions import (DEFAULT_SAMPLES, MAX_SAMPLES, MIN_SAMPLES, list_sessions,
+                                   load_session, resolve_session)
 
 VIOLET = '#bda6ff'
 BLUE = '#8ed6ff'
@@ -78,7 +81,7 @@ def rich_frame(data, shown, *, compact=False, unicode=True):
     if synthetic:
         header.append(f'    K={k}  seed={data.metadata["seed"]}', style=MUTED)
     elif live_session:
-        header.append('    K=3 / fresh background', style=MUTED)
+        header.append('    K=3 / measured background', style=MUTED)
     else:
         header.append('    historical / background only', style=MUTED)
     status = Table.grid(expand=True, padding=(0, 2))
@@ -144,7 +147,7 @@ def compact_frame(data, shown, *, unicode=True):
     k = data.metadata.get('k')
     heading = Text('Governorlab.  /  Power-Aware CPU Governor', style=f'bold {VIOLET}')
     mode = Text(f'{data.mode}  {frame.tick}/{len(data.frames)}', style=BLUE)
-    mode.append(f'  |  K={k}  seed={data.metadata["seed"]}' if synthetic else ('  |  K=3 / fresh background' if live_session else '  |  historical background'), style=MUTED)
+    mode.append(f'  |  K={k}  seed={data.metadata["seed"]}' if synthetic else ('  |  K=3 / measured background' if live_session else '  |  historical background'), style=MUTED)
     metrics = Table.grid(expand=True, padding=(0, 1))
     for _ in range(4):
         metrics.add_column(ratio=1)
@@ -193,8 +196,9 @@ def compact_frame(data, shown, *, unicode=True):
 
 def summary_text(data, shown, interrupted=False):
     synthetic = data.mode == 'SYNTHETIC REPLAY'
-    live_session = data.mode.startswith('LIVE LINUX')
-    status = 'INTERRUPTED' if interrupted else ('LIVE SESSION COMPLETE' if live_session else ('VALIDATED REPLAY COMPLETE' if synthetic else 'RECORDED VIEW COMPLETE'))
+    saved = data.mode.startswith('SAVED LINUX')
+    live_session = data.mode.startswith('LIVE LINUX') or saved
+    status = 'INTERRUPTED' if interrupted else ('SAVED SESSION REPLAY COMPLETE' if saved else 'LIVE SESSION COMPLETE' if live_session else ('VALIDATED REPLAY COMPLETE' if synthetic else 'RECORDED VIEW COMPLETE'))
     lines = [f'{status} | {len(shown)}/{len(data.frames)} samples']
     if synthetic or live_session:
         transitions = sum(f.transition is not None for f in shown)
@@ -282,12 +286,34 @@ def write_line(stream, text, flush=False):
         stream.flush()
 
 
+def list_saved_sessions(stream, root=None):
+    """Print saved sessions newest first with their recorded status; loads nothing."""
+    sessions = list_sessions() if root is None else list_sessions(root)
+    if not sessions:
+        write_line(stream, 'No saved sessions in run/. Create one on Linux with --live.')
+        return 0
+    for folder in sessions:
+        try:
+            meta = json.loads((folder / 'metadata.json').read_text(encoding='utf-8'))
+            note = f"{meta.get('status')} | {meta.get('actual_sample_count')}/{meta.get('requested_attempts')} samples"
+        except (OSError, ValueError) as error:
+            note = f'unreadable metadata: {error}'
+        manifest = 'manifest' if (folder / 'session-sha256.json').exists() else 'no manifest (legacy)'
+        write_line(stream, f'{folder} | {note} | {manifest}')
+    return 0
+
+
 def main(argv=None, stream=None):
     stream = stream if stream is not None else sys.stdout
     parser = argparse.ArgumentParser(description=__doc__)
     sources = parser.add_mutually_exclusive_group()
-    sources.add_argument('--live', action='store_true', help='collect five fresh Linux intervals, then replay simulated decisions')
+    sources.add_argument('--live', action='store_true', help='collect fresh Linux intervals (see --samples), then replay simulated decisions')
     sources.add_argument('--recorded-linux', action='store_true', help='show five archived Linux observations; no live sampling')
+    sources.add_argument('--session', metavar='PATH_OR_latest',
+                         help='replay a saved session folder from run/ (or "latest") after full revalidation; no sampling')
+    sources.add_argument('--list-sessions', action='store_true', help='list saved sessions in run/ and exit; no sampling')
+    parser.add_argument('--samples', type=int, metavar='N',
+                        help=f'with --live: one-second intervals to collect, {MIN_SAMPLES}-{MAX_SAMPLES} (default {DEFAULT_SAMPLES})')
     parser.add_argument('--speed', type=float, default=4, help='presentation ticks/second, 2-60 (default 4)')
     parser.add_argument('--instant', action='store_true', help='finish with no playback delay')
     renderer = parser.add_mutually_exclusive_group()
@@ -298,9 +324,16 @@ def main(argv=None, stream=None):
         args = parser.parse_args(argv)
         if not math.isfinite(args.speed) or not 2 <= args.speed <= 60:
             parser.error('--speed must be between 2 and 60 ticks per second')
+        if args.samples is not None and not args.live:
+            parser.error('--samples applies only to --live')
+        samples = DEFAULT_SAMPLES if args.samples is None else args.samples
+        if not MIN_SAMPLES <= samples <= MAX_SAMPLES:
+            parser.error(f'--samples must be between {MIN_SAMPLES} and {MAX_SAMPLES}')
     except SystemExit as error:
         return error.code
     shown = []
+    if args.list_sessions:
+        return list_saved_sessions(stream)
     try:
         if args.live:
             # Probe terminal readiness before performing any live sampling.
@@ -310,7 +343,10 @@ def main(argv=None, stream=None):
                 write_line(stream, f'Visual mode unavailable: {reason}')
                 return 2
             from governorlab.live import collect_live
-            data = collect_live(progress=lambda n: write_line(stream, f'Collecting Linux samples: {n}/5', flush=True))
+            data = collect_live(progress=lambda n: write_line(stream, f'Collecting Linux samples: {n}/{samples}', flush=True),
+                                count=samples)
+        elif args.session:
+            data = load_session(resolve_session(args.session))
         else:
             data = load_observations() if args.recorded_linux else load_replay()
         console, compact, reason = select_renderer(data, stream, plain=args.plain, visual=args.visual)
