@@ -1,5 +1,32 @@
 # Development log
 
+## 2026-10-18 — Phase 1A: configurable sessions and policy fixes (main)
+
+Single-branch workflow on main, starting at eb2b076. Sync protocol: fetched, main 0/0
+with origin/main; untracked docs/Literature_Review_Notes.md left untouched by user decision.
+- Policy: ramp_down_step now keeps stepping down on later ticks until the stable-class
+  target is reached; the stable-class goal is tracked separately from current.
+  governor.run() calls Policy.sync() when the setter returns a different frequency, so a
+  hardware clamp resyncs current while the goal keeps being requested. Default (None)
+  ramp-down and SimulatedSetter runs are unchanged. Renamed the desync test to
+  test_clamped_write_resyncs_policy_current_and_keeps_requesting_target.
+- Validation (ValueError): empty/unsorted/non-positive ladder, non-integer or <1 k,
+  ramp_down_step <1, unknown class, and missing/NaN/negative/non-numeric features in
+  classify() and compute_signals() snapshots. Thresholds and class fractions unchanged.
+- collect_live(count=5..30); deadline 2*count+2 s (12 s at 5), Daybreak watchdog +3 s
+  (15 s at 5). Governorlab --live --samples N; Daybreak worker --count and a 5/10/20
+  selector. Sessions load when requested_attempts == actual_sample_count in 5..30.
+- presentation/sessions.py is the shared store (daybreak/sessions.py re-exports).
+  collect_live writes session-sha256.json itself; Governorlab gains --session
+  PATH_OR_latest and --list-sessions with the dashboard's revalidation. Listing is now
+  newest-first by folder name.
+
+Windows only (Python 3.12.4): portable suite 182 passed; six portable live-demo cases
+passed. Archived 34-tick replay still verifies with transitions at 13/23/29; five-policy
+comparison and summaries still match. Not run here (need native Linux): four fcntl
+modules and 16 Linux live-demo cases, whose collect_live mocks were updated to accept
+count. No live collection, workloads, installs, sudo or hardware writes.
+
 ## 2026-10-16 — Unified automatic Daybreak session playback
 
 Rechecked clean canonical repository, active development, all tracking refs,

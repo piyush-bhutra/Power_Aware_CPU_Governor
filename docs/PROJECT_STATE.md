@@ -1,5 +1,19 @@
 # Verified project state
 
+## Current update — Phase 1A configurable sessions, October 18, 2026
+
+Single branch: main (development consolidated, tags pre-consolidation-development and
+checkpoint-0-daybreak-integrated at 271c373). Phase 1A adds configurable live sample
+count (5-30; Daybreak offers 5/10/20) with deadlines scaled at 2 s per sample + 2 s
+(watchdog +3 s), one shared session store (presentation/sessions.py) with collect_live
+writing the hash manifest for terminal and dashboard alike, and Governorlab
+--session/--list-sessions. Ramp-down now converges and a hardware clamp resyncs policy
+state; policy, classifier and counter inputs are validated. Windows: 182 portable + 6
+live-adapter tests passed; replay (13/23/29) and comparison unchanged. Still pending on
+Ubuntu: full suite including the updated Linux live tests, real Governorlab and Daybreak
+collection at 5/10/20 samples, cancellation/timeout lifecycle. Checkpoint tag:
+checkpoint-1a-configurable-sessions. Details: DEVELOPMENT_LOG.md 2026-10-18.
+
 ## Current update — Unified Daybreak session player, October 16, 2026
 
 Clean/aligned Windows development started at bfcd822d68ffd78196b90b0e2ca9b79ff5ac07ae;
