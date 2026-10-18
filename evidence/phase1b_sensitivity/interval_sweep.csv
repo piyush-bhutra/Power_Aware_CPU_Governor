@@ -1,0 +1,5 @@
+interval_s,windows,mean_class_lag_s,max_class_lag_s,mean_applied_lag_s_k3,unserved_changes_k3,bursts_total,bursts_missed,missed_burst_lengths_s,transitions_k3,energy_j_k3
+0.5,193,0.575,0.7,1.575,0,6,2,0.3;0.5,10,2660.148
+1.0,96,1.2,1.2,3.2,0,6,2,0.3;0.5,8,2593.528
+2.0,48,2.45,3.2,6.2,0,6,4,0.3;0.5;1;2,4,2518.482
+5.0,19,6.95,8.2,13.2,3,6,6,0.3;0.5;1;2;3;5,4,2593.37

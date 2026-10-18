@@ -98,3 +98,16 @@ def test_refuses_existing_outputs(tmp_path):
     (tmp_path / 'k_sweep.csv').write_text('x')
     with pytest.raises(SystemExit):
         s.main(['--outdir', str(tmp_path)])
+
+
+def test_committed_evidence_verifies_and_regenerates_identically():
+    from presentation.adapter import verify_archive
+    checked = verify_archive(EVIDENCE)
+    assert {p.name for p in checked} == {'k_sweep.csv', 'interval_sweep.csv', 'interval_bursts.csv',
+                                         'summary.md', 'k_energy_archived_seed11.png',
+                                         'k_timeline_cpu_bursts.png', 'PROVENANCE.json'}
+    k_table, _, i_table, b_table = s.tables()
+    assert (EVIDENCE / 'k_sweep.csv').read_bytes() == s.csv_text(k_table, s.K_COLUMNS).encode()
+    assert (EVIDENCE / 'interval_sweep.csv').read_bytes() == s.csv_text(i_table, s.I_COLUMNS).encode()
+    assert (EVIDENCE / 'interval_bursts.csv').read_bytes() == s.csv_text(b_table, s.B_COLUMNS).encode()
+    assert (EVIDENCE / 'summary.md').read_bytes() == s.summary_text(k_table, i_table, b_table).encode()
