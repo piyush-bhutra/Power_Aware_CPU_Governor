@@ -91,7 +91,7 @@ class Collection:
             code = self.child.wait(timeout=.5)
             if code != 0 or result.get('status') != 'validated':
                 result = {'status': 'failed', 'error': result.get('error', f'Child exited ({code}) without a validated session'),
-                          'evidence': result.get('evidence', str(self.folder))}
+                          'evidence': result.get('evidence', str(self.folder)), 'reason': result.get('reason')}
             self.result = result
             return result
 

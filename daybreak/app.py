@@ -14,6 +14,7 @@ from classifier.rules import THRESHOLDS, classify
 from daybreak.charts import comparison_figure, energy_figure, evidence_figure, replay_figure
 from daybreak.data import comparison_table, inspect_decision, load_comparison, observation_table, replay_table
 from presentation.adapter import load_observations, load_replay
+from presentation.sessions import timing_banner
 from daybreak.playback_ui import active_collection, controls, ensure_player, cancel, poll_collection
 import time
 
@@ -141,6 +142,11 @@ def replay_view():
             st.success(f'Session complete · {len(replay.frames)} samples · {replay.summary["transitions"]} simulated transitions')
             st.json(replay.summary)
         st.button('Compare all five policies ↗', on_click=navigate, args=('The Comparison',), key='open_comparison')
+    banner = timing_banner(replay.metadata)
+    if banner:
+        st.warning(banner)
+        with st.expander('Discarded attempts'):
+            st.dataframe(replay.metadata['discarded_attempts'], hide_index=True, width='stretch')
     provenance(replay)
     with st.expander(f'Inspect all {len(replay.frames)} source samples'):
         st.dataframe(replay_table(replay), hide_index=True, width='stretch')

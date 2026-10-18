@@ -18,7 +18,7 @@ def main(argv=None):
     args = parser.parse_args(argv)
     job = args.job.resolve()
     # Imported only on explicit child invocation. No duplicated sampling/policy code.
-    from governorlab.live import collect_live
+    from governorlab.live import AttemptCapExceeded, collect_live
     try:
         def interrupted(signum, frame):
             raise KeyboardInterrupt
@@ -34,7 +34,8 @@ def main(argv=None):
     except BaseException as error:
         write_status(job, {'status': 'cancelled' if isinstance(error, KeyboardInterrupt) else 'failed',
                            'error': f'{type(error).__name__}: {error}',
-                           'evidence': getattr(error, 'live_evidence', None)})
+                           'evidence': getattr(error, 'live_evidence', None),
+                           'reason': 'attempt_cap' if isinstance(error, AttemptCapExceeded) else None})
         return 1
 
 

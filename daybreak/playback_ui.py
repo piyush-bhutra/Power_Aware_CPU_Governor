@@ -94,9 +94,18 @@ def poll_collection(apply=True):
             except (OSError, ValueError, KeyError, TypeError) as error:
                 st.session_state['collection_error'] = f'Collected session rejected: {error}'
         else:
-            st.session_state['collection_error'] = result.get('error', result['status'])
+            st.session_state['collection_error'] = failure_message(result)
     if st.session_state.get('collection_error'):
         st.error(st.session_state['collection_error'])
+
+
+def failure_message(result):
+    """Plain words for the attempt cap; other failures keep their recorded error."""
+    if result.get('reason') == 'attempt_cap':
+        return ('Collection stopped: VM timing was unstable, so too many intervals had to be discarded '
+                'before enough valid samples were collected. Close other applications and retry. '
+                f'Evidence retained at {result.get("evidence")}.')
+    return result.get('error', result['status'])
 
 
 def controls():

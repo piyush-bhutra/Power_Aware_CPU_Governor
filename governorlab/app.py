@@ -10,7 +10,7 @@ import time
 
 from presentation.adapter import load_observations, load_replay
 from presentation.sessions import (DEFAULT_SAMPLES, MAX_SAMPLES, MIN_SAMPLES, list_sessions,
-                                   load_session, resolve_session)
+                                   load_session, resolve_session, timing_banner)
 
 VIOLET = '#bda6ff'
 BLUE = '#8ed6ff'
@@ -220,6 +220,11 @@ def summary_text(data, shown, interrupted=False):
     elif shown:
         lines += [f'Mean CPU {sum(f.util_pct for f in shown) / len(shown):.4f}% | '
                   f'mean elapsed {sum(f.features["elapsed_s"] for f in shown) / len(shown):.4f} s']
+    banner = timing_banner(data.metadata)
+    if banner:
+        lines += [f'TIMING QUALITY DEGRADED: {banner}']
+        lines += [f'  discarded attempt {d["attempt"]}: {d["reason"]} | elapsed {d["elapsed_s"]} s | ratio {d["ratio"]}'
+                  for d in data.metadata['discarded_attempts']]
     lines += [f'Source: {data.metadata["csv_path"]}', f'Producing source commit: {data.metadata["source_commit"]}',
               f'Validation: {data.metadata["validation"]}', data.metadata['limitations']]
     return '\n'.join(lines)
@@ -314,6 +319,8 @@ def main(argv=None, stream=None):
     sources.add_argument('--list-sessions', action='store_true', help='list saved sessions in run/ and exit; no sampling')
     parser.add_argument('--samples', type=int, metavar='N',
                         help=f'with --live: one-second intervals to collect, {MIN_SAMPLES}-{MAX_SAMPLES} (default {DEFAULT_SAMPLES})')
+    parser.add_argument('--strict', action='store_true',
+                        help='with --live: abort on the first timing anomaly instead of discarding and continuing')
     parser.add_argument('--speed', type=float, default=4, help='presentation ticks/second, 2-60 (default 4)')
     parser.add_argument('--instant', action='store_true', help='finish with no playback delay')
     renderer = parser.add_mutually_exclusive_group()
@@ -326,6 +333,8 @@ def main(argv=None, stream=None):
             parser.error('--speed must be between 2 and 60 ticks per second')
         if args.samples is not None and not args.live:
             parser.error('--samples applies only to --live')
+        if args.strict and not args.live:
+            parser.error('--strict applies only to --live')
         samples = DEFAULT_SAMPLES if args.samples is None else args.samples
         if not MIN_SAMPLES <= samples <= MAX_SAMPLES:
             parser.error(f'--samples must be between {MIN_SAMPLES} and {MAX_SAMPLES}')
@@ -344,7 +353,7 @@ def main(argv=None, stream=None):
                 return 2
             from governorlab.live import collect_live
             data = collect_live(progress=lambda n: write_line(stream, f'Collecting Linux samples: {n}/{samples}', flush=True),
-                                count=samples)
+                                count=samples, strict=args.strict)
         elif args.session:
             data = load_session(resolve_session(args.session))
         else:
@@ -356,6 +365,9 @@ def main(argv=None, stream=None):
             return 2
         if not use_rich and reason:
             write_line(stream, f'Plain output: {reason}')
+        banner = timing_banner(data.metadata)
+        if banner:
+            write_line(stream, f'TIMING QUALITY DEGRADED: {banner}', flush=True)
         if use_rich:
             if console.no_color:
                 write_line(stream, 'Rich Live: colors disabled by NO_COLOR; use --visual to enable dashboard colors')
