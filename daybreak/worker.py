@@ -14,19 +14,22 @@ def write_status(job, value):
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--job', type=Path, required=True)
+    parser.add_argument('--count', type=int, default=5, help='samples to collect, 5-30 (default 5)')
     args = parser.parse_args(argv)
     job = args.job.resolve()
     # Imported only on explicit child invocation. No duplicated sampling/policy code.
     from governorlab.live import collect_live
-    from daybreak.sessions import session_hashes
     try:
         def interrupted(signum, frame):
             raise KeyboardInterrupt
         signal.signal(signal.SIGTERM, interrupted)
-        data = collect_live(job, lambda count: write_status(job, {'status': 'collecting', 'count': count}))
+        # collect_live validates the count and writes the session-sha256.json manifest.
+        data = collect_live(job, lambda count: write_status(job, {'status': 'collecting', 'count': count,
+                                                                  'requested': args.count}),
+                            count=args.count)
         folder = Path(data.metadata['csv_path']).parent
-        (folder / 'session-sha256.json').write_text(json.dumps(session_hashes(folder)), encoding='utf-8')
-        write_status(job, {'status': 'validated', 'count': len(data.frames), 'folder': folder.name})
+        write_status(job, {'status': 'validated', 'count': len(data.frames), 'requested': args.count,
+                           'folder': folder.name})
         return 0
     except BaseException as error:
         write_status(job, {'status': 'cancelled' if isinstance(error, KeyboardInterrupt) else 'failed',

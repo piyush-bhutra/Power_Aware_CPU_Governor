@@ -98,7 +98,7 @@ def test_child_worker_calls_existing_pipeline_once_and_preserves_hashes(saved, m
     data = replace(data, metadata={**data.metadata, 'csv_path': str(saved / 'capture.csv')})
     (saved / 'raw_events.jsonl').write_text('')
     calls = []
-    def collect(root, progress):
+    def collect(root, progress, count=5):
         calls.append(root)
         progress(0)
         progress(5)
@@ -116,7 +116,7 @@ def test_worker_failure_is_retained_without_retry(tmp_path, monkeypatch):
     from daybreak import worker
     from governorlab import live
     calls = []
-    def fail(root, progress):
+    def fail(root, progress, count=5):
         calls.append(root)
         raise RuntimeError('fixture invalid counters')
     monkeypatch.setattr(live, 'collect_live', fail)

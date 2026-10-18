@@ -11,20 +11,24 @@ import threading
 import time
 import weakref
 
+from presentation.sessions import DEFAULT_SAMPLES, check_sample_count, watchdog_s
+
 ROOT = Path(__file__).resolve().parents[1]
 JOBS = weakref.WeakSet()
 
 
 class Collection:
-    def __init__(self, child, folder):
-        self.child, self.folder = child, Path(folder)
+    def __init__(self, child, folder, count=DEFAULT_SAMPLES):
+        self.child, self.folder, self.count = child, Path(folder), count
+        self.deadline_s = watchdog_s(count)
         self.started = self.heartbeat = time.monotonic()
         self.result = None
         self.lock = threading.RLock()
         JOBS.add(self)
 
     @classmethod
-    def start(cls, root=ROOT / 'run', current=None):
+    def start(cls, root=ROOT / 'run', current=None, count=DEFAULT_SAMPLES):
+        check_sample_count(count)
         if current is not None and current.child.poll() is None:
             raise RuntimeError('A collection is already active in this user session')
         if sys.platform != 'linux':
@@ -32,10 +36,11 @@ class Collection:
         root = Path(root)
         root.mkdir(parents=True, exist_ok=True)
         folder = Path(tempfile.mkdtemp(prefix='daybreak-', dir=root))
-        child = subprocess.Popen([sys.executable, '-m', 'daybreak.worker', '--job', str(folder.resolve())],
+        child = subprocess.Popen([sys.executable, '-m', 'daybreak.worker', '--job', str(folder.resolve()),
+                                  '--count', str(count)],
                                  cwd=ROOT, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
                                  stderr=subprocess.DEVNULL, start_new_session=True)
-        job = cls(child, folder)
+        job = cls(child, folder, count)
         threading.Thread(target=job._watch, daemon=True, name='daybreak-bounded-collection').start()
         return job
 
@@ -47,7 +52,7 @@ class Collection:
         # No Streamlit calls from background threads. Deadline is independent of UI.
         while self.active:
             now = time.monotonic()
-            if now - self.started >= 15:
+            if now - self.started >= self.deadline_s:
                 self.cancel('timeout')
                 return
             if now - self.heartbeat >= 6:

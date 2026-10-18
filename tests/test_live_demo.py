@@ -143,7 +143,7 @@ def test_live_cli_is_opt_in_and_rejects_conflicting_sources(monkeypatch):
 
 def test_live_cli_automatically_replays_and_summarizes(collector, monkeypatch, tmp_path):
     original = collector.collect_live
-    monkeypatch.setattr(collector, 'collect_live', lambda progress: original(tmp_path, progress))
+    monkeypatch.setattr(collector, 'collect_live', lambda progress, count=5: original(tmp_path, progress))
     output = io.StringIO()
     assert app.main(['--live', '--plain', '--instant'], output) == 0
     text = output.getvalue()
@@ -167,7 +167,7 @@ def test_live_rich_fits_80x24_and_restores_cursor(collector, monkeypatch, tmp_pa
     monkeypatch.setenv('COLUMNS', '80')
     monkeypatch.setenv('LINES', '24')
     monkeypatch.setenv('TERM', 'xterm-256color')
-    monkeypatch.setattr(collector, 'collect_live', lambda progress: data)
+    monkeypatch.setattr(collector, 'collect_live', lambda progress, count=5: data)
     output = TerminalStream()
     assert app.main(['--live', '--visual', '--instant'], output) == 0
     assert 'FINAL SUMMARY' in output.getvalue()
@@ -192,7 +192,7 @@ def test_collection_interrupt_reports_preserved_evidence(collector, monkeypatch,
         raise KeyboardInterrupt
     monkeypatch.setattr(collector, 'sample', interrupted)
     original = collector.collect_live
-    monkeypatch.setattr(collector, 'collect_live', lambda progress: original(tmp_path, progress))
+    monkeypatch.setattr(collector, 'collect_live', lambda progress, count=5: original(tmp_path, progress))
     output = io.StringIO()
     assert app.main(['--live', '--plain'], output) == 130
     assert 'evidence retained at' in output.getvalue()
@@ -262,7 +262,7 @@ def test_live_playback_interrupt_restores_rich_cursor(collector, monkeypatch, tm
         def isatty(self):
             return True
     data = collector.collect_live(tmp_path, lambda n: None)
-    monkeypatch.setattr(collector, 'collect_live', lambda progress: data)
+    monkeypatch.setattr(collector, 'collect_live', lambda progress, count=5: data)
     def interrupted(frames, **kwargs):
         yield frames[0]
         raise KeyboardInterrupt
@@ -283,7 +283,7 @@ def test_errno_read_failure_prints_preserved_evidence_path(collector, monkeypatc
         raise OSError(5, 'read failed', '/proc/stat')
     monkeypatch.setattr(collector, 'sample', failed)
     original = collector.collect_live
-    monkeypatch.setattr(collector, 'collect_live', lambda progress: original(tmp_path, progress))
+    monkeypatch.setattr(collector, 'collect_live', lambda progress, count=5: original(tmp_path, progress))
     output = io.StringIO()
     assert app.main(['--live', '--plain'], output) == 1
     assert 'evidence retained at' in output.getvalue()

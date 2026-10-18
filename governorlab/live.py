@@ -1,4 +1,4 @@
-"""Explicitly invoked, five-attempt background-only collection. No child processes."""
+"""Explicitly invoked, 5-30 attempt background-only collection. No child processes."""
 from contextlib import contextmanager
 from dataclasses import asdict, replace
 from datetime import datetime, timezone
@@ -14,6 +14,7 @@ import time
 from monitor.capture import LABEL_COLS, check_resources, resources, validate_trace
 from monitor.reader import log_csv, sample
 from presentation.adapter import load_csv, process_live_observations
+from presentation.sessions import DEFAULT_SAMPLES, check_sample_count, collection_timeout_s, write_manifest
 
 ROOT = Path(__file__).resolve().parents[1]
 LABEL = 'uncontrolled_background'
@@ -46,12 +47,16 @@ def save_json(path, value):
     temporary.replace(path)
 
 
-def collect_live(output_root=ROOT / 'run', progress=lambda count: None):
-    """Save evidence, validate exactly five intervals, then simulate decisions.
+def collect_live(output_root=ROOT / 'run', progress=lambda count: None, count=DEFAULT_SAMPLES):
+    """Save evidence, validate exactly `count` (5-30) intervals, then simulate decisions.
 
     Invalid intervals consume attempts, without replacement. Partial/error/interrupt
     sessions retain CSV, observer events and failure metadata and are never replayed.
+    Successful sessions get a session-sha256.json manifest: the same on-disk
+    format as dashboard (daybreak worker) sessions.
     """
+    check_sample_count(count)
+    timeout = collection_timeout_s(count)
     if sys.platform != 'linux' or not Path('/proc/stat').is_file():
         raise RuntimeError('Live observation requires Linux /proc/stat')
     initial = resources()
@@ -66,8 +71,8 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None):
         'status': 'collecting', 'started_utc': datetime.now(timezone.utc).isoformat(),
         'csv_path': str(csv_path.resolve()), 'source_commit': 'working-tree',
         'observation_source': 'linux_proc_stat', 'source': '/proc/stat',
-        'workload_label': LABEL, 'requested_attempts': 5, 'interval_s': 1.0,
-        'collection_timeout_s': 12, 'actual_sample_count': 0, 'observed_intervals_s': [],
+        'workload_label': LABEL, 'requested_attempts': count, 'interval_s': 1.0,
+        'collection_timeout_s': timeout, 'actual_sample_count': 0, 'observed_intervals_s': [],
         'initial_resources': initial, 'expected_jiffies_per_s': rate,
         'frequency_control': 'simulated', 'generated_load': False,
         'source_sha256': {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
@@ -81,14 +86,14 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None):
     started = time.monotonic()
     try:
         progress(0)
-        with collection_deadline(), (folder / 'raw_events.jsonl').open('x', encoding='utf-8') as events:
+        with collection_deadline(timeout), (folder / 'raw_events.jsonl').open('x', encoding='utf-8') as events:
             def observed(event):
                 events.write(json.dumps(event) + '\n')
                 events.flush()
                 if event.get('event') == 'interval':
                     metadata['observed_intervals_s'].append(event.get('elapsed_s'))
             def annotated():
-                source = sample(1.0, 5, observer=observed)
+                source = sample(1.0, count, observer=observed)
                 try:
                     for row in source:
                         current = resources()
@@ -103,7 +108,7 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None):
                 finally:
                     source.close()
             log_csv(str(csv_path), annotated(), LABEL_COLS, mode='x')
-            metadata['statistics'] = validate_trace(csv_path, 5, LABEL, rate)
+            metadata['statistics'] = validate_trace(csv_path, count, LABEL, rate)
             records = load_csv(csv_path, 'linux_recorded')
             # Persist successful actual durations even if an alternate source has
             # no observer events (fixtures); real sampler also preserves invalid attempts.
@@ -122,4 +127,5 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None):
         metadata['finished_utc'] = datetime.now(timezone.utc).isoformat()
         metadata['collection_wall_s'] = time.monotonic() - started
         save_json(folder / 'metadata.json', metadata)
+    write_manifest(folder)  # after the final metadata write, so it covers it
     return replace(data, metadata={**data.metadata, **metadata})

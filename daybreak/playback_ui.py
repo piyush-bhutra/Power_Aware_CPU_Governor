@@ -10,6 +10,7 @@ from daybreak.sessions import list_sessions, load_session
 from presentation.adapter import load_replay
 
 SYNTHETIC = 'Verified synthetic scenario'
+SAMPLE_CHOICES = (5, 10, 20)
 
 
 def ensure_player():
@@ -50,12 +51,13 @@ def speed_changed():
 
 def collect():
     try:
-        job = Collection.start(current=st.session_state.get('collection'))
+        job = Collection.start(current=st.session_state.get('collection'),
+                               count=st.session_state.get('collect_count', SAMPLE_CHOICES[0]))
         st.session_state['collection'] = job
         st.session_state.pop('collection_consumed', None)
         st.session_state.pop('collection_error', None)
         ensure_player().pause()
-    except (OSError, RuntimeError) as error:
+    except (OSError, RuntimeError, ValueError) as error:
         st.session_state['collection_error'] = str(error)
 
 
@@ -73,8 +75,9 @@ def poll_collection(apply=True):
         return
     result = job.poll()
     if result['status'] == 'collecting':
-        count = max(0, min(5, result.get('count', 0)))
-        st.progress(count / 5, text=f'Collecting actual Linux intervals: {count} / 5 · cancel available · no retries')
+        total = getattr(job, 'count', SAMPLE_CHOICES[0])
+        count = max(0, min(total, result.get('count', 0)))
+        st.progress(count / total, text=f'Collecting actual Linux intervals: {count} / {total} · cancel available · no retries')
     elif st.session_state.get('collection_consumed') != str(job.folder):
         if not apply:
             return True  # apply new source before its widget is instantiated on full rerun
@@ -106,7 +109,7 @@ def controls():
     # Retain a validated loaded source even if a folder is temporarily unavailable.
     if p.source not in options:
         options.append(p.source)
-    source, action, stop = st.columns([3, 1, 1], vertical_alignment='bottom')
+    source, samples, action, stop = st.columns([3, .8, 1, 1], vertical_alignment='bottom')
     source.selectbox('Session source', options, key='source_choice', disabled=active_collection(),
                      format_func=lambda key: key if key == SYNTHETIC else 'Saved Linux · ' + key.replace('\\', '/').split('/')[-1])
     choice = st.session_state['source_choice']
@@ -114,13 +117,15 @@ def controls():
         data = load_replay() if choice == SYNTHETIC else load_session(choice)
         st.session_state['dataset'] = data
         p.switch(choice, len(data.frames), time.monotonic())
+    samples.selectbox('Samples', SAMPLE_CHOICES, key='collect_count', disabled=active_collection(),
+                      help='One-second background intervals for Collect Live Data')
     action.button('Collect Live Data', key='collect', on_click=collect,
                   disabled=sys.platform != 'linux' or active_collection())
     stop.button('Cancel collection', key='cancel_collection', on_click=cancel, disabled=not active_collection())
     if sys.platform != 'linux':
         st.caption('Fresh collection requires Linux /proc/stat. Synthetic and saved Linux replay work on Windows.')
     else:
-        st.caption('Explicit action only: five background intervals; no generated load, sudo or hardware actuation. Saved sessions are historical.')
+        st.caption('Explicit action only: 5, 10 or 20 one-second background intervals; no generated load, sudo or hardware actuation. Saved sessions are historical.')
     st.session_state['tick'] = p.tick
     if not p.playing:
         st.session_state['tick_control'] = p.tick

@@ -216,7 +216,7 @@ def notes_view():
     with st.container(key='card_live_limit'):
         st.subheader('VirtualBox & live monitoring')
         st.write('The recorded Ubuntu guest exposes no CPUFreq interface. Loaded stress runs have a history of freezes and timing irregularities. Ordinary dashboard startup and replay do not start collection. The explicit Linux collection action observes background activity only; no artificial load or hardware actuation is used.')
-        st.write('Collect Live Data explicitly starts a single-purpose Linux child using the existing five-interval pipeline. Its 12-second collection deadline is backed by a 15-second parent watchdog, cancellation and UI heartbeat lease. Saved sessions are raw-counter validated and decisions reconstructed before the shared player replays them. Nothing collects on startup or ordinary reruns.')
+        st.write('Collect Live Data explicitly starts a single-purpose Linux child using the existing bounded pipeline for 5, 10 or 20 one-second intervals. Its collection deadline (2 s per sample plus 2 s; 12 s for five) is backed by a parent watchdog 3 s longer, cancellation and UI heartbeat lease. Saved sessions are raw-counter validated and decisions reconstructed before the shared player replays them. Nothing collects on startup or ordinary reruns.')
         st.code('.venv/bin/python -m governorlab --visual\n.venv/bin/python -m governorlab --live --visual', language='bash')
         st.caption('Terminal live mode is Linux-only, user-initiated and separately bounded. These commands are documentation, not actions launched by the web page.')
     st.subheader('Reproducibility')
