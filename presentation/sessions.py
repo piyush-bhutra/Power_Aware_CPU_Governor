@@ -4,6 +4,7 @@ Terminal (`governorlab --live`) and dashboard (daybreak worker) captures use the
 same on-disk format under run/: capture.csv, metadata.json, decisions.json,
 raw_events.jsonl and a session-sha256.json manifest written by collect_live.
 """
+from collections import Counter
 from dataclasses import asdict, replace
 import hashlib
 import json
@@ -26,14 +27,54 @@ def check_sample_count(count):
     return count
 
 
-def collection_timeout_s(count):
-    """Inner collection deadline: about 2 s per one-second sample plus a 2 s margin (5 -> 12 s)."""
-    return 2 * check_sample_count(count) + 2
+def max_attempts(count, strict=False):
+    """Strict: exactly `count` attempts. Tolerant: count + max(3, ceil(count/2)) (5 -> 8)."""
+    check_sample_count(count)
+    return count if strict else count + max(3, -(-count // 2))
 
 
-def watchdog_s(count):
-    """Parent watchdog: the inner deadline plus 3 s for child startup/teardown (5 -> 15 s)."""
-    return collection_timeout_s(count) + 3
+def collection_timeout_s(count, strict=False):
+    """Inner collection deadline: 2 s per allowed attempt plus 2 s (strict 5 -> 12 s, tolerant 5 -> 18 s)."""
+    return 2 * max_attempts(count, strict) + 2
+
+
+def watchdog_s(count, strict=False):
+    """Parent watchdog: the inner deadline plus 3 s for child startup/teardown."""
+    return collection_timeout_s(count, strict) + 3
+
+
+TIMING_QUALITIES = ('clean', 'degraded')
+DISCARD_REASONS = {'elapsed_out_of_range': 'measured interval outside 0.5-2 s',
+                   'jiffy_ratio_out_of_range': 'CPU accounting rate outside 0.5-1.5x expected',
+                   'invalid_counter_interval': 'counters went backwards or did not advance'}
+
+
+def timing_banner(metadata):
+    """Disclosure text for degraded sessions, or None for clean/legacy sessions."""
+    if metadata.get('timing_quality') != 'degraded':
+        return None
+    discarded = metadata.get('discarded_attempts', [])
+    reasons = Counter(d.get('reason') for d in discarded)
+    detail = ', '.join(f'{n} x {DISCARD_REASONS.get(r, r)}' for r, n in sorted(reasons.items()))
+    return (f'{len(discarded)} intervals discarded because of VM timing anomalies ({detail}); '
+            f'{metadata.get("attempts_made")} attempts for {metadata.get("actual_sample_count")} kept samples. '
+            'Kept samples may be non-adjacent in time.')
+
+
+def check_timing_fields(metadata, count):
+    """Validate tolerant-collection disclosure; legacy sessions without it are 'clean'."""
+    if 'timing_quality' not in metadata:
+        return dict(timing_quality='clean', discarded_attempts=[], attempts_made=count,
+                    kept_attempt_indices=list(range(1, count + 1)))
+    quality, discarded = metadata['timing_quality'], metadata.get('discarded_attempts')
+    kept, attempts = metadata.get('kept_attempt_indices'), metadata.get('attempts_made')
+    if (quality not in TIMING_QUALITIES or not isinstance(discarded, list) or not isinstance(kept, list)
+            or len(kept) != count or attempts != count + len(discarded)
+            or (quality == 'degraded') != bool(discarded)
+            or sorted(kept + [d.get('attempt') for d in discarded]) != list(range(1, attempts + 1))):
+        raise ValueError('Session timing disclosure (timing_quality / discarded_attempts / '
+                         'kept_attempt_indices / attempts_made) is inconsistent')
+    return {}
 
 
 def list_sessions(root=RUN):
@@ -73,6 +114,7 @@ def load_session(folder):
             or metadata.get('workload_label') != 'uncontrolled_background'):
         raise ValueError(f'Session is not a validated {MIN_SAMPLES}-{MAX_SAMPLES} interval background capture '
                          'with requested_attempts equal to actual_sample_count')
+    timing_defaults = check_timing_fields(metadata, count)
     rate = metadata.get('expected_jiffies_per_s')
     if not isinstance(rate, (int, float)) or not math.isfinite(rate) or rate <= 0:
         raise ValueError('Session CPU accounting rate is unavailable')
@@ -88,7 +130,7 @@ def load_session(folder):
     current = str(path)
     frames = tuple(replace(f, sample_id=f'{current}:{f.tick + 1}') for f in data.frames)
     return replace(data, mode='SAVED LINUX OBSERVATIONS — SIMULATED DECISIONS', frames=frames,
-                   metadata={**data.metadata, 'csv_path': current, 'original_csv_path': original,
+                   metadata={**data.metadata, **timing_defaults, 'csv_path': current, 'original_csv_path': original,
                              'session_folder': str(folder),
                              'validation': 'Saved raw counters and all decisions revalidated against backend; '
                                            + ('capture hashes checked' if manifest.exists() else 'legacy terminal capture has no hash manifest'),

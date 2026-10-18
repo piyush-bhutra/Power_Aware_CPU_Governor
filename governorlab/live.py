@@ -14,7 +14,8 @@ import time
 from monitor.capture import LABEL_COLS, check_resources, resources, validate_trace
 from monitor.reader import log_csv, sample
 from presentation.adapter import load_csv, process_live_observations
-from presentation.sessions import DEFAULT_SAMPLES, check_sample_count, collection_timeout_s, write_manifest
+from presentation.sessions import (DEFAULT_SAMPLES, check_sample_count, collection_timeout_s, max_attempts,
+                                   write_manifest)
 
 ROOT = Path(__file__).resolve().parents[1]
 LABEL = 'uncontrolled_background'
@@ -41,22 +42,42 @@ def collection_deadline(seconds=12):
         signal.signal(signal.SIGALRM, previous)
 
 
+class AttemptCapExceeded(RuntimeError):
+    """Tolerant collection ran out of attempts before enough valid intervals."""
+
+
+def interval_anomaly(row, rate):
+    """(reason, ratio) for an interval outside the unchanged validity thresholds, else (None, ratio)."""
+    elapsed = row['elapsed_s']
+    ratio = float(row['delta_total_jiffies']) / elapsed / rate if elapsed > 0 else float('inf')
+    if not .5 <= elapsed <= 2:
+        return 'elapsed_out_of_range', ratio
+    if not .5 <= ratio <= 1.5:
+        return 'jiffy_ratio_out_of_range', ratio
+    return None, ratio
+
+
 def save_json(path, value):
     temporary = path.with_suffix(path.suffix + '.tmp')
     temporary.write_text(json.dumps(value, indent=2, ensure_ascii=True) + '\n', encoding='utf-8')
     temporary.replace(path)
 
 
-def collect_live(output_root=ROOT / 'run', progress=lambda count: None, count=DEFAULT_SAMPLES):
+def collect_live(output_root=ROOT / 'run', progress=lambda count: None, count=DEFAULT_SAMPLES, strict=False):
     """Save evidence, validate exactly `count` (5-30) intervals, then simulate decisions.
 
-    Invalid intervals consume attempts, without replacement. Partial/error/interrupt
+    Tolerant (default): an interval failing the timing (0.5-2 s) or CPU-accounting
+    (0.5-1.5x expected) check is discarded, recorded and never classified; sampling
+    continues (each interval rebaselines) until `count` valid samples, the attempt cap
+    count + max(3, ceil(count/2)), or the deadline. Strict: the first timing anomaly
+    aborts, as before. Invalid intervals consume attempts, without replacement. Partial/error/interrupt
     sessions retain CSV, observer events and failure metadata and are never replayed.
     Successful sessions get a session-sha256.json manifest: the same on-disk
     format as dashboard (daybreak worker) sessions.
     """
     check_sample_count(count)
-    timeout = collection_timeout_s(count)
+    attempts_allowed = max_attempts(count, strict)
+    timeout = collection_timeout_s(count, strict)
     if sys.platform != 'linux' or not Path('/proc/stat').is_file():
         raise RuntimeError('Live observation requires Linux /proc/stat')
     initial = resources()
@@ -73,6 +94,8 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None, count=DE
         'observation_source': 'linux_proc_stat', 'source': '/proc/stat',
         'workload_label': LABEL, 'requested_attempts': count, 'interval_s': 1.0,
         'collection_timeout_s': timeout, 'actual_sample_count': 0, 'observed_intervals_s': [],
+        'strict': strict, 'max_attempts': attempts_allowed, 'attempts_made': 0, 'discarded_attempts': [],
+        'kept_attempt_indices': [], 'timing_quality': 'clean',
         'initial_resources': initial, 'expected_jiffies_per_s': rate,
         'frequency_control': 'simulated', 'generated_load': False,
         'source_sha256': {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest()
@@ -87,26 +110,54 @@ def collect_live(output_root=ROOT / 'run', progress=lambda count: None, count=DE
     try:
         progress(0)
         with collection_deadline(timeout), (folder / 'raw_events.jsonl').open('x', encoding='utf-8') as events:
-            def observed(event):
+            def write_event(event):
                 events.write(json.dumps(event) + '\n')
                 events.flush()
+            seen = {'interval_event': False}
+            def discard(attempt, reason, elapsed, ratio):
+                record = dict(attempt=attempt, reason=reason, elapsed_s=elapsed, ratio=ratio)
+                metadata['discarded_attempts'].append(record)
+                metadata['timing_quality'] = 'degraded'
+                write_event({'event': 'discarded', **record})
+            def observed(event):
+                write_event(event)
                 if event.get('event') == 'interval':
+                    metadata['attempts_made'] += 1
+                    seen['interval_event'] = True
                     metadata['observed_intervals_s'].append(event.get('elapsed_s'))
+                    if event.get('valid') is False:  # the sampler yields nothing for this attempt
+                        discard(metadata['attempts_made'], 'invalid_counter_interval', event.get('elapsed_s'), None)
             def annotated():
-                source = sample(1.0, count, observer=observed)
+                source = sample(1.0, attempts_allowed, observer=observed)
                 try:
                     for row in source:
+                        if not seen['interval_event']:  # fixture samplers may not emit events
+                            metadata['attempts_made'] += 1
+                        seen['interval_event'] = False
+                        attempt = metadata['attempts_made']
                         current = resources()
                         check_resources(current, initial)
                         metadata['last_resources'] = current
-                        if not .5 <= row['elapsed_s'] <= 2:
+                        reason, ratio = interval_anomaly(row, rate)
+                        if strict and reason == 'elapsed_out_of_range':
                             raise RuntimeError('Sampling timing anomaly; stopping without retry')
+                        if reason and not strict:
+                            discard(attempt, reason, row['elapsed_s'], ratio)
+                            continue  # never classified; the next interval starts from this snapshot
                         yield {**row, **current, 'workload_label': LABEL,
                                'observation_source': 'linux_proc_stat'}
+                        metadata['kept_attempt_indices'].append(attempt)
                         metadata['actual_sample_count'] += 1
                         progress(metadata['actual_sample_count'])
+                        if metadata['actual_sample_count'] == count:
+                            return
                 finally:
                     source.close()
+                if not strict:
+                    raise AttemptCapExceeded(
+                        f'Attempt cap reached: {metadata["actual_sample_count"]} of {count} valid samples after '
+                        f'{metadata["attempts_made"]} attempts ({len(metadata["discarded_attempts"])} discarded); '
+                        'VM timing unstable, no automatic retry')
             log_csv(str(csv_path), annotated(), LABEL_COLS, mode='x')
             metadata['statistics'] = validate_trace(csv_path, count, LABEL, rate)
             records = load_csv(csv_path, 'linux_recorded')

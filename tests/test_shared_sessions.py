@@ -58,12 +58,15 @@ def test_collect_live_uses_count_everywhere_and_writes_manifest(live, tmp_path, 
     progress = []
     data = live.collect_live(tmp_path, progress.append, count=count)
     folder = Path(data.metadata['csv_path']).parent
-    assert live.fixture_requested == [count]
-    assert live.fixture_deadlines == [2 * count + 2]
+    attempts = sessions.max_attempts(count)  # tolerant default
+    assert live.fixture_requested == [attempts]
+    assert live.fixture_deadlines == [2 * attempts + 2]
     assert progress == list(range(count + 1))
     metadata = json.loads((folder / 'metadata.json').read_text())
     assert metadata['requested_attempts'] == metadata['actual_sample_count'] == count
-    assert metadata['collection_timeout_s'] == 2 * count + 2
+    assert metadata['collection_timeout_s'] == 2 * attempts + 2
+    assert metadata['timing_quality'] == 'clean' and metadata['discarded_attempts'] == []
+    assert metadata['kept_attempt_indices'] == list(range(1, count + 1)) and metadata['attempts_made'] == count
     manifest = json.loads((folder / 'session-sha256.json').read_text())
     assert manifest == sessions.session_hashes(folder)
     loaded = sessions.load_session(folder)
@@ -78,9 +81,12 @@ def test_collect_live_rejects_out_of_range_count_before_sampling(live, tmp_path,
     assert live.fixture_requested == [] and not list(tmp_path.iterdir())
 
 
-def test_deadline_and_watchdog_scale_and_keep_five_sample_values():
-    assert (sessions.collection_timeout_s(5), sessions.watchdog_s(5)) == (12, 15)
-    assert (sessions.collection_timeout_s(20), sessions.watchdog_s(20)) == (42, 45)
+def test_deadline_and_watchdog_scale_with_allowed_attempts():
+    # strict keeps the Phase 1A values; tolerant allows count + max(3, ceil(count/2)) attempts
+    assert (sessions.collection_timeout_s(5, strict=True), sessions.watchdog_s(5, strict=True)) == (12, 15)
+    assert sessions.max_attempts(5) == 8 and sessions.max_attempts(20) == 30 and sessions.max_attempts(7) == 11
+    assert (sessions.collection_timeout_s(5), sessions.watchdog_s(5)) == (18, 21)
+    assert (sessions.collection_timeout_s(20), sessions.watchdog_s(20)) == (62, 65)
 
 
 def test_daybreak_sessions_is_a_reexport():
@@ -145,7 +151,8 @@ def test_collection_passes_count_to_child_and_scales_watchdog(monkeypatch, tmp_p
     monkeypatch.setattr(m.Collection, '_watch', lambda self: None)
     job = m.Collection.start(tmp_path, count=20)
     assert commands[0][-2:] == ['--count', '20']
-    assert job.count == 20 and job.deadline_s == 45
+    assert job.count == 20 and job.deadline_s == 65
+    job.result = {'status': 'test finished'}  # fake child: keep atexit cleanup from signalling it
     monkeypatch.setattr(m.subprocess, 'Popen', lambda *a, **k: pytest.fail('spawned'))
     with pytest.raises(ValueError, match='sample count'):
         m.Collection.start(tmp_path, count=7.5)
@@ -249,7 +256,7 @@ def test_cli_rejects_invalid_sample_options_before_collection(argv, monkeypatch)
 def test_cli_live_forwards_samples(ten, monkeypatch):
     from governorlab import live as live_module
     seen = []
-    def collect(progress, count):
+    def collect(progress, count, strict=False):
         seen.append(count)
         progress(count)
         return sessions.load_session(ten)

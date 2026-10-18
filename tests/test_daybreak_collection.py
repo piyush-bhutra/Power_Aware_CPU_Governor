@@ -90,7 +90,7 @@ def test_watchdog_bounds_deadline_and_heartbeat(monkeypatch, tmp_path):
     job = m.Collection(child, tmp_path)
     calls = []
     monkeypatch.setattr(job, 'cancel', lambda reason: calls.append(reason))
-    monkeypatch.setattr(m.time, 'monotonic', lambda: job.started + 16)
+    monkeypatch.setattr(m.time, 'monotonic', lambda: job.started + job.deadline_s + 1)  # 21 s for the tolerant 5-sample default
     job._watch()
     assert calls == ['timeout']
     calls.clear()
