@@ -36,6 +36,23 @@ def parse_stat(text):
     return out
 
 
+COUNTER_KEYS = CPU_FIELDS[:8] + ("ctxt",)
+GAUGE_KEYS = ("procs_running", "procs_blocked")
+
+
+def _check_snapshot(snapshot, label, keys):
+    for key in keys:
+        if key not in snapshot or snapshot[key] is None:
+            raise ValueError(f"{label} /proc/stat snapshot is missing {key!r}")
+        value = snapshot[key]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"{label} snapshot field {key!r} must be a number, got {value!r}")
+        if math.isnan(value):
+            raise ValueError(f"{label} snapshot field {key!r} is NaN")
+        if value < 0:
+            raise ValueError(f"{label} snapshot field {key!r} is negative ({value})")
+
+
 def compute_signals(prev, cur, interval_s):
     """Difference two parse_stat() snapshots into rates/percentages.
 
@@ -44,6 +61,8 @@ def compute_signals(prev, cur, interval_s):
     """
     if not math.isfinite(interval_s) or interval_s <= 0:
         raise ValueError("elapsed interval must be finite and positive")
+    _check_snapshot(prev, "previous", COUNTER_KEYS)
+    _check_snapshot(cur, "current", COUNTER_KEYS + GAUGE_KEYS)
     # guest and guest_nice are already included in user and nice by Linux.
     d = {f: cur[f] - prev[f] for f in CPU_FIELDS[:8]}
     ctxt_delta = cur["ctxt"] - prev["ctxt"]

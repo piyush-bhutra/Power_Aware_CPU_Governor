@@ -46,19 +46,11 @@ def test_run_logs_the_frequency_that_actually_landed():
         "target_khz (the log's main column) must reflect what hardware did, not the ask"
 
 
-def test_known_limitation_policy_stops_retrying_after_a_clamp():
-    # This documents a known gap, not a fix. After a clamped write, Policy's
-    # own hysteresis guard (cls == self.stable_class -> "nothing to do")
-    # trusts self.current as proof the stable class's target was reached.
-    # Resyncing self.current to the clamped value (tried and reverted - see
-    # governor.py's comment) makes the policy silently give up on ever
-    # re-requesting the true target for as long as the class stays stable.
-    # That's arguably worse than not resyncing at all, so NEITHER is done
-    # here: policy.current keeps believing the ORIGINAL request succeeded,
-    # and every subsequent tick of the same class keeps re-requesting it
-    # unchanged (visible below: requested_khz stays 4MHz throughout, not just
-    # on tick 0) - not from the policy noticing the failure and retrying, but
-    # because it truly still doesn't know the write failed.
+def test_clamped_write_resyncs_policy_current_and_keeps_requesting_target():
+    # After a clamped write, governor.run() resyncs policy.current to what the
+    # setter returned. Policy keeps its stable-class goal separately, so every
+    # later tick of the same class re-requests the true target instead of
+    # treating the clamped value as "already reached".
     freqs = [1_000_000, 2_000_000, 3_000_000, 4_000_000]
     setter = ClampingSetter(freqs, clamp_to=2_000_000)
     policy = Policy(freqs, k=1)
@@ -66,13 +58,19 @@ def test_known_limitation_policy_stops_retrying_after_a_clamp():
 
     assert all(r["requested_khz"] == 4_000_000 for r in rows), rows
     assert all(r["target_khz"] == 2_000_000 for r in rows), rows
-    assert policy.current == 4_000_000, (
-        "policy still believes 4MHz landed - this is the known gap. "
-        "A correct fix needs Policy to separately track its own INTENDED "
-        "target for the stable class vs. hardware's LAST CONFIRMED frequency; "
-        "today it conflates the two in self.current. Worth resolving once "
-        "Phase 0 shows whether Outcome A partial-clamping actually occurs."
-    )
+    assert policy.current == 2_000_000, "policy must reflect what the setter confirmed"
+    assert policy._goal == 4_000_000, "the stable-class goal must survive the clamp"
+
+
+def test_policy_reaches_target_once_clamp_is_lifted():
+    freqs = [1_000_000, 2_000_000, 3_000_000, 4_000_000]
+    setter = ClampingSetter(freqs, clamp_to=2_000_000)
+    policy = Policy(freqs, k=1)
+    list(run(synth([("cpu", 2)], seed=1), setter, policy))
+    setter.clamp_to = 4_000_000
+    rows = list(run(synth([("cpu", 2)], seed=2), setter, policy))
+    assert rows[0]["target_khz"] == 4_000_000
+    assert policy.current == 4_000_000
 
 
 def test_no_desync_when_hardware_is_well_behaved():

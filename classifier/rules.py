@@ -4,6 +4,7 @@ THRESHOLDS ARE PLACEHOLDERS. They are guesses until Phase 2 tunes them against
 recorded stress-ng runs; every final value must be justified in docs/thresholds.md
 with the data that produced it.
 """
+import math
 
 CPU_BOUND, IO_BOUND, IDLE, MIXED = "cpu_bound", "io_bound", "idle", "mixed"
 
@@ -15,8 +16,25 @@ THRESHOLDS = {
 }
 
 
+FEATURES = ("util_pct", "iowait_pct", "procs_blocked", "ctxt_per_s", "procs_running")
+
+
+def _check_features(sig):
+    for name in FEATURES:
+        if name not in sig or sig[name] is None:
+            raise ValueError(f"classify: missing feature {name!r}")
+        value = sig[name]
+        if isinstance(value, bool) or not isinstance(value, (int, float)):
+            raise ValueError(f"classify: feature {name!r} must be a number, got {value!r}")
+        if math.isnan(value):
+            raise ValueError(f"classify: feature {name!r} is NaN")
+        if value < 0:
+            raise ValueError(f"classify: feature {name!r} is negative ({value})")
+
+
 def classify(sig, th=THRESHOLDS):
     """Signal dict (from monitor.compute_signals) -> workload class."""
+    _check_features(sig)
     util, iowait = sig["util_pct"], sig["iowait_pct"]
     blocked, ctxt = sig["procs_blocked"], sig["ctxt_per_s"]
 
