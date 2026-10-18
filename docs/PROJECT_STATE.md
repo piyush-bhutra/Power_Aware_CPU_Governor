@@ -1,5 +1,16 @@
 # Verified project state
 
+## Current update — Phase 1B overhead and sensitivity tools, October 18, 2026
+
+Two evaluation tools on main. benchmark/overhead.py measures the governor loop's own CPU
+time, context switches, wake-ups and memory against a sleep-only control (Linux only,
+fixed 0.5/1/2/5 s x 60 s x 3 plan, about 27 minutes); written and fake-tested on Windows,
+not yet run. benchmark/sensitivity.py is a deterministic synthetic K and sampling-interval
+study, archived in evidence/phase1b_sensitivity/ (synthetic inputs, simulated frequency,
+modelled energy). Windows: 210 portable + 6 live-adapter tests passed; replay 13/23/29 and
+comparison unchanged. Pending: an approved overhead run on Ubuntu, plus the Phase 1A Ubuntu
+checks. Checkpoint tag: checkpoint-1b-overhead-sensitivity.
+
 ## Current update — Phase 1A configurable sessions, October 18, 2026
 
 Single branch: main (development consolidated, tags pre-consolidation-development and

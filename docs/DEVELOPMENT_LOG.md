@@ -1,5 +1,32 @@
 # Development log
 
+## 2026-10-18 — Phase 1B: overhead tool and sensitivity study (main)
+
+Started at 0447eb6 after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).
+- benchmark/overhead.py: explicitly invoked, Linux-only self-overhead measurement of the
+  real per-tick pipeline (read /proc/stat, parse, compute_signals, classify, Policy,
+  SimulatedSetter, optional cpufreq read) against a sleep-only control. Records per-tick
+  process_time (mean/median/p95/max), /proc/self/stat user+system, voluntary/involuntary
+  context switches, VmRSS/VmHWM and wake-ups/s; net = governor minus control per
+  repetition. Fixed plan 0.5/1/2/5 s x 60 s x 3 repetitions (hard budget 1590 s), --smoke
+  for 40 s. Clock, sleep and /proc readers are injectable; refuses non-Linux hosts.
+  NOT run anywhere yet; needs separate approval on the Ubuntu VM.
+- benchmark/sensitivity.py: deterministic K sweep (1-8, 10) on seven synthetic scenarios
+  and an interval sweep (0.5/1/2/5 s) over one 0.1 s counter timeline through
+  compute_signals. Results archived in evidence/phase1b_sensitivity/ with README,
+  PROVENANCE.json (commit 544397b, seeds, parameters, LF-normalized source hashes) and
+  SHA256SUMS; the folder is -text in .gitattributes so bytes match on every checkout.
+- Findings (synthetic, simulated, modelled): lag is exactly K-1 ticks; bursts shorter than K
+  are suppressed; K>=3 removes all flapping transitions; at K>=7 the archived scenario stops
+  serving phase changes. Longer intervals miss more bursts (0.5/1 s miss 0.3-0.5 s bursts;
+  5 s misses all six) and class lag grows ~0.6 s -> ~7 s. On bursty scenarios higher K lowers
+  model energy only because the open-loop model does not stretch work at low frequency.
+
+Windows only (Python 3.12.4): portable suite 210 passed (182 + 12 overhead + 16
+sensitivity); six portable live-demo cases passed. Archived replay (13/23/29), the five
+recorded observations, both Review 1 archives and the five-policy comparison verify
+unchanged. Not run: the overhead tool itself, four fcntl modules, 16 Linux live-demo cases.
+
 ## 2026-10-18 — Phase 1A: configurable sessions and policy fixes (main)
 
 Single-branch workflow on main, starting at eb2b076. Sync protocol: fetched, main 0/0
