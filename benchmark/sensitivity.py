@@ -311,7 +311,10 @@ def generate(outdir):
                                           'noise': FINE_NOISE, 'intervals_s': list(INTERVALS),
                                           'timeline_s': FINE_TIMELINE, 'sustained_phase_min_s': SUSTAINED_S,
                                           'k_for_applied_metrics': 3}},
-        'source_hashes': {name: hashlib.sha256((ROOT / name).read_bytes()).hexdigest() for name in SOURCES},
+        # LF-normalized, i.e. the Git blob bytes, so hashes match on Windows (autocrlf) and Linux.
+        'source_hashes': {name: hashlib.sha256((ROOT / name).read_bytes().replace(b'\r\n', b'\n')).hexdigest()
+                          for name in SOURCES},
+        'source_hash_note': 'SHA-256 of LF-normalized source bytes (Git blob content) at source_commit.',
         'model': 'P = 21.6 + 32.4 * (f/5100000)^3 * util/100 W; energy = sum(rounded P * interval)',
         'interpretation_restrictions': [
             'Inputs are invented synthetic counters, not Linux observations.',

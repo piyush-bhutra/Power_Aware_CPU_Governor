@@ -7,3 +7,5 @@ evidence/review1/synthetic_policy_comparison_20261015/powersave.csv -text whites
 evidence/review1/synthetic_policy_comparison_20261015/ondemand.csv -text whitespace=cr-at-eol
 evidence/review1/synthetic_policy_comparison_20261015/conservative.csv -text whitespace=cr-at-eol
 evidence/review1/synthetic_policy_comparison_20261015/ours.csv -text whitespace=cr-at-eol
+# Phase 1B sensitivity outputs: exact bytes are hashed in SHA256SUMS.
+evidence/phase1b_sensitivity/** -text
