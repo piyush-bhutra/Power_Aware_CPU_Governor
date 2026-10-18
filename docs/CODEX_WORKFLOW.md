@@ -2,6 +2,44 @@
 
 Established 2026-10-15 11:27:57 UTC. Source instruction: `/media/sf_OS_Project_Shared/codex_master_setup.txt`.
 
+## Single-branch workflow and sync protocol
+
+Current Git policy since October 18, 2026. It supersedes every main/development
+instruction in the sections below (stop-on-stale branch comparisons, development
+checkpoints, the milestone merge policy and READY/DEFER/BLOCKED integration
+assessments). Those sections are kept as history.
+
+Consolidation record: development (271c3733b30fb4aca22c172b9b86de42600be737) was
+fast-forwarded into main (previously 2753fc397bc97b96421ebb365152c1c0fc66781f),
+main was pushed and verified on origin, and development was deleted locally and on
+origin after Git confirmed main contained it. Its tip is preserved as annotated tag
+pre-consolidation-development. The first safe point is annotated tag
+checkpoint-0-daybreak-integrated at the same commit.
+
+Rules for every task on every device:
+
+1. **One branch: main.** Work and commit directly on main. Safe points are annotated
+   tags named `checkpoint-N-description`, pushed to origin.
+2. **Commits and attribution.** Plain descriptive messages. No AI attribution
+   anywhere: no Co-Authored-By trailers, no "Generated with" lines, no mention of
+   Claude, Codex or AI in commit messages, tags or PR text. Repository-local identity
+   stays piyush-bhutra; never override author or committer.
+3. **Start-of-session sync**, every session and every time the device changes:
+   - confirm repository root, identity, current branch and a clean working tree;
+   - `git fetch origin` without prune; compare local main to origin/main;
+   - if the tree is clean and local main is only behind, update with
+     `git merge --ff-only origin/main` and nothing else;
+   - if the tree is dirty, the branches diverged, or anything is unexpected:
+     STOP and report. Never rebase, reset, stash, force-push or resolve conflicts
+     silently.
+4. **End of task:** clean working tree, main pushed, and the remote hash verified
+   with a remote query (`git ls-remote origin refs/heads/main`).
+5. **Safety:** no collectors, stress, sudo, installs or hardware writes without
+   explicit user approval (see AGENTS.md).
+6. **Preservation:** keep `mock-sysfs-wip` (local and origin) and
+   `backup-before-cleanup-2026-09-18-tag`. Delete no branch, tag or file without
+   explicit approval.
+
 ## Environment and paths
 Repository: `/home/vboxuser/Power_Aware_CPU_Governor` (verified Git root).
 Windows host / VirtualBox guest. Host Ryzen 7 7840HS, 16 GB RAM are user-provided;
@@ -26,7 +64,7 @@ Existing `.venv` is usable; no dependency installation was needed.
 6. Fetch (no pruning) when permitted. Compare ahead/behind; do not blindly pull.
 7. Identify latest checkpoint and current authorized objective. Ask only if ambiguous.
 
-## Mandatory stop-on-stale rule (both development environments)
+## Mandatory stop-on-stale rule (historical; superseded by the single-branch sync protocol above)
 
 Before editing in every coding or repository task, inspect Git status, fetch origin
 without pruning when network access is available, and independently verify remote
@@ -74,7 +112,7 @@ match stored Git blobs; system core.autocrlf=true converts 14 covered text files
 CRLF locally, so direct working-file hash checks differ for those files only. CSVs
 and PNGs retain their recorded bytes. No evidence or line-ending settings were changed.
 
-## Git workflow and permission state
+## Git workflow and permission state (historical; superseded by the single-branch workflow above)
 Current stable/default: main. Reusable development created from verified main at
 `1ece4a22385c56af0e1c4d139b1ec897f6ca997d` under the explicitly requested Review 1 task.
 Initial persistent-documentation checkpoint `1a3d180` was pushed to origin/development.
@@ -94,7 +132,7 @@ publication or repository permission change without explicit approval.
 Fast-forward only under approved workflow; divergence or conflict-producing
 integration requires explanation and approval. Never hide uncommitted work by switching.
 
-## Milestone-based Git synchronization and merge policy
+## Milestone-based Git synchronization and merge policy (historical; superseded by the single-branch workflow above)
 
 Persistent project policy adopted October 15, 2026 from the user-invoked
 `/media/sf_OS_Project_Shared/prompts/GIT_WORKFLOW.txt`. Apply throughout the project;
