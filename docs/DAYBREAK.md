@@ -2,19 +2,24 @@
 
 Daybreak is a local Streamlit presentation of the verified Governorlab backend and
 its archived evidence. Startup and ordinary reruns do not sample. An explicit Linux
-action collects five background intervals in an isolated child; no workloads or
-physical CPUFreq control are used.
+action collects 5, 10 or 20 background intervals in an isolated child; no workloads
+or physical CPUFreq control are used.
+
+**Measured vs simulated.** Saved Linux sessions contain measured `/proc/stat`
+counters and derived rates. Predicted classes use provisional rules. Candidate and
+applied frequencies are simulated decisions; energy in The Comparison is a model
+estimate. Nothing in the dashboard measures power or changes hardware frequency.
 
 ## Install and launch
 
-From `C:\OS Project` in Windows PowerShell:
+From `C:\OS Project` in Windows PowerShell (replay only; Windows cannot collect):
 
 ```powershell
 .\.venv\Scripts\python.exe -m pip install -r requirements-dashboard.txt
 .\.venv\Scripts\python.exe -m streamlit run daybreak/app.py
 ```
 
-From the friend's Ubuntu repository, after safe Git synchronization:
+From the Ubuntu VM repository, after the start-of-session Git sync:
 
 ```bash
 cd /home/vboxuser/Power_Aware_CPU_Governor
@@ -28,6 +33,7 @@ Streamlit 1.66.0 and Plotly 6.9.0 are pinned separately from backend requirement
 Installation needs network access; normal dashboard operation uses local code,
 archives and bundled assets. Telemetry is disabled, file watching is disabled and
 the default listener is loopback only. There are no remote datasets, fonts or APIs.
+See the [user manual](USER_MANUAL.md) for a full walkthrough and troubleshooting.
 
 ## Classroom walkthrough
 
@@ -35,7 +41,7 @@ the default listener is loopback only. There are no remote datasets, fonts or AP
    Play/Pause/Resume, Restart, previous/next, Reset and 0.5×/1×/2×/4× speed.
    Pause to enable the seek slider; previous/next and Reset also pause for inspection.
    Restart plays from tick 1. The same timeline/inspector/summary serves the synthetic
-   34-tick scenario and each validated saved five-observation Linux session.
+   34-tick scenario and every validated saved Linux session (5 to 30 samples).
    The first-transition button selects the first verified event. Three aligned
    lanes show progressive utilization, predicted workload and candidate versus
    applied simulated frequency. At T11 the I/O prediction is waiting; at T13 K=3
@@ -44,6 +50,8 @@ the default listener is loopback only. There are no remote datasets, fonts or AP
    the current tick (or restarts a completed session). Selection changes restart
    playback with the selected source's actual sample count. At completion, playback
    stops and displays its summary; zero simulated transitions is a valid result.
+   A saved session with discarded intervals shows a yellow banner, "N intervals
+   discarded because of VM timing anomalies", and a **Discarded attempts** table.
 2. **The Evidence:** inspect five historical Linux observations, their measured
    elapsed intervals, raw-derived features and provenance. Frequency remains
    unavailable; no simulated decisions are inserted into this measured capture.
@@ -78,44 +86,58 @@ observations establish bounded monitoring readiness, not loaded VM stability.
 The guest exposes no CPUFreq interface. Physical frequency, electrical energy,
 throughput and completion-time preservation are not demonstrated.
 
-## Terminal demonstrations and explicit live collection
+## Live collection and saved sessions (updated October 19, 2026)
 
-Both Ubuntu terminal commands remain available:
+On Linux, choose **Samples** (5, 10 or 20), then click **Collect Live Data**. This
+starts one single-purpose child per user session:
+`python -m daybreak.worker --job <unique ignored run/daybreak-* folder> --count N`.
+The child calls the same `governorlab.live.collect_live()` as the terminal, on its
+main thread, in tolerant mode:
 
-```bash
-.venv/bin/python -m governorlab --visual
-.venv/bin/python -m governorlab --live --visual
-```
+- Each interval must have a measured elapsed time of 0.5 to 2 s and a CPU-accounting
+  rate of 0.5 to 1.5 times the expected rate (thresholds unchanged). A failing
+  interval is discarded, never classified, and recorded with its attempt number and
+  reason; collection continues from that interval's end snapshot.
+- It stops at N valid samples, or fails at N + max(3, ceil(N/2)) attempts, or at the
+  inner deadline of 2 s per allowed attempt plus 2 s (18 s for 5 samples, 32 s for
+  10, 62 s for 20). The parent watchdog is 3 s longer, and a six-second UI heartbeat
+  lease applies.
+- If the attempt cap is hit, the dashboard says in plain words that VM timing was
+  unstable, suggests closing other applications and retrying, and shows where the
+  evidence was kept. There is no automatic retry.
 
-See [Governorlab guide](GOVERNORLAB.md) for their unchanged boundaries.
-
-On Linux, **Collect Live Data** explicitly starts one single-purpose child per user
-session: `python -m daybreak.worker --job <unique ignored run/daybreak-* folder>`.
-The child calls the existing `governorlab.live.collect_live()` on its main thread;
-its Linux SIGALRM/setitimer 12-second deadline is preserved. The parent imposes a
-15-second watchdog and a six-second UI heartbeat lease. Cancel, leaving Replay,
-disconnect or server exit interrupts the owned child, escalates if needed and reaps
-it. The child starts no descendants. There is no automatic retry. Failed/partial
+Cancel, leaving Replay, disconnect or server exit interrupts the owned child,
+escalates if needed and reaps it. The child starts no descendants. Failed/partial
 artifacts remain available for diagnosis and are never substituted or replayed.
 Each browser user session can own only one active collection; other users have
 independent state. Deploy this local demonstration only on a trusted machine.
 
-Progress shows actual completed intervals (five attempts; invalid attempts are not
-replaced). After success the capture loads into the same player and automatically
-plays all five samples. **Session source** separately lists saved terminal
-`run/live-*` and dashboard `run/daybreak-*/live-*` captures. These remain labelled
+**The Samples dropdown applies to the next collection only.** It does not change or
+filter a session that is already loaded; a saved session always replays with its own
+recorded sample count.
+
+After success the capture loads into the same player and plays all of its samples.
+**Session source** lists every saved session: terminal captures `run/live-*` and
+dashboard captures `run/daybreak-*/live-*`. Both use one on-disk format and one
+loader (`presentation/sessions.py`), so a session collected with
+`governorlab --live` can be replayed here and vice versa. Sessions remain labelled
 saved observations, not currently live data. Windows disables collection with an
 explanation; verified synthetic, saved replay and all other views remain functional.
 To replay a Linux capture on Windows, copy its complete folder into `run/live-*`;
 do not edit its files or copy a Linux virtual environment.
 
-Saved loading repeats raw-counter validation, original five-row/source checks and
-faithful classifier/Policy execution, comparing every saved decision. New dashboard
-captures also hash CSV, metadata, decisions and raw events. Legacy terminal captures
-have no hash manifest: the UI says so and revalidates counters and decisions. Hashes
-detect changes relative to a capture, not authenticated origin. Original source paths
-are preserved in metadata while current sample identities point at the copied CSV.
+Saved loading repeats the hash-manifest check (when present), raw-counter validation,
+sample-count checks (5 to 30, requested equal to kept), timing-disclosure consistency
+and faithful classifier/Policy execution, comparing every saved decision. Legacy
+captures without a manifest or timing fields still load; the UI says so and treats
+them as clean. Hashes detect changes relative to a capture, not authenticated origin.
 No capture's absent frequency measurement is replaced by a simulated frequency.
+
+**Practical advice.** The VM's timer overshoots by about 10 %. Dashboard collection
+competes with the browser and Streamlit for the VM's CPU, so it works best on a quiet
+VM. The most reliable demonstration route is terminal collection
+(`.venv/bin/python -m governorlab --live --samples 10`) followed by dashboard replay
+of that session from **Session source**.
 
 The timed Streamlit fragment runs only while playing/collecting. Each callback does
 bounded work and advances at most one sample, with no app-side sleep/animation loop.
@@ -124,30 +146,23 @@ is presentation cadence, never a claim about measured sampling intervals. During
 playback the clock owns the cursor; pause enables seeking without browser slider
 echoes interrupting animation. All chart lanes/inspector/markers use one frame.
 
-## Verification and Ubuntu handoff
+## Verification status
 
-Unified-player Windows verification: **127 portable suite tests plus six portable
-live-adapter tests passed (133 total)**, including 24 new upgrade tests and the
-17 original dashboard cases. Saved-source switching from synthetic tick34 to a
-five-sample capture also passed. Existing 16 Linux-only live lifecycle
-tests cannot execute on Windows because it lacks /proc and SIGALRM/setitimer.
-Four other existing Linux-only modules require fcntl at collection. They remain
-Ubuntu checks; no production or test behavior was altered to hide these boundaries.
-The real Streamlit server and four views were exercised in a browser at desktop
-and 390-pixel widths, including 1×/4× automatic completion, pause/resume, cursor
-persistence and previous/next/reset. Browser
-checks reported no external HTTP assets and no console errors. This does not verify
-Ubuntu deployment or a human classroom rehearsal.
+- Windows portable suite on commit f47e288: 236 passed, plus 6 portable live-adapter
+  tests. These include dashboard tests for the Samples selector (AppTest), the
+  degraded banner (AppTest) and the attempt-cap message (unit test).
+- Ubuntu VM full suite on commit 8b7280e (October 19, 2026): 326 passed in 29.84 s
+  (user report). A run on f47e288 is pending.
+- Tolerant collection on the VM (user report): one run discarded one 2.32 s interval,
+  kept 5 of 5 samples and showed the degraded banner; strict mode also passed.
+- Dashboard collection at 10 and 20 samples on the VM, and cancellation/disconnect/
+  server-shutdown checks with a real child: pending.
 
-Windows restricted execution blocked asyncio's loopback socketpair initialization;
-the bounded server/AppTest checks succeeded with local socket access. No application
-event-loop workaround was added.
+## Ubuntu checklist
 
-On Ubuntu, first inspect cleanliness, branches, stashes/worktrees and incomplete
-operations; fetch without pruning and independently query remote main/development.
-If dirty, stale/diverged or unpublished work exists, stop and report it. Do not
-reset, stash, discard, rebase or overwrite refs. Otherwise fast-forward development
-to its independently verified remote head, then:
+Run the start-of-session sync from [AGENTS.md](../AGENTS.md) (fetch, then
+`git merge --ff-only origin/main` only if the tree is clean and main is only behind;
+otherwise stop). Then:
 
 ```bash
 .venv/bin/python -m pip install -r requirements.txt -r requirements-terminal.txt -r requirements-dashboard.txt
@@ -156,33 +171,26 @@ to its independently verified remote head, then:
 .venv/bin/python -m streamlit run daybreak/app.py
 ```
 
-Check all four pages in the VM browser, ticks 1/11/13/23/29/34, automatic completion,
-pause/resume, paused seek, Restart, speed, policy filtering and narrow layout.
-Explicitly collect one five-interval background session: verify progress, one child,
-five actual rows, source labels, automatic replay and an honest transition count.
-Replay the saved capture independently; verify leaving/returning retains source/speed.
-Check cancellation, child timeout/failure and browser disconnect/server shutdown:
-no orphan child or retry, partial artifacts retained, no failed capture replay.
-Perform these Linux lifecycle checks under normal VM resource conditions, with no
-generated load, sudo or hardware changes. Rehearse both terminal commands
-only under their documented Linux safety conditions; web startup must not collect
-anything. No main merge is authorized by this dashboard milestone.
+Check all four pages, ticks 1/11/13/23/29/34, automatic completion, pause/resume,
+paused seek, Restart, speed, policy filtering and narrow layout. Collect one session
+at each sample setting on a quiet VM: verify progress, one child, the actual row
+count, source labels, automatic replay, any degraded banner and an honest transition
+count. Replay a terminal-collected session from Session source. Check cancellation,
+browser disconnect and server shutdown: no orphan child or retry, partial artifacts
+retained, no failed capture replay. Use no generated load, sudo or hardware changes.
 
-## Milestone and recovery handoff
+## Historical verification (October 16, 2026, five-sample dashboard)
 
-**DEFER main integration** pending Ubuntu full-suite, dashboard visual/startup and
-shutdown verification, followed by separate approval of the exact development head.
-The Daybreak change is additive and main is its ancestor, so it is fast-forward
-eligible while refs retain that relationship. No known dashboard defect blocks
-Ubuntu validation. Historical branches and unique commits are preserved.
-
-All 26 archive manifest entries were independently checked against Git blobs; 14
-working text files differ only by documented Windows checkout conversion. CSV/PNG
-bytes and evidence Git content are unchanged. Static analysis, dependency checks
-and whitespace checks pass. The owned preview server was stopped after browser QA.
-
-This guide is the Windows local recovery handoff: neither the friend's shared
-mount nor its Windows mapping is available here. Supporting verification is recorded
-in PROJECT_STATE.md, DEVELOPMENT_LOG.md and REVIEW1_STATUS.md. Identify the checkpoint
-with `git log -1 development`; independently query remote refs before synchronization.
-No force-push or history rewrite is part of this work.
+Unified-player Windows verification at that time: **127 portable suite tests plus
+six portable live-adapter tests passed (133 total)**, including 24 new upgrade tests
+and the 17 original dashboard cases. Saved-source switching from synthetic tick 34 to
+a five-sample capture also passed. The real Streamlit server and four views were
+exercised in a browser at desktop and 390-pixel widths, including 1×/4× automatic
+completion, pause/resume, cursor persistence and previous/next/reset. Browser checks
+reported no external HTTP assets and no console errors. Windows restricted execution
+blocked asyncio's loopback socketpair initialization; the bounded server/AppTest
+checks succeeded with local socket access. No application event-loop workaround was
+added. At that time collection was exactly five attempts with a 12-second child
+deadline and a 15-second watchdog; the dashboard lived on the former development
+branch, which was fast-forwarded into main on October 18, 2026
+(tag checkpoint-0-daybreak-integrated).
