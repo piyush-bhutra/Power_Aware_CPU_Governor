@@ -13,3 +13,5 @@ evidence/phase1b_sensitivity/** -text
 evidence/phase1b_overhead/** -text
 # Phase 2a closed-loop outputs: exact bytes are hashed in SHA256SUMS.
 evidence/phase2a_closed_loop/** -text
+# Phase 2b Pareto outputs: exact bytes are hashed in SHA256SUMS.
+evidence/phase2b_pareto/** -text
