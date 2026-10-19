@@ -1,7 +1,7 @@
-/* Native Streamlit theme variables keep surfaces readable in light and dark. */
+/* Inherit the native theme's text colour; translucent surfaces work in either theme. */
 :root {
- --ink:var(--st-text-color, #332f3d);
- --surface:var(--st-secondary-background-color, #fff);
+ --ink:currentColor;
+ --surface:color-mix(in srgb, currentColor 3%, transparent);
  --line:color-mix(in srgb, var(--ink) 18%, transparent);
  --muted:color-mix(in srgb, var(--ink) 78%, transparent);
 }

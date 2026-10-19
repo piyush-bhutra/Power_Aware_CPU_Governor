@@ -52,7 +52,7 @@ def replay_figure(replay, tick):
         fig.add_vline(x=tick, line_dash='dot', line_color='#b7b0c3', row=row, col=1)
     fig.update_xaxes(range=[.5, len(replay.frames) + .5], dtick=5)
     synthetic = replay.frames[0].source_kind == 'synthetic'
-    fig.update_xaxes(title_text='Synthetic tick · nominal one-second intervals' if synthetic else 'Saved observation tick · measured intervals in inspector', row=3, col=1)
+    fig.update_xaxes(title_text='Sample · synthetic' if synthetic else 'Sample · saved Linux observation', row=3, col=1)
     events = [f.transition for f in frames if f.transition]
     fig.add_trace(go.Scatter(x=[e.tick for e in events], y=[e.new_khz / 1e6 for e in events],
                                 mode='markers', name='Applied simulated transitions',
@@ -61,7 +61,9 @@ def replay_figure(replay, tick):
     for annotation in fig.layout.annotations:
         annotation.update(font=dict(size=12), x=0, xanchor='left')
     fig.update_layout(uirevision=replay.metadata['csv_path'])
-    return style(fig, CHART_HEIGHT)
+    style(fig, CHART_HEIGHT)
+    fig.update_layout(showlegend=False)
+    return fig
 
 
 def energy_figure(comparison):

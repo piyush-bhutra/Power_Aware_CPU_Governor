@@ -91,6 +91,7 @@ def replay_header(replay):
     st.subheader('What happened')
     st.write(what_happened(replay))
     st.caption('Full-session summary · provisional workload predictions · no hardware frequency changes or measured power')
+    st.caption('Violet dashed line: candidate frequency · Blue solid line: applied frequency · Both simulated')
     banner = timing_banner(replay.metadata)
     if banner:
         st.warning(banner)
@@ -145,6 +146,7 @@ def replay_details(replay):
 
 def evidence_view():
     observations = load_observations()
+    html('<span class="badge">Measured · archived Linux counters</span>')
     html('<div class="overline">THE EVIDENCE / RECORDED LINUX OBSERVATIONS</div>')
     st.title('Real signals. Clear boundaries.')
     st.write('Five historical guest-kernel observations, captured without generated workloads. These are not live data and are not idle ground truth.')
@@ -166,6 +168,7 @@ def evidence_view():
 
 def comparison_view():
     comparison = load_comparison()
+    html('<span class="badge">Simulated · frequency</span> <span class="badge">Modelled · energy</span>')
     html('<div class="overline">THE COMPARISON / SAME SYNTHETIC INPUTS</div>')
     st.title('Five policies. One fixed trace.')
     st.write('Python policy approximations over the same 34 invented observations. Frequency is simulated; energy and power are uncalibrated model estimates, not physical measurements.')
@@ -212,7 +215,7 @@ def notes_view():
     with st.container(key='card_live_limit'):
         st.subheader('VirtualBox & live monitoring')
         st.write('The recorded Ubuntu guest exposes no CPUFreq interface. Loaded stress runs have a history of freezes and timing irregularities. Ordinary dashboard startup and replay do not start collection. The explicit Linux collection action observes background activity only; no artificial load or hardware actuation is used.')
-        st.write('Collect Live Data explicitly starts a single-purpose Linux child using the existing bounded pipeline for 5, 10 or 20 one-second intervals. Its collection deadline (2 s per sample plus 2 s; 12 s for five) is backed by a parent watchdog 3 s longer, cancellation and UI heartbeat lease. Saved sessions are raw-counter validated and decisions reconstructed before the shared player replays them. Nothing collects on startup or ordinary reruns.')
+        st.write('Collect Live Data explicitly starts a single-purpose Linux child using the existing bounded pipeline for 5, 10 or 20 valid intervals. Its collection deadline is 2 s per allowed attempt plus 2 s (18, 32 or 62 s), backed by a parent watchdog 3 s longer, cancellation and a UI heartbeat lease. Saved sessions are raw-counter validated and decisions reconstructed before the shared player replays them. Nothing collects on startup or ordinary reruns.')
         st.code('.venv/bin/python -m governorlab --visual\n.venv/bin/python -m governorlab --live --visual', language='bash')
         st.caption('Terminal live mode is Linux-only, user-initiated and separately bounded. These commands are documentation, not actions launched by the web page.')
     st.subheader('Reproducibility')
@@ -225,7 +228,7 @@ def main():
     html('<style>' + css_tokens() + (Path(__file__).with_name('theme.css')).read_text(encoding='utf-8') + '</style>')
     with st.sidebar:
         html('<div class="brand">Governor<span>lab.</span><small>DAYBREAK</small></div>')
-        st.radio('Dashboard section', VIEWS, key='view')
+        st.radio('Dashboard section', VIEWS, key='view', horizontal=True)
     view = st.session_state['view']
     previous_view = st.session_state.get('previous_view')
     if view != 'The Replay' and 'player' in st.session_state:

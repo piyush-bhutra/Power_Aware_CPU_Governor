@@ -1,4 +1,4 @@
-"""Session selection and common controls, rendered inside one timed fragment."""
+"""Sidebar controls and presentation of collection status; backend calls unchanged."""
 import sys
 import time
 import json
@@ -138,13 +138,13 @@ def controls():
         st.session_state['dataset'] = data
         p.switch(choice, len(data.frames), time.monotonic())
     if not saved:
-        st.caption('No saved sessions yet. Explore the synthetic example, or collect on Linux.')
+        st.caption('No saved sessions yet. Try the synthetic example.')
     st.selectbox('Samples', SAMPLE_CHOICES, key='collect_count', disabled=active_collection(),
                       help='One-second background intervals for Collect Live Data')
     st.button('Collect Live Data', key='collect', on_click=collect, width='stretch',
                   disabled=sys.platform != 'linux' or active_collection())
     if sys.platform != 'linux':
-        st.caption('Fresh collection requires Linux /proc/stat. Synthetic and saved Linux replay work on Windows.')
+        st.caption('Collection requires Linux /proc/stat. Replay works on Windows.')
     else:
         st.caption('Explicit action only: 5, 10 or 20 one-second background intervals; no generated load, sudo or hardware actuation. Saved sessions are historical.')
     st.session_state['tick'] = p.tick
