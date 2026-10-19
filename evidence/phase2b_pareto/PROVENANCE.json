@@ -1,0 +1,157 @@
+{
+  "source_commit": "493923ecce83db55d91e2f6c8b76203e8f46bddd",
+  "tracked_working_tree_dirty": false,
+  "generation_command": "python -m benchmark.pareto --outdir evidence/phase2b_pareto",
+  "python": "3.12.4",
+  "parameters": {
+    "ladder_khz": [
+      3800000,
+      4233333,
+      4666667,
+      5100000
+    ],
+    "static_levels": [
+      "static_3.800GHz",
+      "static_4.233GHz",
+      "static_4.667GHz",
+      "static_5.100GHz"
+    ],
+    "dynamic_policies": [
+      "performance",
+      "powersave",
+      "conservative",
+      "ours_k3",
+      "ours_k3_rampdown",
+      "ours_k1",
+      "ours_k5",
+      "fast_up_slow_down",
+      "adaptive_k",
+      "schedutil_style",
+      "schedutil_style_ioboost"
+    ],
+    "scenarios": [
+      "archived_seed11",
+      "archived_plan_seed23",
+      "high_noise_seed31",
+      "long_phases_seed41",
+      "cpu_bursts_on_idle_seed51",
+      "idle_dips_in_cpu_seed53",
+      "flapping_cpu_idle_seed61",
+      "io_heavy",
+      "cpu_heavy"
+    ],
+    "insensitive_fractions": [
+      0.0,
+      0.3,
+      0.6,
+      0.9
+    ],
+    "seeds_per_scenario": 20,
+    "seed_rule": "scenario seed * 1000 + index (0-19)",
+    "ablation": {
+      "scenarios": [
+        "io_heavy",
+        "cpu_bursts_on_idle_seed51"
+      ],
+      "io_fractions": [
+        1.0,
+        0.6,
+        0.3,
+        0.0
+      ],
+      "mixed_fractions": [
+        1.0,
+        0.6
+      ],
+      "k": 3
+    },
+    "dominance": "a dominates b if mean energy <= and mean time <= with at least one strictly lower"
+  },
+  "source_hashes": {
+    "benchmark/pareto.py": "a53f5df6b21cfe6065068cddf0322d3e0c7bcf67b1c94e211f10d0097a928d48",
+    "benchmark/closed_loop.py": "430eaa9d0b6bceb084ccd0ae4e170b8287e758c172a8f311c64bcea778ac2385",
+    "benchmark/sensitivity.py": "dee5370009576bdc6b502719fd2ac553b76bc9bfb5230da7f1d4e82b497686ca",
+    "benchmark/baselines.py": "f1eb254b39187cb39a8dfe1d6e7315e9b181e78712b2b3a7d989206bbd734ba4",
+    "monitor/synthetic.py": "cea470f591792c621ae0831fda98f0f41c64ad0bf35745d1b434fef648b76b7f",
+    "monitor/reader.py": "796e688e80808814ba9ee2fd51b27c46a8ee9ca679757faba2be9b70795ce6c2",
+    "classifier/rules.py": "8d524a5be274fb573efe5e3e7390fc095d290ddd713e812b3e6d91f97e7dbaaf",
+    "policy/governor_policy.py": "1e7224848b6b257d32fffa7ff64a9dcf1770b1068418188a7bfa4ec0c6eb8b17",
+    "power_model/estimate.py": "c23b623799faff7447641ad290322beb03af527168dea097b2896e4a4ba28d72",
+    "hardware_profile.py": "8f76fdfc05b149a90b1c431eee645336c70e56c4c2ae885486c315fa60fd5cf7"
+  },
+  "source_hash_note": "SHA-256 of LF-normalized source bytes (Git blob content) at source_commit.",
+  "interpretation_restrictions": [
+    "Energy and completion time are modelled, not measured.",
+    "Frequency is simulated; the ladder is 3.8-5.1 GHz only.",
+    "Pareto comparisons use means over 20 seeds; spreads are in results.csv.",
+    "schedutil_style is an approximation, not the Linux schedutil governor.",
+    "No claim of real energy savings or novelty."
+  ],
+  "archived_files": [
+    {
+      "path": "ablation.csv",
+      "bytes": 14476,
+      "sha256": "529e701659987d8af3ea304054647c47c8d2bc8ae671c9940b188f9de857bfad"
+    },
+    {
+      "path": "frontier.csv",
+      "bytes": 56797,
+      "sha256": "a164af3626d6000a39e6d83bb2cbab2110aa8d1bf319b981c1a6efa082b56560"
+    },
+    {
+      "path": "results.csv",
+      "bytes": 115180,
+      "sha256": "e3a511befe7a2d3c509a82f7a2f851f631c3659358a66cd6810e6a01a9467d80"
+    },
+    {
+      "path": "summary.md",
+      "bytes": 26627,
+      "sha256": "86a90fc584ebdf0700bc9487767bbb474ac63c052aead51472d40f07620075f0"
+    },
+    {
+      "path": "pareto_archived_seed11.png",
+      "bytes": 170843,
+      "sha256": "d0c707ae1bfc6c20048978dcb8fa3f57d44a2fad3a4e2d8817f3dc83fe220889"
+    },
+    {
+      "path": "pareto_archived_plan_seed23.png",
+      "bytes": 171771,
+      "sha256": "96969f966d238065ade7d4a672803f3ca3953395be985ffbd01231082e0acaf3"
+    },
+    {
+      "path": "pareto_high_noise_seed31.png",
+      "bytes": 170755,
+      "sha256": "a70b9215ec35a5b6a92ea98b33696aded15efe14998ec25b86e1a4a7d91cf5e5"
+    },
+    {
+      "path": "pareto_long_phases_seed41.png",
+      "bytes": 168796,
+      "sha256": "03f122158ec9fdf4f46d83c04b09b4800240dacf0080a44008a434f5cb75598b"
+    },
+    {
+      "path": "pareto_cpu_bursts_on_idle_seed51.png",
+      "bytes": 164820,
+      "sha256": "3d3b9898116f952521ad3b5c54714ae6d3cff28e0cfeb5cbbf03ac0c7b44107d"
+    },
+    {
+      "path": "pareto_idle_dips_in_cpu_seed53.png",
+      "bytes": 167201,
+      "sha256": "0baa579532b49013afd274436ce45aa7f52718280d3f8c7df82c3bed4841b1b6"
+    },
+    {
+      "path": "pareto_flapping_cpu_idle_seed61.png",
+      "bytes": 164980,
+      "sha256": "57c6e629e2f0ca394f7a882ff5f61c4ae8c4a3fe840b54a38d36279771b013fb"
+    },
+    {
+      "path": "pareto_io_heavy.png",
+      "bytes": 170466,
+      "sha256": "0695c61ccbba2c819b81acf199838feb291007b2dd4473ae712a8da1dfae9b9d"
+    },
+    {
+      "path": "pareto_cpu_heavy.png",
+      "bytes": 164105,
+      "sha256": "12b0387a724f1b7814ffedefcc33c16cf7bf48938d9bf07a9a9e0f2e2a380dbb"
+    }
+  ]
+}
