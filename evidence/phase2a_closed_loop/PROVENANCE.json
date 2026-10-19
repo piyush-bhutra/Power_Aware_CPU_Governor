@@ -1,0 +1,409 @@
+{
+  "source_commit": "3fc4ede956dbf36f0cd98ce189f98adc7160d71c",
+  "tracked_working_tree_dirty": false,
+  "generation_command": "python -m benchmark.closed_loop --outdir evidence/phase2a_closed_loop",
+  "python": "3.12.4",
+  "parameters": {
+    "ladder_khz": [
+      3800000,
+      4233333,
+      4666667,
+      5100000
+    ],
+    "tick_s": 1.0,
+    "cpus": 1,
+    "hz": 100,
+    "seeds_per_scenario": 20,
+    "seed_rule": "scenario seed * 1000 + index (0-19)",
+    "insensitive_fractions": [
+      0.0,
+      0.3,
+      0.6,
+      0.9
+    ],
+    "key_scenarios": [
+      "archived_seed11",
+      "cpu_bursts_on_idle_seed51",
+      "io_heavy",
+      "cpu_heavy"
+    ],
+    "scenarios": {
+      "archived_seed11": {
+        "plan": [
+          [
+            "cpu",
+            10
+          ],
+          [
+            "io_burst",
+            10
+          ],
+          [
+            "idle",
+            6
+          ],
+          [
+            "mixed",
+            8
+          ]
+        ],
+        "seed": 11,
+        "noise": 0.1
+      },
+      "archived_plan_seed23": {
+        "plan": [
+          [
+            "cpu",
+            10
+          ],
+          [
+            "io_burst",
+            10
+          ],
+          [
+            "idle",
+            6
+          ],
+          [
+            "mixed",
+            8
+          ]
+        ],
+        "seed": 23,
+        "noise": 0.1
+      },
+      "high_noise_seed31": {
+        "plan": [
+          [
+            "cpu",
+            10
+          ],
+          [
+            "io_burst",
+            10
+          ],
+          [
+            "idle",
+            6
+          ],
+          [
+            "mixed",
+            8
+          ]
+        ],
+        "seed": 31,
+        "noise": 0.3
+      },
+      "long_phases_seed41": {
+        "plan": [
+          [
+            "cpu",
+            20
+          ],
+          [
+            "idle",
+            20
+          ],
+          [
+            "io",
+            20
+          ],
+          [
+            "mixed",
+            20
+          ]
+        ],
+        "seed": 41,
+        "noise": 0.1
+      },
+      "cpu_bursts_on_idle_seed51": {
+        "plan": [
+          [
+            "idle",
+            10
+          ],
+          [
+            "cpu",
+            1
+          ],
+          [
+            "idle",
+            10
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            10
+          ],
+          [
+            "cpu",
+            3
+          ],
+          [
+            "idle",
+            10
+          ],
+          [
+            "cpu",
+            4
+          ],
+          [
+            "idle",
+            10
+          ],
+          [
+            "cpu",
+            5
+          ],
+          [
+            "idle",
+            10
+          ]
+        ],
+        "seed": 51,
+        "noise": 0.1
+      },
+      "idle_dips_in_cpu_seed53": {
+        "plan": [
+          [
+            "cpu",
+            8
+          ],
+          [
+            "idle",
+            1
+          ],
+          [
+            "cpu",
+            8
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            8
+          ],
+          [
+            "idle",
+            3
+          ],
+          [
+            "cpu",
+            8
+          ],
+          [
+            "idle",
+            4
+          ],
+          [
+            "cpu",
+            8
+          ],
+          [
+            "idle",
+            5
+          ],
+          [
+            "cpu",
+            8
+          ]
+        ],
+        "seed": 53,
+        "noise": 0.1
+      },
+      "flapping_cpu_idle_seed61": {
+        "plan": [
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ],
+          [
+            "cpu",
+            2
+          ],
+          [
+            "idle",
+            2
+          ]
+        ],
+        "seed": 61,
+        "noise": 0.1
+      },
+      "io_heavy": {
+        "plan": [
+          [
+            "io",
+            30
+          ],
+          [
+            "mixed",
+            5
+          ],
+          [
+            "io",
+            30
+          ]
+        ],
+        "seed": 81,
+        "noise": 0.1
+      },
+      "cpu_heavy": {
+        "plan": [
+          [
+            "cpu",
+            40
+          ],
+          [
+            "mixed",
+            5
+          ],
+          [
+            "cpu",
+            40
+          ]
+        ],
+        "seed": 91,
+        "noise": 0.1
+      }
+    },
+    "policies": [
+      "performance",
+      "powersave",
+      "conservative",
+      "ours_k3",
+      "ours_k3_rampdown",
+      "ours_k1",
+      "ours_k5",
+      "fast_up_slow_down",
+      "adaptive_k",
+      "schedutil_style",
+      "schedutil_style_ioboost"
+    ],
+    "adaptive_k_rule": {
+      "start": 3,
+      "min": 2,
+      "max": 6,
+      "reversal_window_ticks": 6,
+      "calm_ticks": 10
+    },
+    "schedutil_style": {
+      "factor": 1.25,
+      "iowait_boost_threshold_pct": 5.0
+    }
+  },
+  "source_hashes": {
+    "benchmark/closed_loop.py": "430eaa9d0b6bceb084ccd0ae4e170b8287e758c172a8f311c64bcea778ac2385",
+    "benchmark/sensitivity.py": "dee5370009576bdc6b502719fd2ac553b76bc9bfb5230da7f1d4e82b497686ca",
+    "benchmark/baselines.py": "f1eb254b39187cb39a8dfe1d6e7315e9b181e78712b2b3a7d989206bbd734ba4",
+    "monitor/synthetic.py": "cea470f591792c621ae0831fda98f0f41c64ad0bf35745d1b434fef648b76b7f",
+    "monitor/reader.py": "796e688e80808814ba9ee2fd51b27c46a8ee9ca679757faba2be9b70795ce6c2",
+    "classifier/rules.py": "8d524a5be274fb573efe5e3e7390fc095d290ddd713e812b3e6d91f97e7dbaaf",
+    "policy/governor_policy.py": "1e7224848b6b257d32fffa7ff64a9dcf1770b1068418188a7bfa4ec0c6eb8b17",
+    "power_model/estimate.py": "c23b623799faff7447641ad290322beb03af527168dea097b2896e4a4ba28d72",
+    "hardware_profile.py": "8f76fdfc05b149a90b1c431eee645336c70e56c4c2ae885486c315fa60fd5cf7"
+  },
+  "source_hash_note": "SHA-256 of LF-normalized source bytes (Git blob content) at source_commit.",
+  "model": "unit time = C*(s + (1-s)*fmax/f) + W + I; P = 21.6 + 32.4*(f/fmax)^3*util/100 W per tick",
+  "interpretation_restrictions": [
+    "Energy and completion time are modelled, not measured.",
+    "Frequency is simulated; the ladder is 3.8-5.1 GHz only.",
+    "The 1/f CPU-time assumption is a model choice; see the insensitive-fraction sweep.",
+    "schedutil_style is an approximation, not the Linux schedutil governor.",
+    "No claim of real energy savings or novelty."
+  ],
+  "archived_files": [
+    {
+      "path": "runs.csv",
+      "bytes": 407016,
+      "sha256": "7536687ce85797ca9877a11e16f6db3d798ce6232b0b90996d43c39cb44aac55"
+    },
+    {
+      "path": "summary.csv",
+      "bytes": 49699,
+      "sha256": "08f4b75d60b2f0829cbfe07dd5b072594dda6282f7134d84bccc8e577c40f340"
+    },
+    {
+      "path": "summary.md",
+      "bytes": 17180,
+      "sha256": "dfb79fdbc3118aac4c1c3d937c00799cd837b28f32600af2c0a43886373b9691"
+    },
+    {
+      "path": "energy_vs_completion.png",
+      "bytes": 154340,
+      "sha256": "71a9ecb947075b0a25e86864f7fbf404703d5e3794211a707fbf278be9020fb2"
+    }
+  ]
+}
