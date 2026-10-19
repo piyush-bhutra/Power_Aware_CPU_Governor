@@ -119,12 +119,13 @@ Measured on the Ubuntu VM (four intervals × 60 s × 3 repetitions, governor min
 sleep-only control, 24 of 24 runs ok): about 0.55 to 0.62 ms of CPU per tick. Net CPU
 per tick was 0.5988 ms at 0.5 s, 0.6168 ms at 1 s, 0.5483 ms at 2 s and 0.5861 ms at 5 s
 intervals; derived, that is 0.1198 %, 0.0617 %, 0.0274 % and 0.0117 % of one core, or
-4.312, 2.221, 0.987 and 0.422 CPU-seconds per hour. Resident memory was about 17.7 MB
-and net wake-ups per second about zero. Caveats: this is process CPU time, not power;
+4.312, 2.221, 0.987 and 0.422 CPU-seconds per hour. Resident memory was about
+17,700 KiB (17.3 MiB), the same as the control, and net wake-ups per second showed no
+measurable difference. Caveats: this is process CPU time, not power;
 it was measured inside a VM; it excludes CSV logging and the UI; and the derived
 percentages are upper bounds because the VM's timer made ticks run slower than planned
-(the 0.5 s governor runs took a median 1.57 times their planned time). The raw output
-files are not yet archived in the repository.
+(the 0.5 s governor runs took a median 1.57 times their planned time). The run is
+archived with provenance and hashes in `evidence/phase1b_overhead/`.
 
 **19. Could that overhead cancel the savings?**
 It is a break-even: savings must exceed the governor's own energy. The cost side is
@@ -170,7 +171,7 @@ a VM whose timer overshoots (about 10 % typically, with single ticks up to 1 to 
 in the overhead run).
 
 **26. What would you do next?**
-Archive the overhead output files; add a schedutil-style baseline including its I/O-wait
+Add a schedutil-style baseline including its I/O-wait
 boost; build closed-loop bounded workloads so lower frequency stretches work; add an
 energy-delay metric; label bounded stress workloads to tune thresholds; then measure
 on native hardware.

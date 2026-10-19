@@ -13,7 +13,7 @@ or a recorded manual check; anything not recorded is marked **pending**.
 | **M1** | Ubuntu VM tolerant live collection, 5 samples | 8b7280e or later | 2026-10-19 | One interval discarded (elapsed 2.32 s, outside 0.5-2 s); 5 of 5 samples kept; degraded banner shown; replay revalidated (user report) |
 | **M2** | Ubuntu VM `--live --strict`, 5 samples | 8b7280e or later | 2026-10-19 | Passed (user report) |
 | **M3** | Ubuntu VM overhead smoke runs (`--smoke`) | before f47e288 | 2026-10-19 | About 0.3 to 0.8 ms CPU per tick; single 5 s runs, quantized (user report) |
-| **M4** | Ubuntu VM overhead full plan (`.venv/bin/python -m benchmark.overhead`): 4 intervals x 60 s x 3 repetitions, governor and sleep-only control | f47e288 | 2026-10-19 | 24 runs ok, 0 failed. Net governor CPU per tick (mean): 0.5988 ms at 0.5 s, 0.6168 ms at 1 s, 0.5483 ms at 2 s, 0.5861 ms at 5 s (user report; output files archive pending) |
+| **M4** | Ubuntu VM overhead full plan (`.venv/bin/python -m benchmark.overhead`): 4 intervals x 60 s x 3 repetitions, governor and sleep-only control | f47e288 | 2026-10-19 | 24 runs ok, 0 failed. Net governor CPU per tick (mean): 0.5988 ms at 0.5 s, 0.6168 ms at 1 s, 0.5483 ms at 2 s, 0.5861 ms at 5 s (archived in `evidence/phase1b_overhead/`) |
 
 Results are recorded per suite, not per test: "Pass (W)" means the test is in the
 Windows portable selection and that selection passed with zero failures. Tests that
@@ -158,21 +158,24 @@ derived as mean ms per tick / (interval s x 1000) x 100 at the nominal tick rate
 | 2 s | 0.5483 | 0.0274 | 0.987 |
 | 5 s | 0.5861 | 0.0117 | 0.422 |
 
-Resident memory about 17.7 MB; net wake-ups per second about zero.
+Governor resident memory: median about 17,700 KiB (17.3 MiB), the same as the control.
+Net wake-ups per second: medians between -0.180 and 0.001, i.e. no measurable difference.
 
 VM timer overshoot in the same run: the 0.5 s governor runs took a median 1.57 times
-their planned time (range 1.05 to 1.72); the other runs took 1.0 to 1.04 times; single
-ticks overshot by 1 to 3 s; the 5 s runs were about 1.001 (few ticks). Because ticks
+their planned time (range 1.05 to 1.72); the other medians were 1.0014 to 1.0845, with
+single runs up to 1.38 (0.5 s control) and 1.35 (1 s governor); single sleeps overshot by
+up to 3.21 s; the 5 s runs were about 1.001 (12 ticks each). Because ticks
 ran slower than planned, the derived percentages are upper bounds.
 
 Caveats: this is process CPU time, not electrical power; it was measured inside a VM;
-it excludes CSV logging and the terminal/dashboard UI. The output files
-(`data/overhead-20261019T091947Z/`) are not yet in the repository: **archive pending**.
+it excludes CSV logging and the terminal/dashboard UI. The output files, provenance,
+hashes and full per-tick tables are archived in
+[`evidence/phase1b_overhead/`](../evidence/phase1b_overhead/README.md) and checked by
+`tests/test_overhead_evidence.py`.
 
 ## Still pending
 
 - Ubuntu full suite on f47e288 or later (U2); the last full run was 326 passed on 8b7280e.
-- Archive of the overhead output files under `evidence/phase1b_overhead/`.
 - Dashboard collection at 10 and 20 samples on the VM; real child cancel, disconnect and
   shutdown checks (DAY-07, DAY-08).
 - A real attempt-cap failure on the VM (TOL-08).

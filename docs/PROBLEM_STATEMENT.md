@@ -80,7 +80,7 @@ sensitivity study (synthetic), overhead tool (Linux).
 | Workload class | **Predicted** by provisional rules (not ground truth) | `classifier/rules.py` |
 | Target / applied frequency | **Simulated** | `policy/`, `setter/SimulatedSetter` |
 | Power, energy, savings | **Modelled** (formula fitted to published TDP figures) | `power_model/estimate.py`, `docs/power_model.md` |
-| Governor CPU cost | **Measured** process CPU time on the VM: net 0.55-0.62 ms per tick across 0.5-5 s intervals (24/24 runs ok, October 19, 2026; output archive pending) | `benchmark/overhead.py`, [test plan](TEST_PLAN_AND_RESULTS.md) |
+| Governor CPU cost | **Measured** process CPU time on the VM: net 0.55-0.62 ms per tick across 0.5-5 s intervals (24/24 runs ok, October 19, 2026; archived in [`evidence/phase1b_overhead/`](../evidence/phase1b_overhead/README.md)) | `benchmark/overhead.py`, [test plan](TEST_PLAN_AND_RESULTS.md) |
 | Completion time, real DVFS, electrical energy | **Not measured** | — |
 
 ## 8. Assumptions

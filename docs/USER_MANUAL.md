@@ -199,6 +199,6 @@ replayed.
   repetitions, 24/24 runs ok): net 0.5988, 0.6168, 0.5483 and 0.5861 ms CPU per tick at
   0.5, 1, 2 and 5 s intervals, i.e. 0.1198 % to 0.0117 % of one core (derived, an upper
   bound because the VM's ticks ran late). This is process CPU time inside a VM, not
-  power, and excludes logging and the UI. The output files are not yet archived in the
-  repository (archive pending); see the [test plan](TEST_PLAN_AND_RESULTS.md).
+  power, and excludes logging and the UI. The run is archived in
+  [`evidence/phase1b_overhead/`](../evidence/phase1b_overhead/README.md).
 - **Aggregate counters only**: no per-core, per-process or PMU (IPC/stall) signals.
