@@ -1,10 +1,29 @@
 # Power-Aware CPU Governor
 
-A workload-adaptive CPU frequency scaling policy for Linux. Samples `/proc/stat`,
-classifies the workload (CPU-bound / I/O-bound / idle / mixed), and sets the core
-frequency to match — instead of scaling on aggregate utilisation alone.
+A user-space prototype of a workload-adaptive CPU frequency policy for Linux. It
+samples `/proc/stat`, classifies the workload (CPU-bound / I/O-bound / idle / mixed)
+with transparent rules, and chooses a target frequency with K-tick hysteresis instead
+of scaling on aggregate utilisation alone.
 
-BITE303P Operating Systems Lab, VIT Vellore. See [`docs/PRD.md`](docs/PRD.md) for full scope.
+**What is measured and what is simulated.** Linux kernel counters from `/proc/stat`
+are measured (on the Ubuntu VM). Frequencies are **simulated** decisions on a model
+ladder: the development VM has no cpufreq interface, so nothing writes to hardware.
+Power, energy and any "savings" are **modelled** estimates, never measured.
+
+BITE303P Operating Systems Lab, VIT Vellore. See [`docs/PRD.md`](docs/PRD.md) for the
+original scope (proposal-era; some status lines there are historical).
+
+## Documentation
+
+| Document | Use it for |
+|---|---|
+| [User manual](docs/USER_MANUAL.md) | Installation, every command, dashboard walkthrough, troubleshooting |
+| [Problem statement](docs/PROBLEM_STATEMENT.md) | Problem, objectives, scope, measured vs simulated, related work and positioning |
+| [Test plan and results](docs/TEST_PLAN_AND_RESULTS.md) | Test cases by feature, recorded results, how to reproduce |
+| [Viva Q&A](docs/VIVA_QA.md) | Likely examiner questions with honest answers |
+| [Review II checklist](docs/REVIEW2_CHECKLIST.md) | Each lab deliverable mapped to its status and file |
+| [Governorlab](docs/GOVERNORLAB.md) / [Daybreak](docs/DAYBREAK.md) | Terminal and dashboard details |
+| [Project state](docs/PROJECT_STATE.md) / [Development log](docs/DEVELOPMENT_LOG.md) | Dated record of what was built and verified |
 
 ## Daybreak web dashboard
 
@@ -15,8 +34,12 @@ From the repository root, install `requirements-dashboard.txt`, then run
 archived Linux observations, five-policy comparison and lab methodology.
 One shared player supports pause/resume, restart, paused seek, previous/next and
 speed for synthetic and saved Linux sessions. An explicit Linux-only Collect Live
-Data action captures five bounded background intervals in an isolated child, then
-replays them in that same player. Startup and ordinary reruns never collect.
+Data action captures 5, 10 or 20 bounded background intervals (the **Samples**
+dropdown; it applies to the next collection, not to a loaded session) in an isolated
+child, then replays them in that same player. Collection is tolerant: intervals with
+VM timing anomalies are discarded, disclosed in a banner and never classified.
+Terminal and dashboard sessions share one format in `run/`, so either can replay the
+other's captures. Startup and ordinary reruns never collect.
 Candidate/applied simulated frequencies and K=3 state use the existing backend;
 measured observations and uncalibrated model estimates remain clearly separated.
 See [Daybreak installation, demonstration and Ubuntu checklist](docs/DAYBREAK.md).
@@ -29,10 +52,14 @@ root. Finite 34-tick synthetic replay shows actual backend classification, candi
 versus applied simulated frequency, K=3 persistence, progressive CPU history and
 verified transitions. `--recorded-linux` displays the five archived Linux observations
 separately. Default replay performs no live monitoring, workload or hardware control.
-For five fresh background-only Linux observations followed automatically by simulated
-K=3 governor decisions, run `.venv/bin/python -m governorlab --live --visual`.
-Collection progress is visible; a unique ignored `run/live-*/` folder preserves the
-raw measurements and decisions. No generated workload or physical frequency writes.
+For fresh background-only Linux observations followed automatically by simulated
+K=3 governor decisions, run `.venv/bin/python -m governorlab --live` (5 samples by
+default; `--samples N` for 5 to 30). Collection is tolerant: an interval outside
+0.5-2 s or with an implausible CPU-accounting rate is discarded and disclosed, and
+the run continues up to N + max(3, ceil(N/2)) attempts; `--strict` aborts on the
+first anomaly instead. Each run saves a session in `run/live-*/`;
+`--list-sessions` lists saved sessions and `--session latest` (or a folder path)
+replays one after full revalidation. No generated workload or physical frequency writes.
 
 Rich is optional (`requirements-terminal.txt`); `--plain --instant` works without it.
 Default interactive mode uses a compact Rich dashboard at 80x24. `--visual` (alias
@@ -52,10 +79,13 @@ Every power figure is estimated from a modelled frequency, never measured.
 | Module | State |
 |---|---|
 | `governor.py` | control loop + CLI (`--synthetic`, `--interval`, `--ticks`, `--k`, `--csv`); logs both `target_khz` (what landed) and `requested_khz`; runs end-to-end on synthetic signals |
-| `monitor/reader.py` | `/proc/stat` parsing + delta/rate computation tested, plus ratio features `iowait_over_util` and `ctxt_over_run` (capped, never inf/nan); `log_csv` creates its parent directory. Five live background intervals validated; CSV exported separately |
+| `monitor/reader.py` | `/proc/stat` parsing + delta/rate computation tested, plus ratio features `iowait_over_util` and `ctxt_over_run` (capped, never inf/nan); missing/NaN/negative counters rejected with clear errors; `log_csv` creates its parent directory |
+| `governorlab/live.py`, `presentation/sessions.py` | Live collection (5-30 samples, tolerant or `--strict`) and the shared saved-session store used by terminal and dashboard |
+| `benchmark/overhead.py` | Governor self-overhead tool (Linux only; CPU ms per tick, wake-ups, memory, VM timer overshoot). Smoke runs only so far; full run pending |
+| `benchmark/sensitivity.py` | Deterministic synthetic K and sampling-interval study; results in `evidence/phase1b_sensitivity/` |
 | `monitor/synthetic.py` | invented cumulative counters (profiles `cpu`, `io`, `io_burst`, `idle`, `mixed`) pushed through the real delta code; dev/demo only |
 | `classifier/rules.py` | 4-class rule classifier, tested; **thresholds are placeholders** (see `docs/thresholds.md`) until tuned on real stress-ng traces |
-| `policy/governor_policy.py` | class -> frequency with K-tick hysteresis (default 3) and optional asymmetric ramp-down, tested |
+| `policy/governor_policy.py` | class -> frequency with K-tick hysteresis (default 3), optional asymmetric ramp-down that keeps stepping until the target, resync to a clamped setter result, input validation; tested |
 | `setter/freq_setter.py` | with no cpufreq, `open_setter()` returns `SimulatedSetter` on the fallback ladder `RYZEN_7840HS_LADDER_KHZ` from `hardware_profile.py` (Ryzen 7 7840HS base-to-boost; its top step is f_max), tested. `SysfsSetter` self-verifies every write; tested against fake hardware only - real sysfs writes are impossible on this VM |
 | `power_model/estimate.py` | P = P_static + P_dyn(f_max) x (f/f_max)^3 x util; constants fitted (two-point) to AMD's published Ryzen 7 7840HS figures, see `docs/power_model.md` |
 | `benchmark/baselines.py` | performance / powersave / ondemand / conservative as comparable policies; no `schedutil` baseline yet |
