@@ -2,7 +2,8 @@
 
 Python userspace OS course project: Linux aggregate monitoring → workload
 classification → hysteretic frequency policy → setter → CSV → estimated power
-and baseline analysis. This is not a kernel scheduler. Review 1: October 16, 2026.
+and baseline analysis. This is not a kernel scheduler. Review 1 was held in October
+2026; Review II is next (see docs/REVIEW2_CHECKLIST.md).
 
 ## Start every session
 Read [project state](docs/PROJECT_STATE.md), recent [development log](docs/DEVELOPMENT_LOG.md),
