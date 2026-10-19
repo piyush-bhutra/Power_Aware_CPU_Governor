@@ -81,7 +81,7 @@ Every power figure is estimated from a modelled frequency, never measured.
 | `governor.py` | control loop + CLI (`--synthetic`, `--interval`, `--ticks`, `--k`, `--csv`); logs both `target_khz` (what landed) and `requested_khz`; runs end-to-end on synthetic signals |
 | `monitor/reader.py` | `/proc/stat` parsing + delta/rate computation tested, plus ratio features `iowait_over_util` and `ctxt_over_run` (capped, never inf/nan); missing/NaN/negative counters rejected with clear errors; `log_csv` creates its parent directory |
 | `governorlab/live.py`, `presentation/sessions.py` | Live collection (5-30 samples, tolerant or `--strict`) and the shared saved-session store used by terminal and dashboard |
-| `benchmark/overhead.py` | Governor self-overhead tool (Linux only; CPU ms per tick, wake-ups, memory, VM timer overshoot). Smoke runs only so far; full run pending |
+| `benchmark/overhead.py` | Governor self-overhead tool (Linux only; CPU ms per tick, wake-ups, memory, VM timer overshoot). Full run on the VM (October 19, 2026): 24/24 runs ok, net 0.55-0.62 ms CPU per tick, 0.0117-0.1198 % of one core derived (upper bound), RSS about 17.7 MB; measured CPU time inside a VM, not power; output archive pending |
 | `benchmark/sensitivity.py` | Deterministic synthetic K and sampling-interval study; results in `evidence/phase1b_sensitivity/` |
 | `monitor/synthetic.py` | invented cumulative counters (profiles `cpu`, `io`, `io_burst`, `idle`, `mixed`) pushed through the real delta code; dev/demo only |
 | `classifier/rules.py` | 4-class rule classifier, tested; **thresholds are placeholders** (see `docs/thresholds.md`) until tuned on real stress-ng traces |

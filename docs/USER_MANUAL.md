@@ -195,6 +195,10 @@ replayed.
   approximations; there is no schedutil baseline.
 - **VM timing** overshoots by about 10 %; tolerant collection discards anomalous
   intervals, so a degraded session's kept samples can be non-adjacent in time.
-- **Governor overhead** has only smoke measurements so far (about 0.3 to 0.8 ms CPU
-  per tick, single 5 s runs); the full overhead run is pending.
+- **Governor overhead** was measured once on the VM (4 intervals x 60 s x 3
+  repetitions, 24/24 runs ok): net 0.5988, 0.6168, 0.5483 and 0.5861 ms CPU per tick at
+  0.5, 1, 2 and 5 s intervals, i.e. 0.1198 % to 0.0117 % of one core (derived, an upper
+  bound because the VM's ticks ran late). This is process CPU time inside a VM, not
+  power, and excludes logging and the UI. The output files are not yet archived in the
+  repository (archive pending); see the [test plan](TEST_PLAN_AND_RESULTS.md).
 - **Aggregate counters only**: no per-core, per-process or PMU (IPC/stall) signals.
