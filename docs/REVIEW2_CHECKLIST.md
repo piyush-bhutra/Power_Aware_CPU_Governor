@@ -25,7 +25,7 @@ started, with named gaps; **missing** = not in the repo.
 |---|---|---|---|
 | Complete implementation | partial | Monitoring, classification, hysteretic policy, simulated actuation, modelled power, five-policy comparison, live collection (5-30 samples, tolerant/strict), shared sessions, terminal and dashboard | Frequency is simulated (VM has no cpufreq); no ML classifier (planned in PRD, not built); no schedutil baseline |
 | Testing | partial | [TEST_PLAN_AND_RESULTS.md](TEST_PLAN_AND_RESULTS.md) | Ubuntu full suite on f47e288 pending; classifier accuracy on labelled workloads pending; real dashboard child lifecycle checks pending |
-| Performance evaluation | partial | `evidence/review1/synthetic_policy_comparison_20261015/` (modelled energy), `evidence/phase1b_sensitivity/` (K and interval study), `benchmark/overhead.py` | Full overhead run pending (smoke only: about 0.3-0.8 ms CPU per tick); no measured energy, no completion-time or energy-delay results, no real-hardware run |
+| Performance evaluation | partial | `evidence/review1/synthetic_policy_comparison_20261015/` (modelled energy), `evidence/phase1b_sensitivity/` (K and interval study), full overhead run on the VM (24/24 runs ok; net 0.55-0.62 ms CPU per tick, 0.0117-0.1198 % of one core derived; [test plan](TEST_PLAN_AND_RESULTS.md)) | Overhead output files not yet archived in `evidence/phase1b_overhead/` (archive pending); no measured energy, no completion-time or energy-delay results, no real-hardware run |
 | Error handling | done | Input validation (policy, classifier, counters), tolerant collection with disclosure, attempt cap, deadlines and watchdog, archive and session integrity checks, plain-words dashboard failures; tests ERR-01 to ERR-07 | Real attempt-cap case not yet observed on the VM |
 | Demo of all features | partial | Governorlab synthetic, recorded, live (tolerant and strict, verified on the VM), session list/replay; Daybreak four views and saved-session replay | Dashboard collection at 10 and 20 samples on the VM pending; demo needs a quiet VM (terminal collection plus dashboard replay is the reliable route) |
 | Viva preparation | done | [VIVA_QA.md](VIVA_QA.md), [PROBLEM_STATEMENT.md](PROBLEM_STATEMENT.md) | Rehearsal by the team |
@@ -33,8 +33,8 @@ started, with named gaps; **missing** = not in the repo.
 ## Open items before Review II (in suggested order)
 
 1. Run the Ubuntu full suite on the current commit.
-2. Run the full overhead plan on the VM (`.venv/bin/python -m benchmark.overhead`,
-   about 26 minutes) and record the summary.
+2. Archive the full overhead run (`data/overhead-20261019T091947Z/` on the VM) under
+   `evidence/phase1b_overhead/` with provenance and hashes.
 3. Check dashboard collection at 5, 10 and 20 samples on a quiet VM, plus cancel and
    server shutdown.
 4. Write the final report in the official template and build the 15-20 slide deck.
