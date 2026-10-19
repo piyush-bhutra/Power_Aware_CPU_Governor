@@ -149,6 +149,10 @@ Test names are in `tests/<file>.py::<test>`. Run one with
 | BEN-09 | Closed-loop model physics | CPU-only and I/O-only units at fmax and fmin; insensitive fraction | CPU work stretches by fmax/f (or s + (1-s) fmax/f); I/O waits do not; slowing raises observed utilization | `test_closed_loop.py` (physics tests) | Pass (W) | 2026-10-19 |
 | BEN-10 | Closed-loop policies | performance, powersave, ours K=1/3/5, ramp-down, fast-up/slow-down, adaptive K | Each behaves as specified on noise-free scenarios | `test_closed_loop.py` (policy tests) | Pass (W) | 2026-10-19 |
 | BEN-11 | Closed-loop evidence | Verify hashes; regenerate CSVs and summary | Byte-identical; same seed gives identical results | `test_closed_loop.py::test_committed_evidence_verifies_and_regenerates_identically` | Pass (W) | 2026-10-19 |
+| BEN-12 | Static-frequency baselines | One constant policy per ladder level | Applied frequency never changes; 5.1 GHz equals performance and 3.8 GHz equals powersave | `test_pareto.py::test_static_levels_are_constant` and `::test_extreme_static_levels_match_performance_and_powersave` | Pass (W) | 2026-10-19 |
+| BEN-13 | Pareto dominance logic | Hand-made energy/time points, including ties | Correct dominance, frontier and best no-slower static level | `test_pareto.py::test_dominance_and_frontier_on_hand_made_points` and `::test_static_comparison_picks_lowest_energy_no_slower_level` | Pass (W) | 2026-10-19 |
+| BEN-14 | I/O-target ablation | Our K=3 policy with I/O and mixed target fractions changed | Default targets reproduce ours_k3; I/O and mixed 1.0 behave like performance; lower I/O target trades time for energy | `test_pareto.py` (ablation tests) | Pass (W) | 2026-10-19 |
+| BEN-15 | Phase 2b evidence | Verify hashes; regenerate CSVs and summary | Byte-identical | `test_pareto.py::test_committed_evidence_verifies_and_regenerates_identically` | Pass (W) | 2026-10-19 |
 | BEN-08 | Measured energy / completion time | Native hardware with energy counters or a meter | — | Not possible on the VM | pending | — |
 
 ## Overhead results (M4, measured process CPU time on the Ubuntu VM)

@@ -171,7 +171,20 @@ a VM whose timer overshoots (about 10 % typically, with single ticks up to 1 to 
 in the overhead run).
 
 **26. What would you do next?**
-Add a schedutil-style baseline including its I/O-wait
-boost; build closed-loop bounded workloads so lower frequency stretches work; add an
-energy-delay metric; label bounded stress workloads to tune thresholds; then measure
-on native hardware.
+Measure on native hardware: real cpufreq control with lower P-states, package energy
+from RAPL counters or a power meter, and bounded workloads with known CPU and I/O
+phases, run under every policy and every fixed frequency. Also label bounded stress
+workloads to tune the thresholds. The closed-loop model, a schedutil-style
+approximation and the energy-delay metric already exist, but only as models.
+
+**27. Does it beat a fixed frequency?**
+Not reliably, even in our own model. In the Phase 2b closed-loop analysis
+(`evidence/phase2b_pareto/`, modelled energy and time, simulated frequency) all four
+fixed frequencies (3.8, 4.23, 4.67, 5.1 GHz) are on the energy/completion-time Pareto
+frontier in every scenario. A fixed 4.67 GHz or 4.23 GHz dominates our K=3 policy, meaning
+it uses less energy without being slower, in 9 of 36 scenario and model settings, by up
+to 23.9 J (1.82 %). Elsewhere our policy uses 0.03 % to 8.9 % less modelled energy than the
+best fixed level that is no slower. Lowering frequency during I/O phases cuts energy but
+costs time; under the pure 1/f assumption, lowering it all the way gives the worst EDP,
+and it helps EDP only when much of the CPU work is frequency-insensitive. The model cannot
+say which is true for real workloads; only native hardware with measured energy can.
