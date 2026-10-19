@@ -11,3 +11,5 @@ evidence/review1/synthetic_policy_comparison_20261015/ours.csv -text whitespace=
 evidence/phase1b_sensitivity/** -text
 # Phase 1B overhead run (Ubuntu VM): exact bytes are hashed in SHA256SUMS.
 evidence/phase1b_overhead/** -text
+# Phase 2a closed-loop outputs: exact bytes are hashed in SHA256SUMS.
+evidence/phase2a_closed_loop/** -text
