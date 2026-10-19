@@ -205,9 +205,9 @@ def test_refuses_non_empty_outdir(tmp_path, monkeypatch):
         run_main(tmp_path, monkeypatch, '--outdir', str(tmp_path))
 
 
-def test_no_other_module_imports_overhead():
+def test_no_other_module_imports_overhead():  # tests may import it; tools and app modules may not
     for path in ROOT.rglob('*.py'):
-        if '.venv' in path.parts or path.name in ('overhead.py', 'test_overhead.py'):
+        if '.venv' in path.parts or path.name == 'overhead.py' or path.parent.name == 'tests':
             continue
         tree = ast.parse(path.read_text(encoding='utf-8'))
         for node in ast.walk(tree):
