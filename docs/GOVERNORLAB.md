@@ -1,27 +1,101 @@
 # Governorlab terminal demonstration
 
-Governorlab is a finite presentation of the existing governor, independent
-of the planned Daybreak web dashboard. Default replay is read-only. Explicit
-`--live` collects five background-only Linux intervals in-process, then replays
-simulated decisions. It never starts generated workloads or physical frequency control. The standard replay lasts about
-8.25 seconds of display time; its original synthetic time remains 34 one-second ticks.
+Governorlab is a finite terminal presentation of the existing governor. Default
+replay is read-only. Explicit `--live` collects 5 to 30 background-only Linux
+intervals in-process (default 5), then replays simulated decisions. It never starts
+generated workloads or physical frequency control. The standard synthetic replay
+lasts about 8.25 seconds of display time; its original synthetic time remains 34
+one-second ticks.
 
-## Review 1: exactly two classroom commands (Ubuntu)
+**Measured vs simulated.** Live mode measures Linux `/proc/stat` counters (CPU
+utilization, I/O wait, context switches, runnable/blocked gauges, actual elapsed
+interval). Predicted classes come from provisional rules. Candidate and applied
+frequencies are simulated decisions on a model ladder; nothing writes to hardware.
+No energy or savings figure in Governorlab is measured.
 
-Run from `/home/vboxuser/Power_Aware_CPU_Governor` in an 80x24 or larger terminal:
+## Current commands (updated October 19, 2026)
+
+Run from the repository root (`/home/vboxuser/Power_Aware_CPU_Governor` on Ubuntu,
+`C:\OS Project` on Windows, where `.venv/bin/python` becomes
+`.\.venv\Scripts\python.exe`). Live collection needs Linux; everything else works
+on Windows. The [user manual](USER_MANUAL.md) has a step-by-step version.
+
+| Command | What it does |
+|---|---|
+| `.venv/bin/python -m governorlab` | Verified 34-tick synthetic replay (transitions at ticks 13, 23, 29) |
+| `.venv/bin/python -m governorlab --recorded-linux` | Five archived Linux observations, counter-only, no decisions |
+| `.venv/bin/python -m governorlab --live` | Collect 5 background intervals (tolerant mode), save a session, replay it |
+| `.venv/bin/python -m governorlab --live --samples 20` | Same with 20 intervals (allowed 5 to 30) |
+| `.venv/bin/python -m governorlab --live --strict` | Abort on the first timing anomaly instead of discarding it |
+| `.venv/bin/python -m governorlab --list-sessions` | List saved sessions in `run/`, newest first, with status and manifest |
+| `.venv/bin/python -m governorlab --session latest` | Replay the newest saved session after full revalidation |
+| `.venv/bin/python -m governorlab --session run/live-<UTC>-<id>` | Replay a specific saved session folder |
+| add `--plain --instant` | ASCII output without delays (works without Rich, and when redirected) |
+| add `--visual` | Require the colored Rich dashboard; report why if unavailable |
+| add `--speed N` | Presentation ticks per second, 2 to 60 (default 4) |
+
+`--samples` and `--strict` apply only to `--live`. `--live`, `--recorded-linux`,
+`--session` and `--list-sessions` are mutually exclusive.
+
+### Tolerant collection (default) and `--strict`
+
+Each one-second interval is checked against unchanged validity thresholds: measured
+elapsed time 0.5 to 2 s, and CPU-accounting rate 0.5 to 1.5 times
+`os.cpu_count() * SC_CLK_TCK`. In the default tolerant mode an interval that fails,
+or whose counters went backwards, is **discarded**: it is never given to the
+classifier or policy, it is recorded in `raw_events.jsonl` and `metadata.json`
+(attempt number, reason, elapsed time, ratio), and sampling continues from that
+interval's end snapshot. Collection stops when N valid samples exist, or fails
+when attempts reach N + max(3, ceil(N/2)) (8 attempts for 5 samples), or at the
+deadline of 2 s per allowed attempt plus 2 s (18 s for 5 samples). A failed
+collection keeps its evidence, is never replayed and is never retried automatically.
+
+A session with any discard is marked `timing_quality: degraded`. Its replay prints
+`TIMING QUALITY DEGRADED: N intervals discarded because of VM timing anomalies`
+with counts per reason, and the final summary lists every discarded attempt.
+Limitation: kept samples in a degraded session can be non-adjacent in time, so K=3
+persistence may span a real gap.
+
+`--strict` keeps the earlier behaviour: exactly N attempts, and the first timing
+anomaly aborts (deadline 2 s x N + 2 s, 12 s for 5 samples).
+
+Recorded VM result (user report, October 19, 2026): one tolerant run discarded one
+interval (elapsed 2.32 s), kept 5 of 5 samples and showed the degraded banner; a
+strict run also passed; the replay revalidated against the backend.
+
+### Saved sessions (shared with the dashboard)
+
+Every successful live run creates `run/live-<UTC>-<random>/` with `capture.csv`
+(raw previous/current counters plus derived rates and resources), `raw_events.jsonl`
+(baseline, every attempted interval, every discard), `metadata.json` (counts,
+attempts, discards, timing quality, timings, resources, source hashes, decision
+summary), `decisions.json` (one frame per kept sample) and `session-sha256.json`
+(hash manifest written by `collect_live` itself). The dashboard's **Collect Live
+Data** writes exactly the same format under `run/daybreak-*/live-*/`, so both
+interfaces list and replay each other's sessions (`presentation/sessions.py`).
+Loading a session re-checks the manifest, the raw counters, the sample count
+(5 to 30, requested equal to kept), the timing disclosure, and re-runs the classifier
+and policy to compare every saved decision. Older sessions without a manifest or
+timing fields still load; they are labelled legacy and treated as clean.
+
+On the VirtualBox VM the sleep timer overshoots by about 10 %, so a five-sample run
+takes roughly 5.5 to 6 s plus startup; isolated intervals over 2 s are discarded and
+disclosed rather than ending the run.
+
+## Historical record (October 15, 2026, five-sample implementation)
+
+The two classroom commands used at Review 1 were:
 
 ```bash
 .venv/bin/python -m governorlab --visual
 .venv/bin/python -m governorlab --live --visual
 ```
 
-The first command preserves the verified 34-tick synthetic scenario and three
-simulated transitions (about 8.3 seconds). The second shows collection progress
-0/5 through 5/5, then automatically opens the same Rich dashboard on the fresh
+At that time `--live` collected exactly five attempts with a 12-second deadline and
+aborted on the first timing anomaly (today's `--strict`). The live flow showed
+collection progress, then automatically opened the same Rich dashboard on the fresh
 measurements and predicted classes, candidates, applied simulated levels and K=3
-persistence. Expect approximately 6-8 seconds total; the final frame and summary
-remain visible. Values and transition counts vary with ordinary VM activity.
-There is no extra command or confirmation within the live flow.
+persistence. Values and transition counts vary with ordinary VM activity.
 
 Professor explanation: “The first scenario makes hysteresis easy to see. The second
 reads actual aggregate Linux CPU counters and derives utilization, I/O wait and
@@ -30,35 +104,20 @@ our existing policy requires three consecutive predictions before applying a
 simulated frequency. These are simulated decisions, not physical frequency changes,
 energy savings or workload completion-time measurements.”
 
-Live runs create a unique ignored `run/live-<UTC>-<random>/` directory containing
-`capture.csv` (raw previous/current counters plus interpreted rates/resources),
-`raw_events.jsonl` (baseline and every attempted interval), `metadata.json` (times,
-actual count, elapsed intervals, validation statistics, resource snapshots, source
-SHA256s and simulated decision summary), and `decisions.json` (five frames).
-These files stay local until deliberately exported. Historical evidence is untouched.
 `monitor.capture --output` itself takes a **file path**, not a directory: the previous
 `run/live_check_20261015` is an extensionless CSV and is preserved unchanged.
-
-Collection lazily reuses `monitor.reader.sample(1.0, 5)` and the existing capture
-resource guards/validator, with a 12-second SIGALRM deadline and no subprocesses.
-Exactly five attempts are permitted; invalid intervals are not replaced. Partial,
-invalid, timed-out, resource-pressure or interrupted captures retain available
-CSV/events/failure metadata, return nonzero and do not replay or automatically retry.
-The sampler's monotonic elapsed intervals and raw accounting must validate before
-classification. Missing/nonfinite classifier features fail explicitly. Its five
-required inputs are measured utilization, I/O wait, context-switch rate and current
-runnable/blocked-process gauges. Read-only CPU frequency may be unavailable in this VM;
-no simulated number is substituted in the measured CSV.
+Collection reuses `monitor.reader.sample()` and the existing capture resource
+guards/validator with a SIGALRM deadline and no subprocesses. Missing/nonfinite
+classifier features fail explicitly. Read-only CPU frequency may be unavailable in
+this VM; no simulated number is substituted in the measured CSV.
 
 `presentation.adapter.process_live_observations()` calls existing `classify()`,
 `Policy.decide()` with K=3, and an explicitly constructed `SimulatedSetter` using
 the existing model ladder. It preserves candidate versus applied state and reports
 zero transitions whenever that is the actual result. The classifier thresholds and
-ladder remain provisional modelling choices. Archived `--recorded-linux` remains a
-historical counter-only view; default imports/replay never initiate live sampling.
-`--live` and `--recorded-linux` are mutually exclusive. Explicit visual readiness is
-checked before collection. Ctrl+C stops collection/playback and restores terminal
-state; replay retains completed capture evidence. The deadline requires Linux's main
+ladder remain provisional modelling choices. Default imports/replay never initiate
+live sampling. Explicit visual readiness is checked before collection. Ctrl+C stops
+collection/playback and restores terminal state. The deadline requires Linux's main
 thread and refuses an existing active interval timer.
 
 Fresh native Ubuntu verification, October 15: **181 tests passed in 22.19 seconds**,
