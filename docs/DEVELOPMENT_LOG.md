@@ -1,5 +1,25 @@
 # Development log
 
+## 2026-10-19 — Phase 2b: fixed frequencies, Pareto frontiers and I/O ablation (main)
+
+Started at 0806d38 after a clean sync (no ui-polish branch on origin; daybreak/ untouched).
+- benchmark/pareto.py reuses the closed-loop model unchanged. Adds one static policy per
+  ladder level, energy/completion-time Pareto frontiers on 20-seed means for all 9 scenarios
+  and s = 0/0.3/0.6/0.9, a per-policy comparison with the best no-slower fixed level, and an
+  ablation of our K=3 policy's I/O target (1.0/0.6/0.3/0.0) and mixed target (1.0/0.6) on
+  io_heavy and cpu_bursts_on_idle. Existing policies are untouched (the ablation subclasses
+  Policy and overrides only the target fractions).
+- Results (evidence/phase2b_pareto/, modelled): all four fixed levels are on the frontier in
+  all 36 cells. A fixed level dominates ours_k3 in 9 of 36 cells (4.667 GHz in archived s=0,
+  archived_plan s=0/0.3 and high_noise all s; 4.233 GHz in cpu_bursts s=0/0.3), by up to
+  +23.9 J (+1.82 %). Elsewhere ours_k3 uses 0.03-8.9 % less energy than the best no-slower
+  fixed level. I/O ablation: in io_heavy at s=0, lowering during I/O cuts energy but costs
+  time and io 0.0 gives the worst EDP; at s >= 0.3 every step of lowering improves EDP. In
+  cpu_bursts_on_idle the ablation has no effect (no I/O or mixed phases).
+
+Windows only: portable suite 271 passed (257 + 14 Pareto tests); six portable live-demo
+cases passed. Replay 13/23/29, all six archives and the comparison unchanged.
+
 ## 2026-10-19 — Phase 2a: deterministic closed-loop benchmark (main)
 
 Started at 4eb1865 after a clean sync. Step 0 (docs): recorded the Ubuntu full suite on

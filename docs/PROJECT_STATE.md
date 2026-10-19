@@ -1,5 +1,16 @@
 # Verified project state
 
+## Current update — Phase 2b fixed frequencies and Pareto analysis, October 19, 2026
+
+benchmark/pareto.py compares every closed-loop policy with fixed frequencies and computes
+energy/completion-time Pareto frontiers (modelled; evidence/phase2b_pareto/). All four
+fixed levels are always on the frontier; a fixed 4.67 or 4.23 GHz dominates our K=3 policy in
+9 of 36 scenario/model cells (up to +1.82 % energy at no time saving). The I/O ablation shows
+that lowering frequency during I/O helps EDP only when much CPU work is frequency-insensitive;
+under pure 1/f, lowering all the way gives the worst EDP. Real hardware with measured energy
+is needed to settle it. Windows: 271 portable + 6 live-adapter tests passed. Checkpoint tag:
+checkpoint-2b-pareto.
+
 ## Current update — Phase 2a closed-loop benchmark, October 19, 2026
 
 benchmark/closed_loop.py adds the feedback missing from open-loop replay: lower frequency
