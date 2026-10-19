@@ -30,10 +30,17 @@ original scope (proposal-era; some status lines there are historical).
 From the repository root, install `requirements-dashboard.txt`, then run
 `.\.venv\Scripts\python.exe -m streamlit run daybreak/app.py` on Windows or
 `.venv/bin/python -m streamlit run daybreak/app.py` on Ubuntu. Open
-`http://127.0.0.1:8501`. Four views cover automatic/manual 34-tick replay,
-archived Linux observations, five-policy comparison and lab methodology.
-One shared player supports pause/resume, restart, paused seek, previous/next and
-speed for synthetic and saved Linux sessions. An explicit Linux-only Collect Live
+`http://127.0.0.1:8501`. A left sidebar holds navigation between the four views
+(The Replay, The Evidence, The Comparison, Lab Notes), the session source, the
+Samples selector, Collect Live Data and the playback controls. The Replay's main area
+starts with honesty badges and a plain-language "What happened" summary, then a
+fixed-height three-lane chart; details, the discarded-attempts table, provenance and
+a CSV export of the replay table follow in expanders. One shared player supports
+play/pause/resume, restart, previous/next, paused seek and speed for synthetic and
+saved Linux sessions. During collection the main area shows only a progress panel
+with Cancel. The layout is designed for desktop screens; there is no mobile
+requirement. Browser-verified on Windows only (October 19, 2026); the Ubuntu VM check
+of the refreshed layout is pending. An explicit Linux-only Collect Live
 Data action captures 5, 10 or 20 bounded background intervals (the **Samples**
 dropdown; it applies to the next collection, not to a loaded session) in an isolated
 child, then replays them in that same player. Collection is tolerant: intervals with

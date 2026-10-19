@@ -126,25 +126,45 @@ launchers under `scripts/` need separate approval and are not part of normal use
 
 ## 4. Dashboard walkthrough
 
+The layout (refreshed October 19, 2026) puts every control in the **left sidebar**
+and the results in the main area. It is designed for desktop screens; there is no
+mobile requirement. It was browser-verified on Windows only; the Ubuntu VM check is
+pending.
+
 1. **Start** the server and open the page. The synthetic 34-tick replay starts
    playing automatically. Nothing is collected at startup.
-2. **The Replay view.** Three aligned lanes show utilization, predicted class and
-   candidate versus applied simulated frequency. Use Play/Pause, Restart, ← / →,
-   Reset and the speed selector (0.5× to 4×). Pause to use the tick slider. Press
-   **Explore the first transition** to jump to tick 13; ticks 11 and 12 show the
-   I/O class waiting (1/3, 2/3), tick 13 applies it. Transitions are at 13, 23 and 29.
-3. **Session source.** Pick the synthetic scenario or any saved Linux session
-   (terminal `run/live-*` or dashboard `run/daybreak-*/live-*`). The player restarts
-   with that session's real sample count.
-4. **Samples and Collect Live Data** (Linux only). Choose 5, 10 or 20, then click
-   Collect Live Data. A progress bar shows kept samples; **Cancel collection** stops
-   it. On success the new session loads and plays. The Samples dropdown only affects
-   the next collection; it does not change a session already loaded.
-5. **Degraded sessions.** If any interval was discarded, a yellow banner reads
-   "N intervals discarded because of VM timing anomalies ..." and a **Discarded
-   attempts** table lists each attempt, reason, elapsed time and ratio.
-6. **The Evidence** shows the five archived Linux observations (measured, no
-   decisions). **The Comparison** shows five policies on one synthetic trace with
+2. **Navigation.** The sidebar's section selector switches between The Replay, The
+   Evidence, The Comparison and Lab Notes. Leaving The Replay pauses playback and
+   cancels any running collection;
+   returning resumes it.
+3. **The Replay view.** The main area starts with badges (synthetic or measured
+   inputs; simulated frequency) and a **What happened** summary of the whole session
+   in plain words (for example "Waiting for I/O" instead of `io_bound`), then a
+   fixed-height chart with three lanes: utilization, predicted class, and candidate
+   (dashed) versus applied (solid) simulated frequency. The line under the chart
+   names the current sample and the decision state. Expanders below hold "How to
+   read this", **Explore the first transition** (jumps to sample 13; samples 11 and 12
+   show the I/O class waiting), the full list of simulated changes (13, 23 and 29 for
+   the synthetic scenario), provenance, all source samples, and **Download replay
+   table (CSV)**, which is a presentation table, not the raw capture.
+4. **Playback controls** (sidebar): Play/Resume, Pause, Restart, Previous, Next,
+   speed (0.5× to 4×), the sample slider (pause first) and Reset.
+5. **Session source** (sidebar). Pick the synthetic scenario or any saved Linux
+   session (terminal `run/live-*` or dashboard `run/daybreak-*/live-*`). Saved
+   sessions are labelled by recorded date and time, sample count and timing quality.
+   Choosing one validates it before it plays; the player restarts with that session's
+   real sample count.
+6. **Samples and Collect Live Data** (sidebar, Linux only). Choose 5, 10 or 20, then
+   click Collect Live Data. The main area switches to a collection panel with one
+   progress bar and a **Cancel collection** button. On success the new session loads
+   and plays; on failure or cancel an error appears above the previous verified
+   results, with no automatic retry. The Samples dropdown only affects the next
+   collection; it does not change a session already loaded.
+7. **Degraded sessions.** If any interval was discarded, a yellow banner reads
+   "N intervals discarded because of VM timing anomalies ..." above the chart, and a
+   **Discarded attempts** expander lists each attempt, reason, elapsed time and ratio.
+8. **The Evidence** shows the five archived Linux observations (measured, no
+   decisions; the source table is in an expander). **The Comparison** shows five policies on one synthetic trace with
    modelled energy. **Lab Notes** shows the classifier source, thresholds and limits.
 
 ## 5. Sessions
