@@ -80,7 +80,7 @@ sensitivity study (synthetic), overhead tool (Linux).
 | Workload class | **Predicted** by provisional rules (not ground truth) | `classifier/rules.py` |
 | Target / applied frequency | **Simulated** | `policy/`, `setter/SimulatedSetter` |
 | Power, energy, savings | **Modelled** (formula fitted to published TDP figures) | `power_model/estimate.py`, `docs/power_model.md` |
-| Governor CPU cost | **Measured** process CPU time on the VM (smoke runs only; full run pending) | `benchmark/overhead.py` |
+| Governor CPU cost | **Measured** process CPU time on the VM: net 0.55-0.62 ms per tick across 0.5-5 s intervals (24/24 runs ok, October 19, 2026; output archive pending) | `benchmark/overhead.py`, [test plan](TEST_PLAN_AND_RESULTS.md) |
 | Completion time, real DVFS, electrical energy | **Not measured** | — |
 
 ## 8. Assumptions
@@ -154,7 +154,12 @@ sensitivity study (lag of exactly K - 1 ticks, bursts shorter than K suppressed;
 **Limits stated plainly.** Power is modelled, frequency is simulated, baselines are
 Python approximations without schedutil, the 3.8-5.1 GHz ladder omits the lower
 P-states where most real savings occur, the VM cannot show hardware behaviour, and
-classifier accuracy on labelled workloads is unknown.
+classifier accuracy on labelled workloads is unknown. The VM's timer also overshoots:
+typically about 10 %, but in the full overhead run the 0.5 s governor runs took a
+median 1.57 times their planned time (range 1.05 to 1.72) and single ticks overshot by
+1 to 3 s. Sampling intervals on the VM are therefore irregular. Tolerant collection
+discards intervals outside 0.5-2 s, and overhead percentages derived per nominal tick
+are upper bounds.
 
 **Sources (as listed in the notes).** Kernel cpufreq guide
 https://docs.kernel.org/admin-guide/pm/cpufreq.html ; amd-pstate
