@@ -1,5 +1,29 @@
 # Development log
 
+## 2026-10-19 — Phase 2a: deterministic closed-loop benchmark (main)
+
+Started at 4eb1865 after a clean sync. Step 0 (docs): recorded the Ubuntu full suite on
+943dba1 (331 tests; 9 test_safe_launcher.py timeouts, exit code 124, during a 204 s run at
+load average 3-4; 33 passed in 4.47 s on a clean re-run of that file) and dashboard
+collection at 5, 10 and 20 samples with Cancel (no leftover worker; harmless Streamlit
+"fragment does not exist anymore" warning). Disconnect/shutdown and a real attempt cap
+remain unverified.
+- benchmark/closed_loop.py: units of CPU work, I/O wait and idle time per nominal second;
+  CPU time scales by s + (1-s) x fmax/f; 1 s ticks on one CPU; counters through the
+  existing compute_signals, classifier and Policy; existing power model per tick.
+  Metrics: modelled energy, completion time, EDP, transitions, fraction at class target.
+- Policies: performance, powersave, conservative, ours K=3 / K=3 ramp-down / K=1 / K=5,
+  fast-up/slow-down, adaptive K (documented rule), schedutil-style approximation with and
+  without I/O-wake boost. 9 scenarios x 20 seeds, plus s = 0.3/0.6/0.9 for 4 key scenarios.
+- Results (evidence/phase2a_closed_loop/, modelled): under pure 1/f, powersave has the
+  lowest energy and performance the shortest time and lowest EDP in every scenario; ours_k3
+  wins none of the three (best EDP rank 2, tied with performance in the flapping scenario).
+  With s >= 0.3, powersave has the best EDP in all key scenarios and ours_k3 beats
+  performance on EDP but not powersave. Conclusions depend on the model assumption.
+
+Windows only: portable suite 257 passed (241 + 16 closed-loop tests); six portable
+live-demo cases passed. Replay 13/23/29, all archives and the comparison unchanged.
+
 ## 2026-10-19 — Phase 1B.1: overhead tool robust to VM timer overshoot (main)
 
 Started at 8b7280e after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).

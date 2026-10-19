@@ -1,5 +1,17 @@
 # Verified project state
 
+## Current update — Phase 2a closed-loop benchmark, October 19, 2026
+
+benchmark/closed_loop.py adds the feedback missing from open-loop replay: lower frequency
+stretches CPU work, which raises observed utilization and completion time. Eleven policies
+(including a schedutil-style approximation) on nine scenarios x 20 seeds, with modelled
+energy, completion time and EDP, archived in evidence/phase2a_closed_loop/. Honest result:
+under the pure 1/f assumption our policy wins no energy, time or EDP comparison (powersave
+lowest energy, performance fastest and lowest EDP); with 30 % or more frequency-insensitive
+CPU time powersave has the best EDP. Ubuntu suite on 943dba1: 331 tests, launcher tests
+timing-sensitive under VM load. Dashboard collection verified at 5/10/20 samples with Cancel.
+Windows: 257 portable + 6 live-adapter tests passed. Checkpoint tag: checkpoint-2a-closed-loop.
+
 ## Current update — Phase 1B.1 overhead tool robust to VM timing, October 19, 2026
 
 The first Ubuntu overhead run aborted because this VM's sleep timer overshoots by about 10 %
