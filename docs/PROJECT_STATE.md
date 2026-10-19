@@ -1,5 +1,15 @@
 # Verified project state
 
+## Current update — Daybreak UI refresh, October 19, 2026
+
+The ui-polish branch is merged into main: Daybreak now has a sidebar for navigation and
+controls, a focused replay view (badges, plain-language summary, fixed-height chart, details
+in expanders), a single collection progress panel with Cancel, readable session labels and
+theme-aware styling. Backend, collection and session validation are unchanged. Unused helper
+candidates kept for now: state_card, navigate (daybreak/app.py), move_tick (daybreak/data.py,
+still tested). Windows: 279 portable + 6 live-adapter tests passed. Browser-verified on Windows
+only; the Ubuntu VM check is pending. Checkpoint tag: checkpoint-ui-1.
+
 ## Current update — Phase 2b fixed frequencies and Pareto analysis, October 19, 2026
 
 benchmark/pareto.py compares every closed-loop policy with fixed frequencies and computes

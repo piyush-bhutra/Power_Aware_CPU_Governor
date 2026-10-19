@@ -1,5 +1,24 @@
 # Development log
 
+## 2026-10-19 — Daybreak UI refresh merged from ui-polish (main)
+
+Reviewed and merged branch ui-polish (head 68f12e0, built in a separate clone from 4eb1865)
+with a merge commit. Scope check: changes limited to six daybreak UI files (app.py,
+charts.py, playback_ui.py, theme.css, new design.py and ui_text.py), one new test file,
+docs/DAYBREAK.md and the new docs/UI_REFRESH_REPORT.md; no dependency change, no tracked-file
+deletion, nothing in collection.py, worker.py, sessions, benchmark, evidence or backend.
+Review: collection, validation, session loading and cancel logic unchanged (poll_collection
+only gained a render flag; Cancel moved from the sidebar to the collection panel and calls
+the same cancel()); polling every 0.5 s keeps the 6 s heartbeat lease; no scripts, remote
+assets or scroll code; bounded chart cache (40 entries). Minor: a validation error raised
+inside a fragment-only rerun now shows Streamlit's traceback instead of the old inline message
+(sessions are validated at load, so this is unlikely). No AI attribution found.
+Unused helper candidates after the refresh (kept, not deleted): daybreak/app.py state_card
+and navigate (no remaining callers); daybreak/data.py move_tick (no UI caller, still tested).
+Windows only: portable suite 279 passed (271 + 8 UI tests); six portable live-demo cases
+passed; replay 13/23/29, all six archives and the comparison unchanged. The refreshed
+dashboard was browser-verified on Windows only by the ui-polish work; Ubuntu VM check pending.
+
 ## 2026-10-19 — Phase 2b: fixed frequencies, Pareto frontiers and I/O ablation (main)
 
 Started at 0806d38 after a clean sync (no ui-polish branch on origin; daybreak/ untouched).
