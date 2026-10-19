@@ -1,5 +1,17 @@
 # Verified project state
 
+## Current update — Phase 1B.1 overhead tool robust to VM timing, October 19, 2026
+
+The first Ubuntu overhead run aborted because this VM's sleep timer overshoots by about 10 %
+(measured ~1.12 s per 1.0 s interval earlier); the real-hardware figure is untested.
+benchmark/overhead.py now plans runs by tick count, records overshoot per run (ratio and
+per-tick mean/p95/max, own summary table), stops only on a 3x runaway guard, records failed
+runs and continues, and exits 1 if any failed. CPU ms per tick is the primary metric; CPU %
+of one core is derived from it; the /proc/self/stat figure is secondary (10 ms quantized).
+Run with `.venv/bin/python -m benchmark.overhead` (output data/overhead-<UTC>, about 26 minutes
+on the VM). Windows: 236 portable + 6 live-adapter tests passed; archives unchanged.
+Checkpoint tag: checkpoint-1b1-overhead-robust.
+
 ## Current update — Phase 1A.1 tolerant live collection, October 19, 2026
 
 Live collection now discards isolated VM timing anomalies by default instead of aborting:

@@ -1,5 +1,31 @@
 # Development log
 
+## 2026-10-19 — Phase 1B.1: overhead tool robust to VM timer overshoot (main)
+
+Started at 8b7280e after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).
+Trigger: on the Ubuntu VM the full overhead plan aborted with "control run at 0.5 s exceeded
+its 65.0 s hard limit". FINDING: this VM's sleep timer overshoots by roughly 10 % (8-12 %;
+an earlier live collection measured a mean 1.12 s interval for a 1.0 s target), so a 60 s
+run can legitimately take ~66 s. The overshoot on real (non-VM) hardware is untested.
+- Runs are planned by tick count (duration / interval). Overshoot is measured, not fatal:
+  each run records actual_elapsed_s, overshoot_ratio (actual / planned) and per-tick sleep
+  overshoot mean/p95/max, shown in a "VM timer overshoot" summary table. Only a runaway
+  guard (3x planned duration) stops a run.
+- A failed run (guard or exception) becomes a failed row with its reason; the plan continues,
+  CSV/summary are rewritten after every run, and the exit code is 1. No retries.
+- Primary metric is CPU ms per tick (time.process_time); CPU % of one core is derived from it
+  (mean ms / (interval s x 1000) x 100) and labelled derived. The /proc/self/stat percentage
+  stays as a secondary column, noted as quantized to the 10 ms clock (zero/negative possible).
+  All Phase 1B CSV columns keep their names and meaning; read_runs() parses old and new files.
+- --outdir is optional (data/overhead-<UTC> or data/overhead-smoke-<UTC>); --duration-s
+  (1-300) and --repetitions (1-5) added. Full plan: nominal 1440 s of ticks (~24 min; ~26-27
+  min with 10 % overshoot), worst case if every run hits the guard 4320 s.
+
+Windows only (Python 3.12.4): portable suite 236 passed (231 - 12 old + 17 new overhead
+tests); six portable live-demo cases passed. Replay 13/23/29, both Review 1 archives, the
+Phase 1B sensitivity archive and the comparison verify unchanged. The tool itself has not
+yet completed a full run on Linux.
+
 ## 2026-10-19 — Phase 1A.1: tolerant live collection with disclosure (main)
 
 Started at 33dcd72 after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).
