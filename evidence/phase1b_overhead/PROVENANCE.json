@@ -1,0 +1,48 @@
+{
+  "source_commit": "f47e28809391444a406bd97618681b30dd5e164b",
+  "source_hashes": {
+    "benchmark/overhead.py": "eea7002e6ea37388a249985fe540cf74c3e029e3cde98fe51f51e45669203bf8"
+  },
+  "source_hash_note": "SHA-256 of the Git blob at source_commit.",
+  "host": "Ubuntu VM in VirtualBox on a Ryzen 7 7840HS laptop",
+  "command": ".venv/bin/python -m benchmark.overhead",
+  "original_output_folder": "data/overhead-20261019T091947Z",
+  "date": "2026-10-19",
+  "duration_note": "Run took about 27 minutes (operator report).",
+  "plan": {
+    "intervals_s": [
+      0.5,
+      1.0,
+      2.0,
+      5.0
+    ],
+    "duration_s": 60.0,
+    "repetitions": 3
+  },
+  "transfer_note": "Copied from the VM to the Windows checkout on 2026-10-19. The two CSV files arrived named overhead_runs.csv.xls and overhead_net.csv.xls (an extension added during transfer); their contents are unchanged plain CSV text with LF line endings and were archived under their original names. Integrity checks at archival: all 24 runs status ok; overhead_net.csv recomputes exactly from overhead_runs.csv; overhead_summary.md regenerates byte-identically from overhead_runs.csv with the f47e288 tool. No hash of the files was recorded on the VM before transfer.",
+  "measured": "Process CPU time (time.process_time and /proc/self/stat), context switches and RSS of the governor loop and a sleep-only control, on the VM.",
+  "interpretation_restrictions": [
+    "Process CPU time, not electrical power or energy.",
+    "Measured inside a VirtualBox guest; not representative of native hardware.",
+    "Excludes CSV logging and terminal/dashboard rendering.",
+    "Derived CPU percent assumes the nominal tick rate; VM timer overshoot makes it an upper bound.",
+    "Frequency control was simulated; no hardware writes."
+  ],
+  "archived_files": [
+    {
+      "path": "overhead_runs.csv",
+      "bytes": 9107,
+      "sha256": "84e55aefb42a75d9e1aaed05b440e2079fcfefe1bb93e461bc685adae219686b"
+    },
+    {
+      "path": "overhead_net.csv",
+      "bytes": 2033,
+      "sha256": "ce0ac295ab7fd0b83b3907d3c1b7241e0bcb6fd190d08ec2427ecd77a94034d8"
+    },
+    {
+      "path": "overhead_summary.md",
+      "bytes": 3756,
+      "sha256": "ed5b50035b7f7bc574a6a95310b641b47e60181f53f4f564e149fadc52de271d"
+    }
+  ]
+}

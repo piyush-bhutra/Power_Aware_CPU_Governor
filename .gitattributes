@@ -9,3 +9,5 @@ evidence/review1/synthetic_policy_comparison_20261015/conservative.csv -text whi
 evidence/review1/synthetic_policy_comparison_20261015/ours.csv -text whitespace=cr-at-eol
 # Phase 1B sensitivity outputs: exact bytes are hashed in SHA256SUMS.
 evidence/phase1b_sensitivity/** -text
+# Phase 1B overhead run (Ubuntu VM): exact bytes are hashed in SHA256SUMS.
+evidence/phase1b_overhead/** -text
