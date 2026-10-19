@@ -17,6 +17,8 @@ from presentation.adapter import load_observations, load_replay
 from presentation.sessions import timing_banner
 from daybreak.playback_ui import active_collection, controls, ensure_player, cancel, poll_collection
 import time
+from daybreak.ui_text import CLASS_NAMES, what_happened
+from daybreak.design import css_tokens
 
 VIEWS = ('The Replay', 'The Evidence', 'The Comparison', 'Lab Notes')
 CHART_CONFIG = {'displaylogo': False, 'scrollZoom': False, 'modeBarButtonsToRemove': ['lasso2d', 'select2d']}
@@ -76,82 +78,69 @@ def provenance(data):
         st.write(data.metadata['limitations'])
 
 
+@st.cache_data(max_entries=40, show_spinner=False)
+def cached_replay_figure(replay, tick):
+    """Bounded presentation cache; validated source content is part of the key."""
+    return replay_figure(replay, tick)
+
+
+def replay_header(replay):
+    synthetic = replay.frames[0].source_kind == 'synthetic'
+    html('<span class="badge">' + ('Synthetic inputs · not measured' if synthetic else 'Measured · Linux counters')
+         + '</span> <span class="badge">Simulated · frequency</span>')
+    st.subheader('What happened')
+    st.write(what_happened(replay))
+    st.caption('Full-session summary · provisional workload predictions · no hardware frequency changes or measured power')
+    banner = timing_banner(replay.metadata)
+    if banner:
+        st.warning(banner)
+
+
 def replay_view():
     replay = st.session_state['dataset']
     p = ensure_player()
     tick = p.tick
     status = 'Complete' if p.complete else ('Playing' if p.playing else 'Paused')
-    st.progress(tick / p.total, text=f'{status} · tick {tick} / {p.total} · {p.speed:g}× · pause to seek and inspect')
-    synthetic = replay.frames[0].source_kind == 'synthetic'
-    frame = replay.frames[tick - 1]
-    info = inspect_decision(replay, tick)
-    left, right = st.columns([1.35, 1], gap='large')
-    with left:
-        html('<div class="overline">OS LAB / POWER-AWARE CPU GOVERNOR</div>'
-             '<div class="hero-title">A little patience.<br>A <em>smarter</em> decision.</div>'
-             '<p class="hero-copy">A workload-adaptive policy that waits before it switches. '
-             'Follow the signals, inspect the logic, and see hysteresis in action.</p>')
-        a, b = st.columns([1.05, 1])
-        a.button('Explore the first transition →', type='primary', on_click=first_transition, key='first_transition', disabled=not any(f.transition for f in replay.frames))
-        b.caption(f'{len(replay.frames)} verified ' + ('synthetic ticks' if synthetic else 'saved Linux observations') + '\n\nSimulated governor decisions')
-    with right:
-        state_card(info)
-    with st.container(key='card_pipeline'):
-        html('<div class="pipeline"><span><span class="index">01</span>Observe</span>→'
-             '<span><span class="index">02</span>Classify</span>→<span><span class="index">03</span>Select</span>→'
-             '<strong><span class="index">04</span>Wait</strong>→<span><span class="index">05</span>Apply</span>'
-             f'<span class="badge">{"SYNTHETIC REPLAY" if synthetic else "SAVED LINUX SESSION"}</span></div>')
-    main, inspector = st.columns([2.15, 1], gap='medium')
-    with main, st.container(key='card_timeline'):
-        st.subheader('The decision timeline')
-        st.caption('Violet: utilization & derived candidate · Blue: applied simulated frequency')
-        st.plotly_chart(replay_figure(replay, tick), width='stretch', theme=None, config=CHART_CONFIG, key='replay_chart')
-        clock = f'nominal synthetic time {frame.timestamp:.0f}s' if synthetic else f'measured interval {frame.features["elapsed_s"]:.4f}s'
-        st.caption(f'Tick {tick} / {len(replay.frames)} · {clock} · {info["transitions"]} simulated transitions so far')
-    with inspector, st.container(key='card_inspector'):
-        html('<div class="overline">READ THE SIGNALS</div>')
-        st.subheader('Why this decision?')
-        html(f'<div class="rule">The existing rule classifier predicts <b>{escape(frame.predicted_class.replace("_", " "))}</b>. '
-             'The candidate comes from the backend policy. Classes are provisional predictions, not verified workload labels.</div>')
-        for label, value in (
-            ('CPU utilization', f'{frame.util_pct:.2f}%'), ('I/O wait', f'{frame.features["iowait_pct"]:.2f}%'),
-            ('Context switches', f'{frame.features["ctxt_per_s"]:,.0f} /s'),
-            ('Runnable / blocked', f'{frame.features["procs_running"]} / {frame.features["procs_blocked"]}'),
-            ('Persistence*', f'{frame.streak} consecutive' if frame.streak is not None else 'Unavailable'),
-            ('Transitions so far', str(info['transitions']))):
-            html(f'<div class="keyval"><span>{label}</span><b>{escape(value)}</b></div>')
-        html(f'<div class="decision">{escape(state_copy(info))}</div>'
-             '<span class="badge">Prediction ≠ verified workload label</span>')
-        st.caption('*Classes are provisional backend predictions; candidate, persistence and reasons are derived with the existing Policy. Applied simulated outputs are verified against the selected source.')
-    a, b = st.columns(2)
-    with a, st.container(key='card_evidence'):
-        html('<div class="overline">THE EVIDENCE MATTERS</div>')
-        st.subheader('Real signals. Clear boundaries.')
-        st.write('Five archived Linux observations establish background monitoring readiness. ' + ('This replay uses invented inputs and simulated frequency decisions.' if synthetic else 'This saved session uses observed Linux counters, derived rates, provisional predicted classes and simulated governor decisions. It is not currently live.'))
-        st.button('Open evidence register ↗', on_click=navigate, args=('The Evidence',), key='open_evidence')
-    with b, st.container(key='card_transition_summary'):
-        st.subheader('A deliberate pause, then a change.')
-        events = [f.transition for f in replay.frames[:tick] if f.transition]
-        if events:
-            for event in events:
-                st.write(f'T{event.tick:02d} · {ghz(event.previous_khz)} → {ghz(event.new_khz)} · {event.predicted_class}')
-        else:
-            st.write('No applied transitions yet. Initialization is excluded.')
-        st.caption(f'{replay.summary["transitions"]} full-session simulated transitions; initialization excluded. Zero is a valid result.')
-        if tick == len(replay.frames):
-            st.success(f'Session complete · {len(replay.frames)} samples · {replay.summary["transitions"]} simulated transitions')
-            st.json(replay.summary)
-        st.button('Compare all five policies ↗', on_click=navigate, args=('The Comparison',), key='open_comparison')
-    banner = timing_banner(replay.metadata)
-    if banner:
-        st.warning(banner)
+    st.progress(tick / p.total, text=f'{status} · sample {tick} / {p.total} · {p.speed:g}× · pause to inspect')
+    with st.container(key='card_timeline'):
+        st.plotly_chart(cached_replay_figure(replay, tick), width='stretch', theme='streamlit',
+                        config=CHART_CONFIG, key='replay_chart')
+        info = inspect_decision(replay, tick)
+        frame = replay.frames[tick - 1]
+        st.caption(f'Sample {tick} · {CLASS_NAMES.get(frame.predicted_class, frame.predicted_class)} · '
+                   f'{state_copy(info)} · {info["transitions"]} simulated changes so far')
+
+
+def replay_details(replay):
+    with st.expander('How to read this'):
+        st.write('Top: how busy the CPU was. Middle: the provisional workload prediction. '
+                 'Bottom: the dashed candidate frequency and solid applied frequency are both simulated. '
+                 'The dotted cursor marks the selected sample; diamonds mark accepted changes. '
+                 'The policy waits for three matching predictions before accepting a different target.')
+        st.write('Saved Linux sessions use measured kernel counters and derived rates. '
+                 'The synthetic example uses invented inputs. Energy in The Comparison is modelled, '
+                 'never measured. Replay speed changes presentation time only.')
+    st.button('Explore the first transition →', on_click=first_transition, key='first_transition',
+              disabled=not any(f.transition for f in replay.frames))
+    with st.expander('Session details and simulated changes'):
+        st.write('Saved sessions are historical observations, not currently live data.')
+        for frame in replay.frames:
+            if frame.transition:
+                event = frame.transition
+                st.write(f'Sample {event.tick} · {ghz(event.previous_khz)} → {ghz(event.new_khz)} · '
+                         f'{CLASS_NAMES.get(event.predicted_class, event.predicted_class)}')
+        st.json(replay.summary)
+    if timing_banner(replay.metadata):
         with st.expander('Discarded attempts'):
             st.dataframe(replay.metadata['discarded_attempts'], hide_index=True, width='stretch')
     provenance(replay)
     with st.expander(f'Inspect all {len(replay.frames)} source samples'):
         st.dataframe(replay_table(replay), hide_index=True, width='stretch')
-        st.caption(info['sample_id'])
-        st.caption('Source: ' + ('synthetic generated counters' if synthetic else 'observed Linux counters; features derived from raw deltas and actual elapsed time'))
+        st.caption('Source: ' + ('synthetic generated counters' if replay.frames[0].source_kind == 'synthetic'
+                                else 'observed Linux counters; features derived from raw deltas and actual elapsed time'))
+    st.download_button('Download replay table (CSV)', replay_table(replay).to_csv(index=False).encode('utf-8'),
+                       file_name='daybreak-replay.csv', mime='text/csv', on_click='ignore',
+                       help='Presentation table: derived features and simulated decisions, not the original raw capture.')
 
 
 def evidence_view():
@@ -169,8 +158,9 @@ def evidence_view():
         st.write('Successful bounded background monitoring, raw-counter consistency and a recorded readiness/cleanup path. No frequency measurements are available.')
         st.caption('It does not establish loaded VM stability, classifier accuracy, physical actuation, measured energy savings or preserved completion time.')
     with st.container(key='card_recorded_chart'):
-        st.plotly_chart(evidence_figure(observations), width='stretch', theme=None, config=CHART_CONFIG)
-        st.dataframe(table, hide_index=True, width='stretch')
+        st.plotly_chart(evidence_figure(observations), width='stretch', theme='streamlit', config=CHART_CONFIG)
+        with st.expander('Measured source samples'):
+            st.dataframe(table, hide_index=True, width='stretch')
     provenance(observations)
 
 
@@ -182,12 +172,12 @@ def comparison_view():
     a, b = st.columns([1, 1.3])
     with a, st.container(key='card_energy'):
         st.subheader('Modelled energy, not measured savings')
-        st.plotly_chart(energy_figure(comparison), width='stretch', theme=None, config=CHART_CONFIG)
+        st.plotly_chart(energy_figure(comparison), width='stretch', theme='streamlit', config=CHART_CONFIG)
     with b, st.container(key='card_comparison_chart'):
         st.subheader('Simulated frequency behavior')
         names = st.multiselect('Policies shown', list(comparison.policies), default=list(comparison.policies), key='policies')
         if names:
-            st.plotly_chart(comparison_figure(comparison, names), width='stretch', theme=None, config=CHART_CONFIG)
+            st.plotly_chart(comparison_figure(comparison, names), width='stretch', theme='streamlit', config=CHART_CONFIG)
         else:
             st.info('Select at least one policy to display its archived trace.')
     st.dataframe(comparison_table(comparison), hide_index=True, width='stretch')
@@ -231,13 +221,11 @@ def notes_view():
 
 
 def main():
-    st.set_page_config(page_title='Governorlab · Daybreak', page_icon='◷', layout='wide', initial_sidebar_state='collapsed')
-    html('<style>' + (Path(__file__).with_name('theme.css')).read_text(encoding='utf-8') + '</style>')
-    brand, navigation = st.columns([1.1, 2.2], vertical_alignment='center')
-    with brand:
+    st.set_page_config(page_title='Governorlab · Daybreak', page_icon='◷', layout='wide', initial_sidebar_state='expanded')
+    html('<style>' + css_tokens() + (Path(__file__).with_name('theme.css')).read_text(encoding='utf-8') + '</style>')
+    with st.sidebar:
         html('<div class="brand">Governor<span>lab.</span><small>DAYBREAK</small></div>')
-    with navigation:
-        st.radio('Dashboard section', VIEWS, horizontal=True, key='view', label_visibility='collapsed')
+        st.radio('Dashboard section', VIEWS, key='view')
     view = st.session_state['view']
     previous_view = st.session_state.get('previous_view')
     if view != 'The Replay' and 'player' in st.session_state:
@@ -250,24 +238,41 @@ def main():
     try:
         if view == 'The Replay':
             p = ensure_player()
-            controls()
-            timed = p.playing or active_collection()
-            @st.fragment(run_every=.25 if timed else None)
-            def session_player():
-                if st.session_state.pop('sync_controls', False) or st.session_state['view'] != 'The Replay':
-                    st.rerun()
-                try:
+            with st.sidebar:
+                controls()
+            collecting = active_collection()
+            if collecting:
+                st.subheader('Collecting Linux observations')
+                st.caption('Measured kernel counters · background activity only · no hardware changes')
+                st.button('Cancel collection', key='cancel_collection', on_click=cancel, type='primary')
+
+                @st.fragment(run_every=.5)
+                def collection_progress():
                     if poll_collection(apply=False):
+                        st.rerun()
+                collection_progress()
+                st.info('Keep this page connected. Valid samples appear here as they arrive; '
+                        'the results replace this panel after validation. Failed attempts are never replayed.')
+            else:
+                error = st.session_state.get('collection_error')
+                if error:
+                    st.error(error)
+                    st.caption('The previous verified session remains below. Collection is never retried automatically.')
+                replay_header(st.session_state['dataset'])
+                timed = p.playing
+
+                @st.fragment(run_every=1 / p.speed if timed else None)
+                def session_player():
+                    if st.session_state.pop('sync_controls', False):
                         st.rerun()
                     p.advance(time.monotonic())
                     st.session_state['tick'] = p.tick
                     replay_view()
-                except (OSError, ValueError, KeyError, TypeError) as error:
-                    ensure_player().pause()
-                    st.error(f'Session validation failed: {error}. No substitute samples generated.')
-                if (ensure_player().playing or active_collection()) != timed:
-                    st.rerun()
-            session_player()
+                    if p.playing != timed:
+                        st.rerun()
+                session_player()
+                replay_details(st.session_state['dataset'])
+
         else:
             {'The Evidence': evidence_view, 'The Comparison': comparison_view, 'Lab Notes': notes_view}[view]()
     except (OSError, ValueError, KeyError, TypeError) as error:

@@ -1,6 +1,7 @@
 """Session selection and common controls, rendered inside one timed fragment."""
 import sys
 import time
+import json
 
 import streamlit as st
 
@@ -8,6 +9,7 @@ from daybreak.collection import Collection
 from daybreak.player import Player
 from daybreak.sessions import list_sessions, load_session
 from presentation.adapter import load_replay
+from daybreak.ui_text import session_label
 
 SYNTHETIC = 'Verified synthetic scenario'
 SAMPLE_CHOICES = (5, 10, 20)
@@ -67,17 +69,18 @@ def cancel():
         job.cancel()
 
 
-def poll_collection(apply=True):
+def poll_collection(apply=True, render=True):
     job = st.session_state.get('collection')
     if job is None:
-        if st.session_state.get('collection_error'):
+        if render and st.session_state.get('collection_error'):
             st.error(st.session_state['collection_error'])
         return
     result = job.poll()
     if result['status'] == 'collecting':
         total = getattr(job, 'count', SAMPLE_CHOICES[0])
         count = max(0, min(total, result.get('count', 0)))
-        st.progress(count / total, text=f'Collecting actual Linux intervals: {count} / {total} · cancel available · no retries')
+        if render:
+            st.progress(count / total, text=f'Collecting actual Linux intervals: {count} / {total} · cancel available · no retries')
     elif st.session_state.get('collection_consumed') != str(job.folder):
         if not apply:
             return True  # apply new source before its widget is instantiated on full rerun
@@ -95,7 +98,7 @@ def poll_collection(apply=True):
                 st.session_state['collection_error'] = f'Collected session rejected: {error}'
         else:
             st.session_state['collection_error'] = failure_message(result)
-    if st.session_state.get('collection_error'):
+    if render and st.session_state.get('collection_error'):
         st.error(st.session_state['collection_error'])
 
 
@@ -110,7 +113,8 @@ def failure_message(result):
 
 def controls():
     p = ensure_player()
-    poll_collection()
+    if not active_collection():
+        poll_collection(render=False)
     saved = {str(path.resolve()): path for path in list_sessions()}
     options = [SYNTHETIC, *saved]
     st.session_state.setdefault('source_choice', p.source)
@@ -118,19 +122,27 @@ def controls():
     # Retain a validated loaded source even if a folder is temporarily unavailable.
     if p.source not in options:
         options.append(p.source)
-    source, samples, action, stop = st.columns([3, .8, 1, 1], vertical_alignment='bottom')
-    source.selectbox('Session source', options, key='source_choice', disabled=active_collection(),
-                     format_func=lambda key: key if key == SYNTHETIC else 'Saved Linux · ' + key.replace('\\', '/').split('/')[-1])
+    labels = {SYNTHETIC: SYNTHETIC}
+    for index, (key, path) in enumerate(saved.items(), 1):
+        try:
+            metadata = json.loads((path / 'metadata.json').read_text(encoding='utf-8'))
+            labels[key] = f'{session_label(metadata)} · #{index}'
+        except (OSError, ValueError, TypeError, AttributeError):
+            labels[key] = f'Unreadable session · #{index}'
+    st.selectbox('Session source', options, key='source_choice', disabled=active_collection(),
+                 format_func=lambda key: labels.get(key, 'Previously loaded session'))
     choice = st.session_state['source_choice']
     if choice != p.source:
-        data = load_replay() if choice == SYNTHETIC else load_session(choice)
+        with st.spinner('Validating session and preparing replay…'):
+            data = load_replay() if choice == SYNTHETIC else load_session(choice)
         st.session_state['dataset'] = data
         p.switch(choice, len(data.frames), time.monotonic())
-    samples.selectbox('Samples', SAMPLE_CHOICES, key='collect_count', disabled=active_collection(),
+    if not saved:
+        st.caption('No saved sessions yet. Explore the synthetic example, or collect on Linux.')
+    st.selectbox('Samples', SAMPLE_CHOICES, key='collect_count', disabled=active_collection(),
                       help='One-second background intervals for Collect Live Data')
-    action.button('Collect Live Data', key='collect', on_click=collect,
+    st.button('Collect Live Data', key='collect', on_click=collect, width='stretch',
                   disabled=sys.platform != 'linux' or active_collection())
-    stop.button('Cancel collection', key='cancel_collection', on_click=cancel, disabled=not active_collection())
     if sys.platform != 'linux':
         st.caption('Fresh collection requires Linux /proc/stat. Synthetic and saved Linux replay work on Windows.')
     else:
@@ -140,13 +152,15 @@ def controls():
         st.session_state['tick_control'] = p.tick
     else:
         st.session_state.setdefault('tick_control', p.tick)
-    play, pause, again, previous, next_button, speed = st.columns([1, 1, 1, .6, .6, 1.5], vertical_alignment='bottom')
+    st.divider()
+    play, pause, again = st.columns(3)
     play.button('Resume' if p.tick > 1 else 'Play', key='play', on_click=toggle_play, args=(True,), disabled=p.playing or p.complete or active_collection())
     pause.button('Pause', key='pause', on_click=toggle_play, args=(False,), disabled=not p.playing)
     again.button('Restart', key='restart', on_click=restart, disabled=active_collection())
-    previous.button('←', key='previous', help='Previous tick; pauses playback', on_click=seek, args=(-1,), disabled=p.tick == 1)
-    next_button.button('→', key='next', help='Next tick; pauses playback', on_click=seek, args=(1,), disabled=p.complete)
-    speed.selectbox('Playback speed', [.5, 1.0, 2.0, 4.0], key='speed', format_func=lambda value: f'{value:g}×', on_change=speed_changed)
-    st.slider('Selected replay tick', 1, p.total, key='tick_control', on_change=seek, disabled=p.playing, help='Pause to seek to an exact tick')
-    st.button('Reset', key='reset', on_click=seek, kwargs={'reset': True}, help='Return to tick 1 and pause')
+    previous, next_button = st.columns(2)
+    previous.button('Previous', key='previous', help='Previous sample; pauses playback', on_click=seek, args=(-1,), disabled=p.tick == 1 or active_collection())
+    next_button.button('Next', key='next', help='Next sample; pauses playback', on_click=seek, args=(1,), disabled=p.complete or active_collection())
+    st.selectbox('Playback speed', [.5, 1.0, 2.0, 4.0], key='speed', format_func=lambda value: f'{value:g}×', on_change=speed_changed, disabled=active_collection())
+    st.slider('Selected replay sample', 1, p.total, key='tick_control', on_change=seek, disabled=p.playing or active_collection(), help='Pause to seek to an exact sample')
+    st.button('Reset', key='reset', on_click=seek, kwargs={'reset': True}, help='Return to sample 1 and pause', disabled=active_collection())
     return st.session_state['dataset']
