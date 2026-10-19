@@ -13,6 +13,7 @@ or a recorded manual check; anything not recorded is marked **pending**.
 | **M1** | Ubuntu VM tolerant live collection, 5 samples | 8b7280e or later | 2026-10-19 | One interval discarded (elapsed 2.32 s, outside 0.5-2 s); 5 of 5 samples kept; degraded banner shown; replay revalidated (user report) |
 | **M2** | Ubuntu VM `--live --strict`, 5 samples | 8b7280e or later | 2026-10-19 | Passed (user report) |
 | **M3** | Ubuntu VM overhead smoke runs (`--smoke`) | before f47e288 | 2026-10-19 | About 0.3 to 0.8 ms CPU per tick; single 5 s runs, quantized (user report) |
+| **M4** | Ubuntu VM overhead full plan (`.venv/bin/python -m benchmark.overhead`): 4 intervals x 60 s x 3 repetitions, governor and sleep-only control | f47e288 | 2026-10-19 | 24 runs ok, 0 failed. Net governor CPU per tick (mean): 0.5988 ms at 0.5 s, 0.6168 ms at 1 s, 0.5483 ms at 2 s, 0.5861 ms at 5 s (user report; output files archive pending) |
 
 Results are recorded per suite, not per test: "Pass (W)" means the test is in the
 Windows portable selection and that selection passed with zero failures. Tests that
@@ -141,9 +142,42 @@ Test names are in `tests/<file>.py::<test>`. Run one with
 | BEN-03 | K sweep known answers | Burst shorter than K; clean phases | Burst suppressed; lag = K - 1 ticks | `test_sensitivity.py` | Pass (W, U) | 2026-10-19 |
 | BEN-04 | Overhead tool logic | Fake clock and /proc, 12 % overshoot, failing run, runaway | Completes with ratio 1.12; failure recorded and plan continues; guard stops runaway | `test_overhead.py` | Pass (W); Linux pending (U2) | 2026-10-19 |
 | BEN-05 | Overhead smoke on VM | `--smoke` | Per-tick CPU recorded | M3 | Recorded: about 0.3-0.8 ms CPU per tick (single 5 s runs, quantized) | 2026-10-19 |
-| BEN-06 | Overhead full plan on VM | `benchmark.overhead` (4 intervals x 60 s x 3) | Net cost with median and spread; VM timer overshoot table | Manual | pending | — |
+| BEN-06 | Overhead full plan on VM | `benchmark.overhead` (4 intervals x 60 s x 3) | Net cost with median and spread; VM timer overshoot table | M4 | Pass (M4): 24/24 runs ok; see the overhead results below | 2026-10-19 |
 | BEN-07 | schedutil baseline | Compare against a schedutil model | — | Not implemented | pending | — |
 | BEN-08 | Measured energy / completion time | Native hardware with energy counters or a meter | — | Not possible on the VM | pending | — |
+
+## Overhead results (M4, measured process CPU time on the Ubuntu VM)
+
+Net = governor minus a sleep-only control, paired per repetition. CPU % of one core is
+derived as mean ms per tick / (interval s x 1000) x 100 at the nominal tick rate.
+
+| Interval | Net CPU ms per tick (mean) | Net CPU % of one core (derived) | Net CPU-s per hour (derived) |
+|---|---|---|---|
+| 0.5 s | 0.5988 | 0.1198 | 4.312 |
+| 1 s | 0.6168 | 0.0617 | 2.221 |
+| 2 s | 0.5483 | 0.0274 | 0.987 |
+| 5 s | 0.5861 | 0.0117 | 0.422 |
+
+Resident memory about 17.7 MB; net wake-ups per second about zero.
+
+VM timer overshoot in the same run: the 0.5 s governor runs took a median 1.57 times
+their planned time (range 1.05 to 1.72); the other runs took 1.0 to 1.04 times; single
+ticks overshot by 1 to 3 s; the 5 s runs were about 1.001 (few ticks). Because ticks
+ran slower than planned, the derived percentages are upper bounds.
+
+Caveats: this is process CPU time, not electrical power; it was measured inside a VM;
+it excludes CSV logging and the terminal/dashboard UI. The output files
+(`data/overhead-20261019T091947Z/`) are not yet in the repository: **archive pending**.
+
+## Still pending
+
+- Ubuntu full suite on f47e288 or later (U2); the last full run was 326 passed on 8b7280e.
+- Archive of the overhead output files under `evidence/phase1b_overhead/`.
+- Dashboard collection at 10 and 20 samples on the VM; real child cancel, disconnect and
+  shutdown checks (DAY-07, DAY-08).
+- A real attempt-cap failure on the VM (TOL-08).
+- Classifier accuracy on labelled workloads (CLS-05).
+- schedutil baseline (BEN-07); measured energy, completion time and real DVFS (BEN-08, ACT-05).
 
 ## How to reproduce
 
