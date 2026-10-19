@@ -145,7 +145,10 @@ Test names are in `tests/<file>.py::<test>`. Run one with
 | BEN-04 | Overhead tool logic | Fake clock and /proc, 12 % overshoot, failing run, runaway | Completes with ratio 1.12; failure recorded and plan continues; guard stops runaway | `test_overhead.py` | Pass (W, U2) | 2026-10-19 |
 | BEN-05 | Overhead smoke on VM | `--smoke` | Per-tick CPU recorded | M3 | Recorded: about 0.3-0.8 ms CPU per tick (single 5 s runs, quantized) | 2026-10-19 |
 | BEN-06 | Overhead full plan on VM | `benchmark.overhead` (4 intervals x 60 s x 3) | Net cost with median and spread; VM timer overshoot table | M4 | Pass (M4): 24/24 runs ok; see the overhead results below | 2026-10-19 |
-| BEN-07 | schedutil baseline | Compare against a schedutil model | — | Not implemented | pending | — |
+| BEN-07 | schedutil-style approximation | 1.25 x util x fmax rounded up; optional I/O-wake boost | Rounds up to the ladder; boost starts at fmin and doubles | `test_closed_loop.py::test_schedutil_style_rounds_up_and_boosts_on_io` | Pass (W); an approximation, not the kernel governor | 2026-10-19 |
+| BEN-09 | Closed-loop model physics | CPU-only and I/O-only units at fmax and fmin; insensitive fraction | CPU work stretches by fmax/f (or s + (1-s) fmax/f); I/O waits do not; slowing raises observed utilization | `test_closed_loop.py` (physics tests) | Pass (W) | 2026-10-19 |
+| BEN-10 | Closed-loop policies | performance, powersave, ours K=1/3/5, ramp-down, fast-up/slow-down, adaptive K | Each behaves as specified on noise-free scenarios | `test_closed_loop.py` (policy tests) | Pass (W) | 2026-10-19 |
+| BEN-11 | Closed-loop evidence | Verify hashes; regenerate CSVs and summary | Byte-identical; same seed gives identical results | `test_closed_loop.py::test_committed_evidence_verifies_and_regenerates_identically` | Pass (W) | 2026-10-19 |
 | BEN-08 | Measured energy / completion time | Native hardware with energy counters or a meter | — | Not possible on the VM | pending | — |
 
 ## Overhead results (M4, measured process CPU time on the Ubuntu VM)

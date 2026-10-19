@@ -113,6 +113,7 @@ Open `http://127.0.0.1:8501`. Stop with Ctrl+C in the terminal.
 | Synthetic control loop, 3 ticks | `.venv/bin/python governor.py --synthetic --ticks 3` | Invented inputs, simulated frequency |
 | Five-policy comparison table | `.venv/bin/python -m benchmark.compare` | Synthetic, modelled energy |
 | Regenerate the Review 1 demo export | `.venv/bin/python -m benchmark.review_demo --outdir data/review1-demo-new` | Needs a new folder |
+| Closed-loop benchmark (modelled energy, time, EDP) | `.venv/bin/python -m benchmark.closed_loop --outdir data/closed-loop-new` | Deterministic, about 5 s; archived copy in `evidence/phase2a_closed_loop/` |
 | Sensitivity study (K and interval) | `.venv/bin/python -m benchmark.sensitivity --outdir data/sensitivity-new` | Deterministic; archived copy in `evidence/phase1b_sensitivity/` |
 | Overhead smoke check (Linux, ~22 s) | `.venv/bin/python -m benchmark.overhead --smoke` | Output `data/overhead-smoke-<UTC>/` |
 | Overhead full plan (Linux, ~26 min on the VM) | `.venv/bin/python -m benchmark.overhead` | Output `data/overhead-<UTC>/` |
@@ -192,7 +193,12 @@ replayed.
 - **Replay is open loop**: running work at a lower simulated frequency does not make
   it take longer, so completion time is not modelled.
 - **Baselines** (performance, powersave, ondemand, conservative) are Python
-  approximations; there is no schedutil baseline.
+  approximations; the closed-loop benchmark adds a schedutil-style approximation, which
+  is not the Linux schedutil governor.
+- **Closed-loop results are modelled.** In `evidence/phase2a_closed_loop/`, with the
+  pure 1/f assumption our policy wins no energy, completion-time or EDP comparison; with
+  30 % or more frequency-insensitive CPU time powersave has the best EDP. The ranking
+  depends on model assumptions, so it is not evidence of real savings.
 - **VM timing** overshoots by about 10 %; tolerant collection discards anomalous
   intervals, so a degraded session's kept samples can be non-adjacent in time.
 - **Governor overhead** was measured once on the VM (4 intervals x 60 s x 3
