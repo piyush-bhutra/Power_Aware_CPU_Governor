@@ -9,7 +9,8 @@ or a recorded manual check; anything not recorded is marked **pending**.
 |---|---|---|---|---|
 | **W** | Windows portable suite (Python 3.12.4): all test files except the four Linux-only modules and `test_live_demo.py`, plus six portable `test_live_demo.py` cases | f47e288 | 2026-10-19 | 236 passed + 6 passed, 0 failed |
 | **U** | Ubuntu VM full suite (`pytest tests/ -q`) | 8b7280e | 2026-10-19 | 326 passed in 29.84 s, 0 failed (user report) |
-| **U2** | Ubuntu VM full suite | f47e288 | — | pending |
+| **U2** | Ubuntu VM full suite (code identical to f47e288; later commits were docs only) | 943dba1 | 2026-10-19 | 331 tests. First run: 322 passed, 9 failed, all in `tests/test_safe_launcher.py` with exit code 124 (timeout); the run took 204 s while the VM load average was 3 to 4. Clean re-run of that file: 33 passed in 4.47 s. Those launcher tests are timing-sensitive on a loaded VM (user report) |
+| **M5** | Ubuntu VM dashboard: Collect Live Data at 5, 10 and 20 samples, and Cancel | 943dba1 | 2026-10-19 | Collection worked at all three sample counts; Cancel left no leftover worker process; Streamlit logged a harmless "fragment does not exist anymore" warning (user report) |
 | **M1** | Ubuntu VM tolerant live collection, 5 samples | 8b7280e or later | 2026-10-19 | One interval discarded (elapsed 2.32 s, outside 0.5-2 s); 5 of 5 samples kept; degraded banner shown; replay revalidated (user report) |
 | **M2** | Ubuntu VM `--live --strict`, 5 samples | 8b7280e or later | 2026-10-19 | Passed (user report) |
 | **M3** | Ubuntu VM overhead smoke runs (`--smoke`) | before f47e288 | 2026-10-19 | About 0.3 to 0.8 ms CPU per tick; single 5 s runs, quantized (user report) |
@@ -109,8 +110,9 @@ Test names are in `tests/<file>.py::<test>`. Run one with
 | DAY-04 | Degraded banner | Load a degraded session | Banner and discarded table shown; not on synthetic | `test_tolerant_collection.py::test_dashboard_replay_shows_degraded_banner` | Pass (W, U) | 2026-10-19 |
 | DAY-05 | Child lifecycle | Fake child: cancel, timeout, disconnect | Escalates and reaps; no retry | `test_daybreak_collection.py::test_cancellation_escalates_and_reaps` | Pass (W, U) | 2026-10-19 |
 | DAY-06 | Windows collection | Click on Windows | Disabled, never spawns | `test_daybreak_playback_ui.py::test_windows_collect_disabled_and_never_spawned` | Pass (W, U) | 2026-10-19 |
-| DAY-07 | Real VM dashboard collection at 5, 10, 20 | Collect Live Data on a quiet VM | Session collected and replayed | Manual | pending | — |
-| DAY-08 | Real child cancel / disconnect / shutdown | Manual on the VM | No orphan child, evidence kept | Manual | pending | — |
+| DAY-07 | Real VM dashboard collection at 5, 10, 20 | Collect Live Data on a quiet VM | Session collected and replayed | M5 | Pass (M5) | 2026-10-19 |
+| DAY-08 | Real child cancel | Cancel during collection on the VM | No leftover worker process | M5 | Pass (M5) | 2026-10-19 |
+| DAY-09 | Real child disconnect / server shutdown | Close the browser tab, or stop Streamlit, during collection on the VM | No orphan child, evidence kept | Manual | pending | — |
 
 ### 8. Error handling
 
@@ -140,7 +142,7 @@ Test names are in `tests/<file>.py::<test>`. Run one with
 | BEN-01 | Baselines | Run all baselines on one trace | Valid frequencies; ours never above performance | `test_baselines.py` | Pass (W, U) | 2026-10-19 |
 | BEN-02 | Energy summary | Known rows | Modelled energy matches manual total | `test_baselines.py::test_summarize_computes_energy_and_matches_manual_totals` | Pass (W, U) | 2026-10-19 |
 | BEN-03 | K sweep known answers | Burst shorter than K; clean phases | Burst suppressed; lag = K - 1 ticks | `test_sensitivity.py` | Pass (W, U) | 2026-10-19 |
-| BEN-04 | Overhead tool logic | Fake clock and /proc, 12 % overshoot, failing run, runaway | Completes with ratio 1.12; failure recorded and plan continues; guard stops runaway | `test_overhead.py` | Pass (W); Linux pending (U2) | 2026-10-19 |
+| BEN-04 | Overhead tool logic | Fake clock and /proc, 12 % overshoot, failing run, runaway | Completes with ratio 1.12; failure recorded and plan continues; guard stops runaway | `test_overhead.py` | Pass (W, U2) | 2026-10-19 |
 | BEN-05 | Overhead smoke on VM | `--smoke` | Per-tick CPU recorded | M3 | Recorded: about 0.3-0.8 ms CPU per tick (single 5 s runs, quantized) | 2026-10-19 |
 | BEN-06 | Overhead full plan on VM | `benchmark.overhead` (4 intervals x 60 s x 3) | Net cost with median and spread; VM timer overshoot table | M4 | Pass (M4): 24/24 runs ok; see the overhead results below | 2026-10-19 |
 | BEN-07 | schedutil baseline | Compare against a schedutil model | — | Not implemented | pending | — |
@@ -175,12 +177,14 @@ hashes and full per-tick tables are archived in
 
 ## Still pending
 
-- Ubuntu full suite on f47e288 or later (U2); the last full run was 326 passed on 8b7280e.
-- Dashboard collection at 10 and 20 samples on the VM; real child cancel, disconnect and
-  shutdown checks (DAY-07, DAY-08).
+- Disconnect and server-shutdown handling with a real dashboard child (DAY-09).
 - A real attempt-cap failure on the VM (TOL-08).
 - Classifier accuracy on labelled workloads (CLS-05).
-- schedutil baseline (BEN-07); measured energy, completion time and real DVFS (BEN-08, ACT-05).
+- Measured energy, completion time and real DVFS (BEN-08, ACT-05).
+
+Known issue: `tests/test_safe_launcher.py` can time out (exit code 124) when the VM is
+loaded (U2: 9 failures at load average 3 to 4, all passing on a clean re-run). Run the full
+suite on a quiet VM, or re-run that file on its own before treating a failure as real.
 
 ## How to reproduce
 
