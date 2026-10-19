@@ -1,5 +1,38 @@
 # Daybreak dashboard
 
+## UI refresh on ui-polish (October 19, 2026)
+
+Navigation, session selection, sampling controls and playback controls now live in
+the sidebar. The main area switches between a single collection-progress panel
+with Cancel and a results view with a plain-language **What happened** summary and
+a fixed-height chart. No scrolling script is required. On narrow screens, use the
+native sidebar toggle; vertical scrolling can still be necessary.
+
+The results summary describes the full verified session, while the cursor and
+status describe the selected sample. **How to read this**, session details, source
+tables, provenance and discarded attempts are collapsible. The degraded-timing
+warning stays above the chart. Saved sessions show their recorded date/time, sample
+count and timing quality; missing metadata is disclosed rather than guessed.
+**Download replay table (CSV)** exports the displayed derived features and simulated
+decisions, not a replacement for the original raw capture or its manifest.
+
+Only collection progress polls at 0.5-second intervals. Playback redraws the chart
+at its selected cadence (0.5× through 4×); static explanation and detail panels are
+outside that fragment. A 40-entry presentation cache reuses chart construction for
+identical verified data and sample positions. Source selection still runs the
+existing loaders and integrity checks. Shared style tokens, native theme colours,
+short transitions and reduced-motion support keep the presentation consistent.
+
+Fresh Windows verification: **249 portable tests passed plus 6 portable
+live-adapter tests**, including eight new UI checks. Desktop light/dark and
+390-pixel browser checks were performed. Actual collection, VM resource usage and
+the full Linux suite remain unverified by this refresh. See
+[UI refresh report](UI_REFRESH_REPORT.md) for exact commands, screen descriptions,
+the redraw diagnosis, limitations and retained stale-code candidates.
+
+This work uses the separate `ui-polish` clone and branch. It does not change the
+canonical `main` workflow or authorize integration into `main`.
+
 Daybreak is a local Streamlit presentation of the verified Governorlab backend and
 its archived evidence. Startup and ordinary reruns do not sample. An explicit Linux
 action collects 5, 10 or 20 background intervals in an isolated child; no workloads

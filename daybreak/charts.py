@@ -2,21 +2,22 @@
 import plotly.graph_objects as go
 from plotly.subplots import make_subplots
 
-VIOLET = '#7057cf'
-BLUE = '#4389ba'
-AMBER = '#c28a42'
-CLASS_COLORS = {'cpu_bound': VIOLET, 'io_bound': AMBER, 'idle': '#8aa48f', 'mixed': '#bba9d9'}
+from daybreak.design import VIOLET, BLUE, AMBER, SAGE, MIXED, CHART_HEIGHT
+from daybreak.ui_text import CLASS_NAMES
+
+CLASS_COLORS = {'cpu_bound': VIOLET, 'io_bound': AMBER, 'idle': SAGE, 'mixed': MIXED}
 POLICY_COLORS = {'ours': VIOLET, 'performance': '#a9adb9', 'powersave': '#97ad9a',
                  'ondemand': BLUE, 'conservative': '#d3a170'}
 
 
 def style(figure, height=360):
-    figure.update_layout(template='plotly_white', height=height, paper_bgcolor='rgba(0,0,0,0)',
-                         plot_bgcolor='rgba(0,0,0,0)', font=dict(family='Segoe UI, Arial', color='#3e3b48', size=12),
+    figure.update_layout(template=None, height=height, paper_bgcolor='rgba(0,0,0,0)',
+                         plot_bgcolor='rgba(0,0,0,0)', font=dict(family='Segoe UI, Arial', size=12),
                          margin=dict(l=50, r=20, t=40, b=45),
-                         legend=dict(orientation='h', y=-.23, x=0), hovermode='x unified')
-    figure.update_xaxes(gridcolor='#eeeaf0', zeroline=False)
-    figure.update_yaxes(gridcolor='#eeeaf0', zeroline=False)
+                         legend=dict(orientation='h', y=-.23, x=0), hovermode='x unified',
+                         transition=dict(duration=0))
+    figure.update_xaxes(gridcolor='rgba(128,128,128,.18)', zeroline=False)
+    figure.update_yaxes(gridcolor='rgba(128,128,128,.18)', zeroline=False)
     return figure
 
 
@@ -34,7 +35,7 @@ def replay_figure(replay, tick):
                             hovertemplate='%{y:.2f}%<extra>CPU utilization</extra>'), row=1, col=1)
     fig.add_trace(go.Scatter(x=ticks, y=[1] * len(frames), mode='markers', name='Predicted workload',
                             marker=dict(symbol='square', size=17, color=[CLASS_COLORS[f.predicted_class] for f in frames]),
-                            text=[f.predicted_class for f in frames], showlegend=False,
+                            text=[CLASS_NAMES.get(f.predicted_class, f.predicted_class) for f in frames], showlegend=False,
                             hovertemplate='%{text}<extra>Provisional rule output</extra>'), row=2, col=1)
     for field, name, color, dash in (
         ('candidate_khz', 'Candidate simulated frequency (derived)', VIOLET, 'dash'),
@@ -51,16 +52,18 @@ def replay_figure(replay, tick):
         fig.add_vline(x=tick, line_dash='dot', line_color='#b7b0c3', row=row, col=1)
     fig.update_xaxes(range=[.5, len(replay.frames) + .5], dtick=5)
     synthetic = replay.frames[0].source_kind == 'synthetic'
-    fig.update_xaxes(title_text='Synthetic tick · nominal one-second intervals' if synthetic else 'Saved observation tick · measured intervals in inspector', row=3, col=1)
+    fig.update_xaxes(title_text='Sample · synthetic' if synthetic else 'Sample · saved Linux observation', row=3, col=1)
     events = [f.transition for f in frames if f.transition]
-    if events:
-        fig.add_trace(go.Scatter(x=[e.tick for e in events], y=[e.new_khz / 1e6 for e in events],
+    fig.add_trace(go.Scatter(x=[e.tick for e in events], y=[e.new_khz / 1e6 for e in events],
                                 mode='markers', name='Applied simulated transitions',
-                                marker=dict(symbol='diamond', size=11, color=AMBER),
+                                marker=dict(symbol='diamond', size=11, color=AMBER), showlegend=False,
                                 text=[e.reason for e in events], hovertemplate='%{text}<extra>Simulated transition</extra>'), row=3, col=1)
     for annotation in fig.layout.annotations:
-        annotation.update(font=dict(size=12, color='#716a7c'), x=0, xanchor='left')
-    return style(fig, 420)
+        annotation.update(font=dict(size=12), x=0, xanchor='left')
+    fig.update_layout(uirevision=replay.metadata['csv_path'])
+    style(fig, CHART_HEIGHT)
+    fig.update_layout(showlegend=False)
+    return fig
 
 
 def energy_figure(comparison):
