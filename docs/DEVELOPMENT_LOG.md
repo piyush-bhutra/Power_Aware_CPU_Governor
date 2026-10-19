@@ -1,5 +1,34 @@
 # Development log
 
+## 2026-10-19 — Phase 1A.1: tolerant live collection with disclosure (main)
+
+Started at 33dcd72 after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).
+Validity thresholds unchanged: elapsed 0.5-2 s; jiffy ratio 0.5-1.5 x cpu_count*SC_CLK_TCK.
+- collect_live(strict=False): in tolerant mode an interval failing the timing or jiffy-ratio
+  check, or an invalid counter interval, is discarded and never reaches the classifier or
+  policy; monitor.reader.sample() already rebaselines after every attempt. Collection stops at
+  `count` valid samples, or fails (AttemptCapExceeded, evidence retained, no manifest) at
+  count + max(3, ceil(count/2)) attempts, or at the deadline. --strict keeps the old
+  abort-on-first-timing-anomaly behaviour.
+- Disclosure: each discard is written to raw_events.jsonl ({"event": "discarded", attempt,
+  reason, elapsed_s, ratio}) and metadata (discarded_attempts); metadata also records strict,
+  max_attempts, attempts_made, kept_attempt_indices and timing_quality clean/degraded. Session
+  loading checks these are consistent; legacy sessions without them load as clean.
+- Deadline = 2 s x allowed attempts + 2 s (tolerant 5 samples: 18 s, watchdog 21 s; strict
+  5: 12/15 s). Governorlab --live/--session and the Daybreak replay show "N intervals
+  discarded because of VM timing anomalies" with per-reason counts (terminal also lists each
+  discard; dashboard has a Discarded attempts table). Dashboard attempt-cap failures say in
+  plain words that VM timing was unstable and to close other applications and retry.
+- LIMITATION: kept samples can be non-adjacent in time (a discarded interval sits between
+  them), so a degraded session's K=3 persistence spans real gaps and is not a continuous trace.
+
+Windows only (Python 3.12.4): portable suite 231 passed (210 + 21 new tolerant-collection
+tests); six portable live-demo cases passed. Archived replay (13/23/29), both Review 1
+archives, the Phase 1B sensitivity archive and the five-policy comparison verify unchanged.
+Updated but not run here: Linux-only test_live_demo.py cases (sampler now called with the
+8-attempt tolerant cap). Existing test_daybreak_collection.py leaves a fake job that prints a
+harmless os.killpg AttributeError at interpreter exit on Windows (pre-existing).
+
 ## 2026-10-18 — Phase 1B: overhead tool and sensitivity study (main)
 
 Started at 0447eb6 after a clean sync (docs/Literature_Review_Notes.md untracked, untouched).

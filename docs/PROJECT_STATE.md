@@ -1,5 +1,16 @@
 # Verified project state
 
+## Current update — Phase 1A.1 tolerant live collection, October 19, 2026
+
+Live collection now discards isolated VM timing anomalies by default instead of aborting:
+anomalous intervals are recorded and never classified, collection continues up to count +
+max(3, ceil(count/2)) attempts, and sessions carry timing_quality clean/degraded with every
+discard disclosed in terminal and dashboard replays. Thresholds are unchanged; --strict keeps
+the old behaviour. Limitation: kept samples in a degraded session can be non-adjacent in time.
+Windows: 231 portable + 6 live-adapter tests passed; archives and replay unchanged. Pending on
+Ubuntu: full suite and real tolerant/strict collections. Checkpoint tag:
+checkpoint-1a1-tolerant-collection.
+
 ## Current update — Phase 1B overhead and sensitivity tools, October 18, 2026
 
 Two evaluation tools on main. benchmark/overhead.py measures the governor loop's own CPU
